@@ -34,7 +34,7 @@ export default function RegisterPage() {
     setLoading(true)
 
     try {
-      // Sign up the user
+      // Sign up the user - profile will be created automatically by database trigger
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -51,19 +51,8 @@ export default function RegisterPage() {
         throw new Error('User creation failed')
       }
 
-      // Create profile in the profiles table
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: authData.user.id,
-        full_name: fullName,
-        email: email,
-        role: 'user', // Default role is user
-        total_points: 0,
-      })
-
-      if (profileError) {
-        console.error('Profile creation error:', profileError)
-        // If profile creation fails, we should still continue as the trigger might have created it
-      }
+      // Profile is automatically created by the database trigger (handle_new_user)
+      // No need to manually insert into profiles table
 
       // Check if email confirmation is required
       if (authData.session) {
