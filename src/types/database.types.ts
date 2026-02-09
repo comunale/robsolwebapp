@@ -44,6 +44,7 @@ export interface Database {
           end_date: string
           is_active: boolean
           banner_url: string | null
+          keywords: string[]
           created_at: string
           updated_at: string
         }
@@ -55,6 +56,7 @@ export interface Database {
           end_date: string
           is_active?: boolean
           banner_url?: string | null
+          keywords?: string[]
           created_at?: string
           updated_at?: string
         }
@@ -66,6 +68,7 @@ export interface Database {
           end_date?: string
           is_active?: boolean
           banner_url?: string | null
+          keywords?: string[]
           created_at?: string
           updated_at?: string
         }
