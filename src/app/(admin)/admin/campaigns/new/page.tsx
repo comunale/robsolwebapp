@@ -20,6 +20,8 @@ export default function NewCampaignPage() {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [isActive, setIsActive] = useState(true)
+  const [keywords, setKeywords] = useState<string[]>([])
+  const [keywordInput, setKeywordInput] = useState('')
   const [bannerFile, setBannerFile] = useState<File | null>(null)
   const [bannerPreview, setBannerPreview] = useState<string | null>(null)
 
@@ -103,6 +105,7 @@ export default function NewCampaignPage() {
           end_date: endDate,
           is_active: isActive,
           banner_url: bannerUrl,
+          keywords,
         }),
       })
 
@@ -234,6 +237,67 @@ export default function NewCampaignPage() {
               <label htmlFor="isActive" className="ml-2 text-sm text-gray-700">
                 Set campaign as active immediately
               </label>
+            </div>
+
+            {/* Target Keywords */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Target Keywords (Eligible Products)
+              </label>
+              <p className="text-xs text-gray-500 mb-2">
+                Add product names or brands that qualify for this campaign. The AI will match these against receipt items.
+              </p>
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={keywordInput}
+                  onChange={(e) => setKeywordInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      const kw = keywordInput.trim()
+                      if (kw && !keywords.includes(kw)) {
+                        setKeywords([...keywords, kw])
+                        setKeywordInput('')
+                      }
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                  placeholder="e.g., Coca-Cola, Beer, Heineken..."
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const kw = keywordInput.trim()
+                    if (kw && !keywords.includes(kw)) {
+                      setKeywords([...keywords, kw])
+                      setKeywordInput('')
+                    }
+                  }}
+                  className="px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg font-medium transition"
+                >
+                  Add
+                </button>
+              </div>
+              {keywords.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {keywords.map((kw, i) => (
+                    <span
+                      key={i}
+                      className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm"
+                    >
+                      {kw}
+                      <button
+                        type="button"
+                        onClick={() => setKeywords(keywords.filter((_, j) => j !== i))}
+                        className="hover:text-red-600"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Banner Upload */}

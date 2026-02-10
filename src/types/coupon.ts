@@ -5,14 +5,17 @@ export interface CouponItem {
   quantity?: number
   price?: number
   unit_price?: number
+  matched_keyword?: string | null
 }
 
 export interface ExtractedData {
-  items: CouponItem[]
-  total?: number
-  store?: string
+  customer_name?: string
   date?: string
-  [key: string]: any // Allow additional fields from AI extraction
+  store?: string
+  total?: number
+  items: CouponItem[]
+  matched_keywords: string[]
+  has_matching_products: boolean
 }
 
 export interface Coupon {
@@ -28,19 +31,16 @@ export interface Coupon {
   reviewed_by: string | null
 }
 
+export interface CouponWithRelations extends Coupon {
+  profiles?: { full_name: string; email: string }
+  campaigns?: { title: string; keywords: string[] }
+}
+
 export interface CreateCouponInput {
   user_id: string
   campaign_id: string
   image_url: string
   extracted_data?: ExtractedData | null
-}
-
-export interface UpdateCouponInput {
-  status?: CouponStatus
-  extracted_data?: ExtractedData | null
-  points_awarded?: number
-  reviewed_at?: string | null
-  reviewed_by?: string | null
 }
 
 export interface ReviewCouponInput {

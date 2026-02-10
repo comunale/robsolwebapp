@@ -79,6 +79,7 @@ export async function POST(request: Request) {
         end_date: body.end_date,
         is_active: body.is_active ?? true,
         banner_url: body.banner_url,
+        keywords: body.keywords || [],
       })
       .select()
       .single()
