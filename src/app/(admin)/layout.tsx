@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import AdminSidebar from '@/components/admin/AdminSidebar'
 
 export const metadata: Metadata = {
   title: 'Admin Panel - Incentive Campaigns',
@@ -12,7 +13,8 @@ export default function AdminLayout({
 }) {
   return (
     <div className="min-h-screen bg-gray-50">
-      {children}
+      <AdminSidebar />
+      <div className="ml-64">{children}</div>
     </div>
   )
 }

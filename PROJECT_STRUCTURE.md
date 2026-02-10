@@ -1,415 +1,146 @@
 # Incentive Campaigns WebApp - Project Structure
 
-## Recommended Next.js App Router Folder Structure
+## Implemented Next.js App Router Structure
 
 ```
 robsolwebapp/
-├── .vscode/
 ├── public/
-│   ├── images/
-│   └── icons/
 ├── src/
 │   ├── app/
 │   │   ├── (auth)/
 │   │   │   ├── login/
-│   │   │   │   └── page.tsx
+│   │   │   │   └── page.tsx          # Login page (Suspense-wrapped)
 │   │   │   ├── register/
-│   │   │   │   └── page.tsx
-│   │   │   └── layout.tsx
+│   │   │   │   └── page.tsx          # Registration page
+│   │   │   └── layout.tsx            # Auth layout (centered cards)
 │   │   │
 │   │   ├── (user)/
 │   │   │   ├── dashboard/
-│   │   │   │   ├── page.tsx
-│   │   │   │   ├── campaigns/
-│   │   │   │   │   ├── page.tsx
-│   │   │   │   │   └── [id]/
-│   │   │   │   │       └── page.tsx
-│   │   │   │   ├── coupons/
-│   │   │   │   │   ├── page.tsx
-│   │   │   │   │   ├── upload/
-│   │   │   │   │   │   └── page.tsx
-│   │   │   │   │   └── [id]/
-│   │   │   │   │       └── page.tsx
-│   │   │   │   └── profile/
-│   │   │   │       └── page.tsx
-│   │   │   └── layout.tsx
+│   │   │   │   ├── page.tsx          # User dashboard (stats, quick actions)
+│   │   │   │   └── scan/
+│   │   │   │       └── page.tsx      # Receipt scanner (GPT-4o-mini OCR)
+│   │   │   └── layout.tsx            # User layout
 │   │   │
 │   │   ├── (admin)/
 │   │   │   ├── admin/
-│   │   │   │   ├── page.tsx
+│   │   │   │   ├── page.tsx          # → DashboardOverview
 │   │   │   │   ├── campaigns/
-│   │   │   │   │   ├── page.tsx
-│   │   │   │   │   ├── new/
-│   │   │   │   │   │   └── page.tsx
-│   │   │   │   │   └── [id]/
-│   │   │   │   │       ├── page.tsx
-│   │   │   │   │       └── edit/
-│   │   │   │   │           └── page.tsx
+│   │   │   │   │   ├── page.tsx      # → CampaignList
+│   │   │   │   │   └── new/
+│   │   │   │   │       └── page.tsx  # → CampaignForm
 │   │   │   │   ├── coupons/
-│   │   │   │   │   ├── page.tsx
-│   │   │   │   │   └── [id]/
-│   │   │   │   │       └── page.tsx
+│   │   │   │   │   └── page.tsx      # → CouponModeration
 │   │   │   │   ├── users/
-│   │   │   │   │   ├── page.tsx
-│   │   │   │   │   └── [id]/
-│   │   │   │   │       └── page.tsx
+│   │   │   │   │   └── page.tsx      # → UserManagementTable
 │   │   │   │   └── analytics/
-│   │   │   │       └── page.tsx
-│   │   │   └── layout.tsx
+│   │   │   │       └── page.tsx      # → AnalyticsDashboard
+│   │   │   └── layout.tsx            # Admin layout (sidebar + content area)
+│   │   │
+│   │   ├── actions/
+│   │   │   └── scanCoupon.ts         # Server Action: GPT-4o-mini receipt OCR
 │   │   │
 │   │   ├── api/
-│   │   │   ├── auth/
-│   │   │   │   └── [...supabase]/
-│   │   │   │       └── route.ts
 │   │   │   ├── campaigns/
-│   │   │   │   ├── route.ts
+│   │   │   │   ├── route.ts          # GET (list) + POST (create)
 │   │   │   │   └── [id]/
-│   │   │   │       └── route.ts
-│   │   │   ├── coupons/
-│   │   │   │   ├── route.ts
-│   │   │   │   ├── [id]/
-│   │   │   │   │   └── route.ts
-│   │   │   │   └── approve/
-│   │   │   │       └── route.ts
-│   │   │   └── upload/
-│   │   │       └── route.ts
+│   │   │   │       └── route.ts      # GET + PATCH + DELETE
+│   │   │   └── coupons/
+│   │   │       ├── route.ts          # GET (list with filters) + POST (submit)
+│   │   │       └── [id]/
+│   │   │           └── route.ts      # PATCH (approve/reject + award points)
 │   │   │
-│   │   ├── layout.tsx
-│   │   ├── page.tsx
-│   │   ├── globals.css
-│   │   └── not-found.tsx
+│   │   ├── layout.tsx                # Root layout (Geist fonts, metadata)
+│   │   ├── page.tsx                  # Root redirect (role-based → /admin or /dashboard)
+│   │   └── globals.css               # Tailwind v4 config + brand palette
 │   │
 │   ├── components/
-│   │   ├── ui/
-│   │   │   ├── button.tsx
-│   │   │   ├── card.tsx
-│   │   │   ├── input.tsx
-│   │   │   ├── modal.tsx
-│   │   │   └── ... (other UI components)
 │   │   ├── admin/
-│   │   │   ├── AdminSidebar.tsx
-│   │   │   ├── CampaignForm.tsx
-│   │   │   ├── CouponReviewCard.tsx
-│   │   │   └── UserManagementTable.tsx
-│   │   ├── user/
-│   │   │   ├── UserSidebar.tsx
-│   │   │   ├── CampaignCard.tsx
-│   │   │   ├── CouponUpload.tsx
-│   │   │   └── PointsDisplay.tsx
-│   │   ├── shared/
-│   │   │   ├── Navbar.tsx
-│   │   │   ├── Footer.tsx
-│   │   │   ├── ImageUploader.tsx
-│   │   │   └── LoadingSpinner.tsx
-│   │   └── providers/
-│   │       └── Providers.tsx
+│   │   │   ├── AdminSidebar.tsx      # Fixed sidebar with nav (Dashboard, Campaigns, Coupons, Users, Analytics)
+│   │   │   ├── AdminHeader.tsx       # Sticky header with title, subtitle, user info, sign out
+│   │   │   ├── DashboardOverview.tsx # Live stats cards, hero banner, quick action grid
+│   │   │   ├── CampaignList.tsx      # Campaign listing with toggle active, delete, keywords display
+│   │   │   ├── CampaignForm.tsx      # Create campaign form (title, dates, keywords, banner upload)
+│   │   │   ├── CouponModeration.tsx  # Filter tabs, coupon cards, review modal (photo + AI data side-by-side)
+│   │   │   ├── UserManagementTable.tsx # Users table with avatar, role badge, points
+│   │   │   └── AnalyticsDashboard.tsx  # Stats cards + coupon status breakdown bars
+│   │   └── shared/
+│   │       └── LoadingSpinner.tsx     # Reusable spinner (size, color, fullScreen props)
 │   │
 │   ├── lib/
 │   │   ├── supabase/
-│   │   │   ├── client.ts
-│   │   │   ├── server.ts
-│   │   │   └── middleware.ts
-│   │   ├── utils/
-│   │   │   ├── cn.ts
-│   │   │   ├── format.ts
-│   │   │   └── validation.ts
+│   │   │   ├── client.ts             # Browser client (createBrowserClient from @supabase/ssr)
+│   │   │   └── server.ts             # Server client (createServerClient with cookies)
 │   │   ├── hooks/
-│   │   │   ├── useAuth.ts
-│   │   │   ├── useCampaigns.ts
-│   │   │   └── useCoupons.ts
+│   │   │   └── useAuth.ts            # Auth hook (signIn, signUp, signOut, profile, isAdmin)
 │   │   └── storage/
-│   │       └── imageStorage.ts
+│   │       └── imageStorage.ts       # Upload helpers for campaigns + coupons bucket
 │   │
 │   ├── types/
-│   │   ├── database.types.ts
-│   │   ├── supabase.ts
-│   │   ├── campaign.ts
-│   │   ├── coupon.ts
-│   │   └── user.ts
+│   │   ├── database.types.ts         # Supabase generated types
+│   │   ├── campaign.ts               # Campaign interface (includes keywords: string[])
+│   │   ├── coupon.ts                 # Coupon, CouponItem, ExtractedData, CouponWithRelations
+│   │   └── user.ts                   # Profile interface (role: 'admin' | 'user')
 │   │
-│   └── middleware.ts
+│   └── middleware.ts                 # Route protection (admin/dashboard/login/register)
 │
-├── supabase/
-│   ├── migrations/
-│   │   └── 001_initial_schema.sql
-│   └── config.toml
-│
-├── .env.local
-├── .gitignore
-├── next.config.js
+├── .env.local                        # Supabase URL + Anon Key + OpenAI API Key
+├── supabase-schema.sql               # Database schema reference
 ├── package.json
-├── tailwind.config.ts
 ├── tsconfig.json
-├── supabase-schema.sql
-└── README.md
+└── PROJECT_STRUCTURE.md
 ```
 
-## Key Structure Explanations
+## Architecture
 
 ### Route Groups
 
-**`(auth)/`** - Authentication pages (login, register)
-- No prefix in URL
-- Shared layout for auth pages
+| Group      | URL Prefix    | Auth Required | Role     |
+|-----------|---------------|---------------|----------|
+| `(auth)`  | `/login`, `/register` | No | — |
+| `(user)`  | `/dashboard/*` | Yes | Any |
+| `(admin)` | `/admin/*`     | Yes | Admin |
 
-**`(user)/dashboard/`** - User-facing routes
-- Accessible at `/dashboard/*`
-- Protected by user authentication middleware
-- Contains: campaigns view, coupon upload, profile
+### Component-Based Architecture
 
-**`(admin)/admin/`** - Admin-only routes
-- Accessible at `/admin/*`
-- Protected by admin role check middleware
-- Contains: campaign management, coupon approval, user management, analytics
+All admin pages are **thin wrappers** that import dedicated components from `src/components/admin/`:
+
+```
+page.tsx (5 lines) → Component.tsx (full logic + UI)
+```
+
+This separation keeps route files minimal and all business logic in reusable, testable components.
 
 ### Layout Hierarchy
 
 ```
-Root Layout (app/layout.tsx)
-├── Auth Layout (app/(auth)/layout.tsx)
-│   └── Login/Register pages
-│
-├── User Layout (app/(user)/layout.tsx)
-│   └── Dashboard pages + User Sidebar
-│
-└── Admin Layout (app/(admin)/layout.tsx)
-    └── Admin pages + Admin Sidebar
+Root Layout (app/layout.tsx) — Geist fonts, global metadata
+├── Auth Layout — Centered card container
+├── User Layout — Standard page layout
+└── Admin Layout — Fixed sidebar (w-64) + content area (ml-64)
+    ├── AdminSidebar — Navigation links
+    └── AdminHeader — Sticky top bar per page
 ```
 
-## Image Storage Logic
+### Key Integrations
 
-### Supabase Storage Bucket Structure
+- **Supabase Auth** — Email/password via `@supabase/ssr` (not deprecated auth-helpers)
+- **Supabase Storage** — `incentive-campaigns` bucket for banners + receipt images
+- **Supabase RLS** — Simple policies using `auth.uid()` only (avoids recursive admin checks)
+- **OpenAI GPT-4o-mini** — Server Action receipt OCR with keyword matching
+- **Middleware** — Route protection with role-based redirects
 
-```
-incentive-campaigns/
-├── campaigns/
-│   └── {campaign_id}/
-│       └── banner.jpg
-│
-└── coupons/
-    └── {campaign_id}/
-        └── {user_id}/
-            ├── {timestamp}_coupon1.jpg
-            ├── {timestamp}_coupon2.jpg
-            └── ...
-```
+### Routes Summary
 
-### Implementation Example
-
-**File: `src/lib/storage/imageStorage.ts`**
-
-```typescript
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-
-const BUCKET_NAME = 'incentive-campaigns'
-
-export const uploadCouponImage = async (
-  file: File,
-  userId: string,
-  campaignId: string
-): Promise<string> => {
-  const supabase = createClientComponentClient()
-
-  // Generate unique filename
-  const timestamp = Date.now()
-  const fileExt = file.name.split('.').pop()
-  const fileName = `${timestamp}_${file.name}`
-
-  // Storage path: coupons/{campaign_id}/{user_id}/{filename}
-  const filePath = `coupons/${campaignId}/${userId}/${fileName}`
-
-  const { data, error } = await supabase.storage
-    .from(BUCKET_NAME)
-    .upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: false
-    })
-
-  if (error) throw error
-
-  // Get public URL
-  const { data: { publicUrl } } = supabase.storage
-    .from(BUCKET_NAME)
-    .getPublicUrl(filePath)
-
-  return publicUrl
-}
-
-export const uploadCampaignBanner = async (
-  file: File,
-  campaignId: string
-): Promise<string> => {
-  const supabase = createClientComponentClient()
-
-  const fileExt = file.name.split('.').pop()
-  const filePath = `campaigns/${campaignId}/banner.${fileExt}`
-
-  const { data, error } = await supabase.storage
-    .from(BUCKET_NAME)
-    .upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: true // Allow overwriting existing banner
-    })
-
-  if (error) throw error
-
-  const { data: { publicUrl } } = supabase.storage
-    .from(BUCKET_NAME)
-    .getPublicUrl(filePath)
-
-  return publicUrl
-}
-
-export const deleteCouponImage = async (imageUrl: string): Promise<void> => {
-  const supabase = createClientComponentClient()
-
-  // Extract file path from URL
-  const path = imageUrl.split('/storage/v1/object/public/')[1]
-
-  const { error } = await supabase.storage
-    .from(BUCKET_NAME)
-    .remove([path])
-
-  if (error) throw error
-}
-```
-
-### Storage Policies (Supabase)
-
-```sql
--- Allow authenticated users to upload coupons to their own folder
-CREATE POLICY "Users can upload own coupons"
-ON storage.objects FOR INSERT
-TO authenticated
-WITH CHECK (
-  bucket_id = 'incentive-campaigns' AND
-  (storage.foldername(name))[1] = 'coupons' AND
-  (storage.foldername(name))[3] = auth.uid()::text
-);
-
--- Allow users to view their own coupons
-CREATE POLICY "Users can view own coupons"
-ON storage.objects FOR SELECT
-TO authenticated
-USING (
-  bucket_id = 'incentive-campaigns' AND
-  (storage.foldername(name))[1] = 'coupons' AND
-  (storage.foldername(name))[3] = auth.uid()::text
-);
-
--- Admins can view all coupons
-CREATE POLICY "Admins can view all coupons"
-ON storage.objects FOR SELECT
-TO authenticated
-USING (
-  bucket_id = 'incentive-campaigns' AND
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE id = auth.uid() AND role = 'admin'
-  )
-);
-
--- Admins can upload campaign banners
-CREATE POLICY "Admins can upload campaign banners"
-ON storage.objects FOR INSERT
-TO authenticated
-WITH CHECK (
-  bucket_id = 'incentive-campaigns' AND
-  (storage.foldername(name))[1] = 'campaigns' AND
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE id = auth.uid() AND role = 'admin'
-  )
-);
-```
-
-## Middleware Protection
-
-**File: `src/middleware.ts`**
-
-```typescript
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
-
-  const { data: { session } } = await supabase.auth.getSession()
-
-  // Protect admin routes
-  if (req.nextUrl.pathname.startsWith('/admin')) {
-    if (!session) {
-      return NextResponse.redirect(new URL('/login', req.url))
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', session.user.id)
-      .single()
-
-    if (profile?.role !== 'admin') {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
-    }
-  }
-
-  // Protect user dashboard routes
-  if (req.nextUrl.pathname.startsWith('/dashboard')) {
-    if (!session) {
-      return NextResponse.redirect(new URL('/login', req.url))
-    }
-  }
-
-  return res
-}
-
-export const config = {
-  matcher: ['/admin/:path*', '/dashboard/:path*']
-}
-```
-
-## Environment Variables
-
-**File: `.env.local`**
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=your-project-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-```
-
-## Getting Started
-
-1. **Set up Supabase project**
-   - Create a new project at supabase.com
-   - Run the `supabase-schema.sql` in the SQL Editor
-   - Create storage bucket named `incentive-campaigns`
-   - Apply storage policies
-
-2. **Install dependencies**
-   ```bash
-   npm install next@latest react react-dom
-   npm install @supabase/auth-helpers-nextjs @supabase/supabase-js
-   npm install tailwindcss postcss autoprefixer
-   npm install -D typescript @types/react @types/node
-   ```
-
-3. **Configure environment variables**
-   - Copy `.env.local.example` to `.env.local`
-   - Add your Supabase credentials
-
-4. **Run development server**
-   ```bash
-   npm run dev
-   ```
-
-## Benefits of This Structure
-
-✅ **Clear separation** between admin and user routes using route groups
-✅ **Reusable components** organized by context (admin/user/shared)
-✅ **Type safety** with TypeScript and Supabase generated types
-✅ **Middleware protection** for role-based access control
-✅ **Organized storage** with logical folder structure (campaign_id/user_id/filename)
-✅ **Scalable** - easy to add new features within existing structure
+| Route | Page | Component |
+|-------|------|-----------|
+| `/` | Root redirect | — |
+| `/login` | Login form | — |
+| `/register` | Register form | — |
+| `/dashboard` | User dashboard | — |
+| `/dashboard/scan` | Receipt scanner | — |
+| `/admin` | Admin dashboard | `DashboardOverview` |
+| `/admin/campaigns` | Campaign list | `CampaignList` |
+| `/admin/campaigns/new` | Create campaign | `CampaignForm` |
+| `/admin/coupons` | Coupon moderation | `CouponModeration` |
+| `/admin/users` | User management | `UserManagementTable` |
+| `/admin/analytics` | Analytics | `AnalyticsDashboard` |
