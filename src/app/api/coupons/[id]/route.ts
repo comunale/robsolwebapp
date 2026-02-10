@@ -106,23 +106,8 @@ export async function PATCH(
 
     if (updateError) throw updateError
 
-    // If approved, add points to the user's profile
-    if (status === 'approved' && finalPoints > 0) {
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('total_points')
-        .eq('id', existingCoupon.user_id)
-        .single()
-
-      if (userProfile) {
-        await supabase
-          .from('profiles')
-          .update({
-            total_points: (userProfile.total_points || 0) + finalPoints,
-          })
-          .eq('id', existingCoupon.user_id)
-      }
-    }
+    // Points are awarded automatically by the database trigger (update_user_points)
+    // when the coupon status changes to 'approved'. No manual update needed here.
 
     return NextResponse.json({ coupon })
   } catch (error: any) {
