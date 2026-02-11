@@ -1,3 +1,5 @@
+import type { CampaignSettings } from './goal'
+
 export interface Campaign {
   id: string
   title: string
@@ -7,6 +9,7 @@ export interface Campaign {
   is_active: boolean
   banner_url: string | null
   keywords: string[]
+  settings: CampaignSettings | null
   created_at: string
   updated_at: string
 }
@@ -19,6 +22,7 @@ export interface CreateCampaignInput {
   is_active: boolean
   banner_url: string | null
   keywords?: string[]
+  settings?: CampaignSettings | null
 }
 
 export interface UpdateCampaignInput {
@@ -29,4 +33,5 @@ export interface UpdateCampaignInput {
   is_active?: boolean
   banner_url?: string | null
   keywords?: string[]
+  settings?: CampaignSettings | null
 }

@@ -73,10 +73,10 @@ export async function PATCH(
       )
     }
 
-    // Get the coupon first to know the user
+    // Get the coupon first to know the user and campaign
     const { data: existingCoupon, error: fetchError } = await supabase
       .from('coupons')
-      .select('user_id, status')
+      .select('user_id, status, campaign_id')
       .eq('id', id)
       .single()
 
@@ -89,7 +89,16 @@ export async function PATCH(
       )
     }
 
-    const finalPoints = status === 'approved' ? (points_awarded || 10) : 0
+    // Read campaign settings for default points
+    const { data: campaign } = await supabase
+      .from('campaigns')
+      .select('settings')
+      .eq('id', existingCoupon.campaign_id)
+      .single()
+
+    const campaignSettings = campaign?.settings as Record<string, unknown> | null
+    const defaultPoints = (campaignSettings?.points_per_coupon as number) ?? 10
+    const finalPoints = status === 'approved' ? (points_awarded || defaultPoints) : 0
 
     // Update the coupon
     const { data: coupon, error: updateError } = await supabase
@@ -107,7 +116,18 @@ export async function PATCH(
     if (updateError) throw updateError
 
     // Points are awarded automatically by the database trigger (update_user_points)
-    // when the coupon status changes to 'approved'. No manual update needed here.
+    // Goals are evaluated by the trigger (trigger_goal_evaluation)
+
+    // Create notification for the user
+    await supabase.from('notifications').insert({
+      user_id: existingCoupon.user_id,
+      type: status === 'approved' ? 'coupon_approved' : 'coupon_rejected',
+      title: status === 'approved' ? 'Cupom aprovado!' : 'Cupom rejeitado',
+      body: status === 'approved'
+        ? `Seu cupom foi aprovado! Voce ganhou ${finalPoints} pontos.`
+        : 'Seu cupom foi rejeitado. Tente novamente com uma foto mais clara.',
+      data: { coupon_id: id, campaign_id: existingCoupon.campaign_id },
+    })
 
     return NextResponse.json({ coupon })
   } catch (error: any) {

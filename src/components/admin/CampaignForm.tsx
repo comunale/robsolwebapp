@@ -8,6 +8,7 @@ import { uploadCampaignBanner } from '@/lib/storage/imageStorage'
 import { createClient } from '@/lib/supabase/client'
 import AdminHeader from './AdminHeader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
+import type { GoalConfig } from '@/types/goal'
 
 export default function CampaignForm() {
   const { user, profile, loading: authLoading } = useAuth()
@@ -25,6 +26,34 @@ export default function CampaignForm() {
   const [keywordInput, setKeywordInput] = useState('')
   const [bannerFile, setBannerFile] = useState<File | null>(null)
   const [bannerPreview, setBannerPreview] = useState<string | null>(null)
+
+  // Campaign Settings
+  const [pointsPerCoupon, setPointsPerCoupon] = useState(10)
+  const [hasDraws, setHasDraws] = useState(false)
+  const [drawType, setDrawType] = useState<'manual' | 'random'>('random')
+  const [goals, setGoals] = useState<GoalConfig[]>([])
+
+  const addGoal = () => {
+    setGoals([...goals, {
+      id: crypto.randomUUID(),
+      label: '',
+      period: 'weekly',
+      metric: 'approved_coupons',
+      target: 5,
+      bonus_points: 10,
+      lucky_numbers: 1,
+    }])
+  }
+
+  const updateGoal = (index: number, field: keyof GoalConfig, value: string | number) => {
+    const updated = [...goals]
+    updated[index] = { ...updated[index], [field]: value }
+    setGoals(updated)
+  }
+
+  const removeGoal = (index: number) => {
+    setGoals(goals.filter((_, i) => i !== index))
+  }
 
   const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -86,6 +115,12 @@ export default function CampaignForm() {
           is_active: isActive,
           banner_url: bannerUrl,
           keywords,
+          settings: {
+            points_per_coupon: pointsPerCoupon,
+            has_draws: hasDraws,
+            draw_type: hasDraws ? drawType : null,
+            goals: goals.filter(g => g.label.trim()),
+          },
         }),
       })
 
@@ -228,6 +263,129 @@ export default function CampaignForm() {
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Campaign Settings */}
+            <div className="border-t border-gray-200 pt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Campaign Settings</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Points per Coupon</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={pointsPerCoupon}
+                    onChange={(e) => setPointsPerCoupon(parseInt(e.target.value) || 10)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Default points awarded per approved coupon</p>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center">
+                    <input
+                      id="hasDraws"
+                      type="checkbox"
+                      checked={hasDraws}
+                      onChange={(e) => setHasDraws(e.target.checked)}
+                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                    />
+                    <label htmlFor="hasDraws" className="ml-2 text-sm text-gray-700">Enable Draws (Sorteios)</label>
+                  </div>
+                  {hasDraws && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Draw Type</label>
+                      <select
+                        value={drawType}
+                        onChange={(e) => setDrawType(e.target.value as 'manual' | 'random')}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white"
+                      >
+                        <option value="random">Random</option>
+                        <option value="manual">Manual</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Goals */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-sm font-medium text-gray-700">Goals (Metas)</label>
+                  <button
+                    type="button"
+                    onClick={addGoal}
+                    className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                  >
+                    + Add Goal
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mb-3">
+                  Define targets that award bonus points and lucky numbers when met.
+                </p>
+                {goals.map((goal, i) => (
+                  <div key={goal.id} className="border border-gray-200 rounded-lg p-4 mb-3 bg-gray-50">
+                    <div className="flex justify-between items-start mb-3">
+                      <span className="text-xs font-medium text-gray-500">Goal {i + 1}</span>
+                      <button type="button" onClick={() => removeGoal(i)} className="text-red-500 hover:text-red-700 text-sm">Remove</button>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <div className="col-span-2 md:col-span-1">
+                        <label className="block text-xs text-gray-600 mb-1">Label</label>
+                        <input
+                          type="text"
+                          value={goal.label}
+                          onChange={(e) => updateGoal(i, 'label', e.target.value)}
+                          className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                          placeholder="e.g., Meta Semanal"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Period</label>
+                        <select
+                          value={goal.period}
+                          onChange={(e) => updateGoal(i, 'period', e.target.value)}
+                          className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white"
+                        >
+                          <option value="weekly">Weekly</option>
+                          <option value="monthly">Monthly</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Target (coupons)</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={goal.target}
+                          onChange={(e) => updateGoal(i, 'target', parseInt(e.target.value) || 1)}
+                          className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Bonus Points</label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={goal.bonus_points}
+                          onChange={(e) => updateGoal(i, 'bonus_points', parseInt(e.target.value) || 0)}
+                          className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Lucky Numbers</label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={goal.lucky_numbers}
+                          onChange={(e) => updateGoal(i, 'lucky_numbers', parseInt(e.target.value) || 0)}
+                          className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Banner Upload */}

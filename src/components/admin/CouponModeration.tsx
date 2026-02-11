@@ -42,6 +42,25 @@ export default function CouponModeration() {
     }
   }
 
+  // When a coupon is selected, load its campaign's default points
+  useEffect(() => {
+    if (!selectedCoupon) return
+    const loadCampaignPoints = async () => {
+      try {
+        const res = await fetch(`/api/campaigns/${selectedCoupon.campaign_id}`)
+        if (res.ok) {
+          const data = await res.json()
+          const settings = data.campaign?.settings as Record<string, unknown> | null
+          const defaultPts = (settings?.points_per_coupon as number) ?? 10
+          setReviewPoints(defaultPts)
+        }
+      } catch {
+        // fallback to 10
+      }
+    }
+    loadCampaignPoints()
+  }, [selectedCoupon])
+
   const handleReview = async (couponId: string, status: 'approved' | 'rejected') => {
     setReviewing(true)
     setError('')

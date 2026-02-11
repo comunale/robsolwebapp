@@ -6,6 +6,7 @@ export interface Profile {
   email: string
   role: UserRole
   total_points: number
+  store_id: string | null
   created_at: string
 }
 

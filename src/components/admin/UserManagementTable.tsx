@@ -7,9 +7,13 @@ import AdminHeader from './AdminHeader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import type { Profile } from '@/types/user'
 
+interface ProfileWithStore extends Profile {
+  stores?: { name: string } | null
+}
+
 export default function UserManagementTable() {
   const { user, profile, loading: authLoading } = useAuth()
-  const [users, setUsers] = useState<Profile[]>([])
+  const [users, setUsers] = useState<ProfileWithStore[]>([])
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
@@ -18,9 +22,9 @@ export default function UserManagementTable() {
     const fetchUsers = async () => {
       const { data } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, stores(name)')
         .order('created_at', { ascending: false })
-      setUsers(data || [])
+      setUsers((data as unknown as ProfileWithStore[]) || [])
       setLoading(false)
     }
     fetchUsers()
@@ -40,6 +44,7 @@ export default function UserManagementTable() {
               <tr>
                 <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
                 <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Loja</th>
                 <th className="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                 <th className="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
                 <th className="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
@@ -48,7 +53,7 @@ export default function UserManagementTable() {
             <tbody className="divide-y divide-gray-100">
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
                     No users found
                   </td>
                 </tr>
@@ -64,6 +69,9 @@ export default function UserManagementTable() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{u.email}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {u.stores?.name || <span className="text-gray-400">-</span>}
+                    </td>
                     <td className="px-6 py-4 text-center">
                       <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'

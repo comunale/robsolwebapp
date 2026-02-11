@@ -14,6 +14,10 @@ interface AnalyticsData {
   approvedCoupons: number
   rejectedCoupons: number
   totalPointsAwarded: number
+  activeStores: number
+  goalsCompleted: number
+  totalLuckyNumbers: number
+  luckyNumberWinners: number
 }
 
 export default function AnalyticsDashboard() {
@@ -25,15 +29,21 @@ export default function AnalyticsDashboard() {
   useEffect(() => {
     if (!user || profile?.role !== 'admin') return
     const fetchAnalytics = async () => {
-      const [campAll, campActive, coupAll, coupPending, coupApproved, coupRejected] =
-        await Promise.all([
-          supabase.from('campaigns').select('id', { count: 'exact', head: true }),
-          supabase.from('campaigns').select('id', { count: 'exact', head: true }).eq('is_active', true),
-          supabase.from('coupons').select('id', { count: 'exact', head: true }),
-          supabase.from('coupons').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-          supabase.from('coupons').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
-          supabase.from('coupons').select('id', { count: 'exact', head: true }).eq('status', 'rejected'),
-        ])
+      const [
+        campAll, campActive, coupAll, coupPending, coupApproved, coupRejected,
+        storeRes, goalRes, luckyAll, luckyWinners,
+      ] = await Promise.all([
+        supabase.from('campaigns').select('id', { count: 'exact', head: true }),
+        supabase.from('campaigns').select('id', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('coupons').select('id', { count: 'exact', head: true }),
+        supabase.from('coupons').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('coupons').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
+        supabase.from('coupons').select('id', { count: 'exact', head: true }).eq('status', 'rejected'),
+        supabase.from('stores').select('id', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('goal_completions').select('id', { count: 'exact', head: true }),
+        supabase.from('lucky_numbers').select('id', { count: 'exact', head: true }),
+        supabase.from('lucky_numbers').select('id', { count: 'exact', head: true }).eq('is_winner', true),
+      ])
 
       const { data: pointsData } = await supabase
         .from('coupons')
@@ -50,6 +60,10 @@ export default function AnalyticsDashboard() {
         approvedCoupons: coupApproved.count ?? 0,
         rejectedCoupons: coupRejected.count ?? 0,
         totalPointsAwarded: totalPoints,
+        activeStores: storeRes.count ?? 0,
+        goalsCompleted: goalRes.count ?? 0,
+        totalLuckyNumbers: luckyAll.count ?? 0,
+        luckyNumberWinners: luckyWinners.count ?? 0,
       })
       setLoading(false)
     }
@@ -65,18 +79,25 @@ export default function AnalyticsDashboard() {
       : 0
 
   const stats = [
-    { label: 'Total Campaigns', value: data.totalCampaigns, sub: `${data.activeCampaigns} active`, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Total Submissions', value: data.totalCoupons, sub: `${data.pendingCoupons} pending`, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-    { label: 'Approved', value: data.approvedCoupons, sub: `${approvalRate}% rate`, color: 'text-green-600', bg: 'bg-green-50' },
-    { label: 'Rejected', value: data.rejectedCoupons, sub: '', color: 'text-red-600', bg: 'bg-red-50' },
-    { label: 'Points Awarded', value: data.totalPointsAwarded, sub: 'total', color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'Campanhas', value: data.totalCampaigns, sub: `${data.activeCampaigns} ativas`, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Envios', value: data.totalCoupons, sub: `${data.pendingCoupons} pendentes`, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { label: 'Aprovados', value: data.approvedCoupons, sub: `${approvalRate}% taxa`, color: 'text-green-600', bg: 'bg-green-50' },
+    { label: 'Rejeitados', value: data.rejectedCoupons, sub: '', color: 'text-red-600', bg: 'bg-red-50' },
+    { label: 'Pontos', value: data.totalPointsAwarded, sub: 'total distribuido', color: 'text-purple-600', bg: 'bg-purple-50' },
+  ]
+
+  const gamificationStats = [
+    { label: 'Lojas Ativas', value: data.activeStores, color: 'text-teal-600', bg: 'bg-teal-50' },
+    { label: 'Metas Concluidas', value: data.goalsCompleted, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Numeros da Sorte', value: data.totalLuckyNumbers, sub: `${data.luckyNumberWinners} ganhador(es)`, color: 'text-amber-600', bg: 'bg-amber-50' },
   ]
 
   return (
     <>
-      <AdminHeader title="Analytics" subtitle="Campaign performance and coupon metrics" />
+      <AdminHeader title="Analytics" subtitle="Metricas de campanhas e cupons" />
 
       <div className="p-8 space-y-8">
+        {/* Core Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {stats.map((s) => (
             <div key={s.label} className={`${s.bg} rounded-xl p-5`}>
@@ -87,14 +108,28 @@ export default function AnalyticsDashboard() {
           ))}
         </div>
 
+        {/* Gamification Stats */}
+        <div>
+          <h3 className="font-semibold text-gray-900 mb-3">Gamificacao</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {gamificationStats.map((s) => (
+              <div key={s.label} className={`${s.bg} rounded-xl p-5`}>
+                <p className="text-xs text-gray-500 mb-1">{s.label}</p>
+                <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+                {'sub' in s && s.sub && <p className="text-xs text-gray-500 mt-1">{s.sub}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Coupon Status Breakdown */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Coupon Status Breakdown</h3>
+          <h3 className="font-semibold text-gray-900 mb-4">Status dos Cupons</h3>
           <div className="space-y-3">
             {[
-              { label: 'Pending', count: data.pendingCoupons, color: 'bg-yellow-500', total: data.totalCoupons },
-              { label: 'Approved', count: data.approvedCoupons, color: 'bg-green-500', total: data.totalCoupons },
-              { label: 'Rejected', count: data.rejectedCoupons, color: 'bg-red-500', total: data.totalCoupons },
+              { label: 'Pendentes', count: data.pendingCoupons, color: 'bg-yellow-500', total: data.totalCoupons },
+              { label: 'Aprovados', count: data.approvedCoupons, color: 'bg-green-500', total: data.totalCoupons },
+              { label: 'Rejeitados', count: data.rejectedCoupons, color: 'bg-red-500', total: data.totalCoupons },
             ].map((bar) => {
               const pct = bar.total > 0 ? (bar.count / bar.total) * 100 : 0
               return (

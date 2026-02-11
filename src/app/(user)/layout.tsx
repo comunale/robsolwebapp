@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Dashboard - Incentive Campaigns',
-  description: 'Manage your campaigns and earn rewards',
+  title: 'Painel - Robsol VIP',
+  description: 'Participe de campanhas e ganhe premios',
 }
 
 export default function UserLayout({
@@ -11,7 +11,7 @@ export default function UserLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20">
       {children}
     </div>
   )

@@ -126,6 +126,26 @@ export default function CampaignList() {
                           ))}
                         </div>
                       )}
+                      {/* Settings Badges */}
+                      {campaign.settings && (
+                        <div className="flex flex-wrap gap-1.5 mb-3">
+                          {campaign.settings.points_per_coupon != null && (
+                            <span className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full text-xs font-medium">
+                              {campaign.settings.points_per_coupon} pts/cupom
+                            </span>
+                          )}
+                          {campaign.settings.has_draws && (
+                            <span className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full text-xs font-medium">
+                              Sorteio ({campaign.settings.draw_type || 'manual'})
+                            </span>
+                          )}
+                          {campaign.settings.goals?.length > 0 && (
+                            <span className="px-2 py-0.5 bg-teal-50 text-teal-700 rounded-full text-xs font-medium">
+                              {campaign.settings.goals.length} meta(s)
+                            </span>
+                          )}
+                        </div>
+                      )}
                       <div className="flex gap-6 text-xs text-gray-500">
                         <span><span className="font-medium">Start:</span> {new Date(campaign.start_date).toLocaleDateString()}</span>
                         <span><span className="font-medium">End:</span> {new Date(campaign.end_date).toLocaleDateString()}</span>

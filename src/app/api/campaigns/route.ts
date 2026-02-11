@@ -80,6 +80,7 @@ export async function POST(request: Request) {
         is_active: body.is_active ?? true,
         banner_url: body.banner_url,
         keywords: body.keywords || [],
+        settings: body.settings || {},
       })
       .select()
       .single()

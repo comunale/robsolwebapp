@@ -1,0 +1,135 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/lib/hooks/useAuth'
+import AdminHeader from './AdminHeader'
+import LoadingSpinner from '@/components/shared/LoadingSpinner'
+
+interface StorePerformanceRow {
+  store_id: string
+  store_name: string
+  cnpj: string
+  location: string | null
+  salesperson_count: number
+  total_coupons: number
+  approved_coupons: number
+  total_points: number
+  goals_completed: number
+  current_week_approved: number
+  previous_week_approved: number
+}
+
+export default function StoreRewards() {
+  const { user, profile, loading: authLoading } = useAuth()
+  const [performance, setPerformance] = useState<StorePerformanceRow[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (user && profile?.role === 'admin') fetchPerformance()
+  }, [user, profile])
+
+  const fetchPerformance = async () => {
+    try {
+      const res = await fetch('/api/store-performance')
+      const data = await res.json()
+      if (data.performance) setPerformance(data.performance)
+    } catch (err) {
+      console.error('Failed to fetch store performance:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const calcGrowth = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? 100 : 0
+    return Math.round(((current - previous) / previous) * 100)
+  }
+
+  const growthColor = (growth: number) => {
+    if (growth >= 20) return 'text-green-700 bg-green-100'
+    if (growth > 0) return 'text-yellow-700 bg-yellow-100'
+    return 'text-red-700 bg-red-100'
+  }
+
+  if (authLoading || loading) return <LoadingSpinner />
+  if (!user || profile?.role !== 'admin') return null
+
+  return (
+    <>
+      <AdminHeader title="Store Rewards" subtitle="B2B performance tracking — target: +20% weekly growth" />
+
+      <div className="p-6">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+            <p className="text-sm text-gray-500">Total Stores</p>
+            <p className="text-2xl font-bold text-gray-900">{performance.length}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+            <p className="text-sm text-gray-500">Total Salespeople</p>
+            <p className="text-2xl font-bold text-indigo-600">
+              {performance.reduce((sum, s) => sum + s.salesperson_count, 0)}
+            </p>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+            <p className="text-sm text-gray-500">Goals Completed</p>
+            <p className="text-2xl font-bold text-green-600">
+              {performance.reduce((sum, s) => sum + s.goals_completed, 0)}
+            </p>
+          </div>
+        </div>
+
+        {/* Performance Table */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Store</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Team</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Approved</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Points</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Goals</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">This Week</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Last Week</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Growth</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {performance.map((store) => {
+                const growth = calcGrowth(store.current_week_approved, store.previous_week_approved)
+                return (
+                  <tr key={store.store_id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-gray-900 text-sm">{store.store_name}</div>
+                      <div className="text-xs text-gray-500">{store.cnpj}</div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{store.location || '—'}</td>
+                    <td className="px-4 py-3 text-center text-sm font-medium">{store.salesperson_count}</td>
+                    <td className="px-4 py-3 text-center text-sm">{store.approved_coupons}</td>
+                    <td className="px-4 py-3 text-center text-sm font-medium text-indigo-600">{store.total_points}</td>
+                    <td className="px-4 py-3 text-center text-sm">{store.goals_completed}</td>
+                    <td className="px-4 py-3 text-center text-sm font-medium">{store.current_week_approved}</td>
+                    <td className="px-4 py-3 text-center text-sm text-gray-500">{store.previous_week_approved}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold ${growthColor(growth)}`}>
+                        {growth > 0 ? '+' : ''}{growth}%
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
+              {performance.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
+                    No store data available yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
+  )
+}
