@@ -46,6 +46,7 @@ export interface Database {
           id: string
           full_name: string
           email: string
+          whatsapp: string
           role: 'admin' | 'user'
           total_points: number
           store_id: string | null
@@ -55,6 +56,7 @@ export interface Database {
           id: string
           full_name: string
           email: string
+          whatsapp: string
           role: 'admin' | 'user'
           total_points?: number
           store_id?: string | null
@@ -64,6 +66,7 @@ export interface Database {
           id?: string
           full_name?: string
           email?: string
+          whatsapp?: string
           role?: 'admin' | 'user'
           total_points?: number
           store_id?: string | null

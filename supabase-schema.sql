@@ -30,6 +30,7 @@ CREATE TABLE profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
+  whatsapp TEXT UNIQUE NOT NULL,
   role TEXT NOT NULL CHECK (role IN ('admin', 'user')),
   total_points INTEGER DEFAULT 0 CHECK (total_points >= 0),
   store_id UUID REFERENCES stores(id) ON DELETE SET NULL,
@@ -37,6 +38,7 @@ CREATE TABLE profiles (
 );
 
 CREATE INDEX idx_profiles_email ON profiles(email);
+CREATE INDEX idx_profiles_whatsapp ON profiles(whatsapp);
 CREATE INDEX idx_profiles_role ON profiles(role);
 CREATE INDEX idx_profiles_store_id ON profiles(store_id);
 
@@ -175,6 +177,10 @@ CREATE POLICY "Authenticated users can delete stores"
 -- PROFILES POLICIES (simple - no admin self-referencing)
 CREATE POLICY "Users can view own profile"
   ON profiles FOR SELECT USING (auth.uid() = id);
+
+-- Allow authenticated users to read all profiles (needed for admin user management + leaderboard)
+CREATE POLICY "Authenticated users can view all profiles"
+  ON profiles FOR SELECT TO authenticated USING (true);
 
 CREATE POLICY "Users can update own profile"
   ON profiles FOR UPDATE USING (auth.uid() = id);
@@ -322,11 +328,12 @@ CREATE TRIGGER trigger_stores_updated_at
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, full_name, email, role, total_points, store_id)
+  INSERT INTO public.profiles (id, full_name, email, whatsapp, role, total_points, store_id)
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'full_name', 'Unnamed'),
     NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'whatsapp', ''),
     'user',
     0,
     (NEW.raw_user_meta_data->>'store_id')::UUID

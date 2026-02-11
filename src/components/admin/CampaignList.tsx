@@ -33,7 +33,7 @@ export default function CampaignList() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this campaign?')) return
+    if (!confirm('Tem certeza que deseja excluir esta campanha?')) return
     try {
       const response = await fetch(`/api/campaigns/${id}`, { method: 'DELETE' })
       if (!response.ok) throw new Error('Failed to delete campaign')
@@ -62,12 +62,12 @@ export default function CampaignList() {
 
   return (
     <>
-      <AdminHeader title="Campaigns" subtitle="Create and manage incentive campaigns">
+      <AdminHeader title="Campanhas" subtitle="Crie e gerencie campanhas de incentivo">
         <Link
           href="/admin/campaigns/new"
           className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition text-sm"
         >
-          + Create Campaign
+          + Criar Campanha
         </Link>
       </AdminHeader>
 
@@ -85,13 +85,13 @@ export default function CampaignList() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No campaigns yet</h3>
-            <p className="text-gray-600 mb-6">Get started by creating your first campaign</p>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Nenhuma campanha ainda</h3>
+            <p className="text-gray-600 mb-6">Comece criando sua primeira campanha</p>
             <Link
               href="/admin/campaigns/new"
               className="inline-block px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition"
             >
-              Create Your First Campaign
+              Criar Primeira Campanha
             </Link>
           </div>
         ) : (
@@ -111,7 +111,7 @@ export default function CampaignList() {
                               : 'bg-gray-100 text-gray-800'
                           }`}
                         >
-                          {campaign.is_active ? 'Active' : 'Inactive'}
+                          {campaign.is_active ? 'Ativa' : 'Inativa'}
                         </button>
                       </div>
                       {campaign.description && (
@@ -147,9 +147,9 @@ export default function CampaignList() {
                         </div>
                       )}
                       <div className="flex gap-6 text-xs text-gray-500">
-                        <span><span className="font-medium">Start:</span> {new Date(campaign.start_date).toLocaleDateString()}</span>
-                        <span><span className="font-medium">End:</span> {new Date(campaign.end_date).toLocaleDateString()}</span>
-                        <span><span className="font-medium">Created:</span> {new Date(campaign.created_at).toLocaleDateString()}</span>
+                        <span><span className="font-medium">Inicio:</span> {new Date(campaign.start_date).toLocaleDateString('pt-BR')}</span>
+                        <span><span className="font-medium">Fim:</span> {new Date(campaign.end_date).toLocaleDateString('pt-BR')}</span>
+                        <span><span className="font-medium">Criada em:</span> {new Date(campaign.created_at).toLocaleDateString('pt-BR')}</span>
                       </div>
                     </div>
                     {campaign.banner_url && (
@@ -167,13 +167,13 @@ export default function CampaignList() {
                       href={`/admin/campaigns/${campaign.id}/edit`}
                       className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-sm font-medium transition"
                     >
-                      Edit
+                      Editar
                     </Link>
                     <button
                       onClick={() => handleDelete(campaign.id)}
                       className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-sm font-medium transition"
                     >
-                      Delete
+                      Excluir
                     </button>
                   </div>
                 </div>

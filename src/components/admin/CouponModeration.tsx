@@ -12,6 +12,13 @@ const statusColors: Record<string, string> = {
   rejected: 'bg-red-100 text-red-800',
 }
 
+const statusLabels: Record<string, string> = {
+  pending: 'Pendente',
+  approved: 'Aprovado',
+  rejected: 'Rejeitado',
+  all: 'Todos',
+}
+
 export default function CouponModeration() {
   const { user, profile, loading: authLoading } = useAuth()
 
@@ -32,7 +39,7 @@ export default function CouponModeration() {
     try {
       const params = filter !== 'all' ? `?status=${filter}` : ''
       const res = await fetch(`/api/coupons${params}`)
-      if (!res.ok) throw new Error('Failed to fetch coupons')
+      if (!res.ok) throw new Error('Falha ao carregar cupons')
       const data = await res.json()
       setCoupons(data.coupons || [])
     } catch (err: any) {
@@ -75,7 +82,7 @@ export default function CouponModeration() {
       })
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data.error || 'Failed to review coupon')
+        throw new Error(data.error || 'Falha ao revisar cupom')
       }
       setSelectedCoupon(null)
       setReviewPoints(10)
@@ -92,7 +99,7 @@ export default function CouponModeration() {
 
   return (
     <>
-      <AdminHeader title="Coupon Moderation" subtitle="Review, approve or reject user submissions" />
+      <AdminHeader title="Moderacao de Cupons" subtitle="Revise, aprove ou rejeite os envios dos usuarios" />
 
       <div className="p-8">
         {error && (
@@ -113,7 +120,7 @@ export default function CouponModeration() {
                   : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
               }`}
             >
-              {s.charAt(0).toUpperCase() + s.slice(1)}
+              {statusLabels[s]}
             </button>
           ))}
         </div>
@@ -125,10 +132,10 @@ export default function CouponModeration() {
               {/* Modal Header */}
               <div className="flex justify-between items-center p-6 border-b">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Review Coupon</h2>
+                  <h2 className="text-xl font-bold text-gray-900">Revisar Cupom</h2>
                   <p className="text-sm text-gray-500">
-                    Submitted by <span className="font-medium">{selectedCoupon.profiles?.full_name || 'Unknown'}</span>
-                    {' '}&mdash; Campaign: <span className="font-medium">{selectedCoupon.campaigns?.title || 'Unknown'}</span>
+                    Enviado por <span className="font-medium">{selectedCoupon.profiles?.full_name || 'Desconhecido'}</span>
+                    {' '}&mdash; Campanha: <span className="font-medium">{selectedCoupon.campaigns?.title || 'Desconhecida'}</span>
                   </p>
                 </div>
                 <button onClick={() => setSelectedCoupon(null)} className="p-2 hover:bg-gray-100 rounded-full transition">
@@ -142,15 +149,15 @@ export default function CouponModeration() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
                 {/* Left: Photo */}
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Receipt Photo</h3>
+                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Foto do Cupom</h3>
                   <div className="rounded-lg border overflow-hidden bg-gray-100">
-                    <img src={selectedCoupon.image_url} alt="Receipt" className="w-full object-contain max-h-[500px]" />
+                    <img src={selectedCoupon.image_url} alt="Cupom" className="w-full object-contain max-h-[500px]" />
                   </div>
                 </div>
 
                 {/* Right: AI Extracted Data */}
                 <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">AI Extracted Data</h3>
+                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Dados Extraidos pela IA</h3>
 
                   {selectedCoupon.extracted_data ? (
                     <>
@@ -163,8 +170,8 @@ export default function CouponModeration() {
                           selectedCoupon.extracted_data.has_matching_products ? 'text-green-800' : 'text-yellow-800'
                         }`}>
                           {selectedCoupon.extracted_data.has_matching_products
-                            ? 'Matching products found'
-                            : 'No matching products'}
+                            ? 'Produtos correspondentes encontrados'
+                            : 'Nenhum produto correspondente'}
                         </p>
                         {selectedCoupon.extracted_data.matched_keywords?.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
@@ -177,38 +184,38 @@ export default function CouponModeration() {
 
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div className="bg-gray-50 rounded-lg p-3">
-                          <span className="text-gray-500">Customer</span>
-                          <p className="font-medium">{selectedCoupon.extracted_data.customer_name || 'N/A'}</p>
+                          <span className="text-gray-500">Cliente</span>
+                          <p className="font-medium">{selectedCoupon.extracted_data.customer_name || 'N/D'}</p>
                         </div>
                         <div className="bg-gray-50 rounded-lg p-3">
-                          <span className="text-gray-500">Date</span>
-                          <p className="font-medium">{selectedCoupon.extracted_data.date || 'N/A'}</p>
+                          <span className="text-gray-500">Data</span>
+                          <p className="font-medium">{selectedCoupon.extracted_data.date || 'N/D'}</p>
                         </div>
                         <div className="bg-gray-50 rounded-lg p-3">
-                          <span className="text-gray-500">Store</span>
-                          <p className="font-medium">{selectedCoupon.extracted_data.store || 'N/A'}</p>
+                          <span className="text-gray-500">Loja</span>
+                          <p className="font-medium">{selectedCoupon.extracted_data.store || 'N/D'}</p>
                         </div>
                         <div className="bg-gray-50 rounded-lg p-3">
                           <span className="text-gray-500">Total</span>
                           <p className="font-medium text-lg">
                             {selectedCoupon.extracted_data.total != null
-                              ? `$${selectedCoupon.extracted_data.total.toFixed(2)}`
-                              : 'N/A'}
+                              ? `R$ ${selectedCoupon.extracted_data.total.toFixed(2)}`
+                              : 'N/D'}
                           </p>
                         </div>
                       </div>
 
                       <div>
                         <h4 className="text-sm font-semibold text-gray-700 mb-2">
-                          Products ({selectedCoupon.extracted_data.items?.length || 0})
+                          Produtos ({selectedCoupon.extracted_data.items?.length || 0})
                         </h4>
                         <div className="max-h-48 overflow-y-auto border rounded-lg">
                           <table className="w-full text-sm">
                             <thead className="bg-gray-50 sticky top-0">
                               <tr>
-                                <th className="text-left py-2 px-3 font-medium text-gray-600">Product</th>
-                                <th className="text-center py-2 px-2 font-medium text-gray-600">Qty</th>
-                                <th className="text-right py-2 px-3 font-medium text-gray-600">Price</th>
+                                <th className="text-left py-2 px-3 font-medium text-gray-600">Produto</th>
+                                <th className="text-center py-2 px-2 font-medium text-gray-600">Qtd</th>
+                                <th className="text-right py-2 px-3 font-medium text-gray-600">Preco</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -224,7 +231,7 @@ export default function CouponModeration() {
                                   </td>
                                   <td className="text-center py-2 px-2">{item.quantity ?? '-'}</td>
                                   <td className="text-right py-2 px-3">
-                                    {item.price != null ? `$${item.price.toFixed(2)}` : '-'}
+                                    {item.price != null ? `R$ ${item.price.toFixed(2)}` : '-'}
                                   </td>
                                 </tr>
                               ))}
@@ -234,7 +241,7 @@ export default function CouponModeration() {
                       </div>
                     </>
                   ) : (
-                    <p className="text-gray-500">No AI data extracted for this coupon.</p>
+                    <p className="text-gray-500">Nenhum dado extraido pela IA para este cupom.</p>
                   )}
                 </div>
               </div>
@@ -243,7 +250,7 @@ export default function CouponModeration() {
               {selectedCoupon.status === 'pending' && (
                 <div className="flex items-center justify-between p-6 border-t bg-gray-50">
                   <div className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-gray-700">Points to Award:</label>
+                    <label className="text-sm font-medium text-gray-700">Pontos a conceder:</label>
                     <input
                       type="number"
                       min={0}
@@ -258,14 +265,14 @@ export default function CouponModeration() {
                       disabled={reviewing}
                       className="px-6 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white rounded-lg font-medium transition"
                     >
-                      {reviewing ? '...' : 'Reject'}
+                      {reviewing ? '...' : 'Rejeitar'}
                     </button>
                     <button
                       onClick={() => handleReview(selectedCoupon.id, 'approved')}
                       disabled={reviewing}
                       className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white rounded-lg font-medium transition"
                     >
-                      {reviewing ? '...' : `Approve (+${reviewPoints} pts)`}
+                      {reviewing ? '...' : `Aprovar (+${reviewPoints} pts)`}
                     </button>
                   </div>
                 </div>
@@ -274,8 +281,8 @@ export default function CouponModeration() {
               {selectedCoupon.status !== 'pending' && (
                 <div className="p-6 border-t bg-gray-50 text-center">
                   <span className={`px-4 py-2 rounded-full text-sm font-medium ${statusColors[selectedCoupon.status]}`}>
-                    Already {selectedCoupon.status}
-                    {selectedCoupon.status === 'approved' && ` — ${selectedCoupon.points_awarded} pts awarded`}
+                    {statusLabels[selectedCoupon.status]}
+                    {selectedCoupon.status === 'approved' && ` — ${selectedCoupon.points_awarded} pts concedidos`}
                   </span>
                 </div>
               )}
@@ -292,10 +299,10 @@ export default function CouponModeration() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             <h3 className="text-xl font-semibold text-gray-400 mb-2">
-              No {filter !== 'all' ? filter : ''} coupons
+              Nenhum cupom {filter !== 'all' ? statusLabels[filter].toLowerCase() : ''}
             </h3>
             <p className="text-gray-400">
-              {filter === 'pending' ? 'All coupons have been reviewed' : 'No coupons found with this filter'}
+              {filter === 'pending' ? 'Todos os cupons foram revisados' : 'Nenhum cupom encontrado com este filtro'}
             </p>
           </div>
         ) : (
@@ -307,34 +314,34 @@ export default function CouponModeration() {
                 className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition cursor-pointer overflow-hidden"
               >
                 <div className="h-40 bg-gray-100 overflow-hidden">
-                  <img src={coupon.image_url} alt="Receipt" className="w-full h-full object-cover" />
+                  <img src={coupon.image_url} alt="Cupom" className="w-full h-full object-cover" />
                 </div>
                 <div className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <p className="font-semibold text-gray-900">{coupon.profiles?.full_name || 'Unknown User'}</p>
-                      <p className="text-sm text-gray-500">{coupon.campaigns?.title || 'Unknown Campaign'}</p>
+                      <p className="font-semibold text-gray-900">{coupon.profiles?.full_name || 'Usuario desconhecido'}</p>
+                      <p className="text-sm text-gray-500">{coupon.campaigns?.title || 'Campanha desconhecida'}</p>
                     </div>
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[coupon.status]}`}>
-                      {coupon.status}
+                      {statusLabels[coupon.status]}
                     </span>
                   </div>
                   {coupon.extracted_data && (
                     <div className="mt-3 pt-3 border-t border-gray-100">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">{coupon.extracted_data.items?.length || 0} items</span>
+                        <span className="text-gray-500">{coupon.extracted_data.items?.length || 0} itens</span>
                         <span className="font-medium text-gray-900">
-                          {coupon.extracted_data.total != null ? `$${coupon.extracted_data.total.toFixed(2)}` : ''}
+                          {coupon.extracted_data.total != null ? `R$ ${coupon.extracted_data.total.toFixed(2)}` : ''}
                         </span>
                       </div>
                       {coupon.extracted_data.has_matching_products ? (
-                        <p className="text-xs text-green-600 font-medium mt-1">Has matching products</p>
+                        <p className="text-xs text-green-600 font-medium mt-1">Produtos correspondentes</p>
                       ) : (
-                        <p className="text-xs text-yellow-600 font-medium mt-1">No keyword matches</p>
+                        <p className="text-xs text-yellow-600 font-medium mt-1">Sem correspondencia</p>
                       )}
                     </div>
                   )}
-                  <p className="text-xs text-gray-400 mt-2">{new Date(coupon.created_at).toLocaleDateString()}</p>
+                  <p className="text-xs text-gray-400 mt-2">{new Date(coupon.created_at).toLocaleDateString('pt-BR')}</p>
                 </div>
               </div>
             ))}

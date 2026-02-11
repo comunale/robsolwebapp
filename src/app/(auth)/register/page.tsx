@@ -6,9 +6,21 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { Store } from '@/types/store'
 
+function formatWhatsApp(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11)
+  if (digits.length <= 2) return digits.length ? `(${digits}` : ''
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
+}
+
+function extractDigits(value: string): string {
+  return value.replace(/\D/g, '')
+}
+
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
+  const [whatsapp, setWhatsapp] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [storeId, setStoreId] = useState('')
@@ -30,9 +42,20 @@ export default function RegisterPage() {
     fetchStores()
   }, [])
 
+  const handleWhatsAppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatWhatsApp(e.target.value)
+    setWhatsapp(formatted)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    const whatsappDigits = extractDigits(whatsapp)
+    if (whatsappDigits.length < 10 || whatsappDigits.length > 11) {
+      setError('Informe um numero de WhatsApp valido com DDD')
+      return
+    }
 
     if (password !== confirmPassword) {
       setError('As senhas nao coincidem')
@@ -53,6 +76,7 @@ export default function RegisterPage() {
         options: {
           data: {
             full_name: fullName,
+            whatsapp: whatsappDigits,
             store_id: storeId || null,
           },
         },
@@ -74,7 +98,13 @@ export default function RegisterPage() {
       }
     } catch (err: any) {
       console.error('Registration error:', err)
-      setError(err.message || 'Falha ao criar conta')
+      if (err.message?.includes('whatsapp')) {
+        setError('Este numero de WhatsApp ja esta cadastrado')
+      } else if (err.message?.includes('email')) {
+        setError('Este email ja esta cadastrado')
+      } else {
+        setError(err.message || 'Falha ao criar conta')
+      }
       setLoading(false)
     }
   }
@@ -89,7 +119,7 @@ export default function RegisterPage() {
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
           <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-            Nome Completo
+            Nome Completo *
           </label>
           <input
             id="fullName"
@@ -104,7 +134,7 @@ export default function RegisterPage() {
 
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-            Email
+            Email *
           </label>
           <input
             id="email"
@@ -115,6 +145,22 @@ export default function RegisterPage() {
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
             placeholder="seu@email.com"
           />
+        </div>
+
+        <div>
+          <label htmlFor="whatsapp" className="block text-sm font-medium text-gray-700 mb-1">
+            WhatsApp *
+          </label>
+          <input
+            id="whatsapp"
+            type="tel"
+            required
+            value={whatsapp}
+            onChange={handleWhatsAppChange}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+            placeholder="(11) 99999-9999"
+          />
+          <p className="text-xs text-gray-500 mt-1">Informe seu numero com DDD</p>
         </div>
 
         {stores.length > 0 && (
@@ -143,7 +189,7 @@ export default function RegisterPage() {
 
         <div>
           <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-            Senha
+            Senha *
           </label>
           <input
             id="password"
@@ -152,14 +198,14 @@ export default function RegisterPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
-            placeholder="••••••••"
+            placeholder="Minimo 6 caracteres"
             minLength={6}
           />
         </div>
 
         <div>
           <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-            Confirmar Senha
+            Confirmar Senha *
           </label>
           <input
             id="confirmPassword"
@@ -168,7 +214,7 @@ export default function RegisterPage() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
-            placeholder="••••••••"
+            placeholder="Repita a senha"
             minLength={6}
           />
         </div>

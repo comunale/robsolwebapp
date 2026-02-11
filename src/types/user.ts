@@ -4,6 +4,7 @@ export interface Profile {
   id: string
   full_name: string
   email: string
+  whatsapp: string
   role: UserRole
   total_points: number
   store_id: string | null

@@ -17,7 +17,6 @@ function LoginForm() {
   const redirectTo = searchParams.get('redirectTo') || null
 
   useEffect(() => {
-    // Redirect based on role once profile is loaded after login
     if (profile) {
       const destination = redirectTo || (profile.role === 'admin' ? '/admin' : '/dashboard')
       router.push(destination)
@@ -33,10 +32,8 @@ function LoginForm() {
       const { data, error } = await signIn(email, password)
 
       if (error) throw error
-
-      // Profile will be loaded by useAuth hook and useEffect will handle redirect
     } catch (err: any) {
-      setError(err.message || 'Failed to sign in')
+      setError(err.message || 'Falha ao fazer login')
       setLoading(false)
     }
   }
@@ -44,8 +41,8 @@ function LoginForm() {
   return (
     <div className="bg-white rounded-lg shadow-xl p-8">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-        <p className="text-gray-600">Sign in to your account</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Bem-vindo de Volta</h1>
+        <p className="text-gray-600">Entre na sua conta</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -59,14 +56,14 @@ function LoginForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-            placeholder="you@example.com"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+            placeholder="seu@email.com"
           />
         </div>
 
         <div>
           <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-            Password
+            Senha
           </label>
           <input
             id="password"
@@ -74,8 +71,8 @@ function LoginForm() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-            placeholder="••••••••"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+            placeholder="Sua senha"
           />
         </div>
 
@@ -88,17 +85,17 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
+          className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
         >
-          {loading ? 'Signing in...' : 'Sign In'}
+          {loading ? 'Entrando...' : 'Entrar'}
         </button>
       </form>
 
       <div className="mt-6 text-center">
         <p className="text-gray-600">
-          Don't have an account?{' '}
-          <Link href="/register" className="text-blue-600 hover:text-blue-700 font-medium">
-            Sign up
+          Nao tem uma conta?{' '}
+          <Link href="/register" className="text-indigo-600 hover:text-indigo-700 font-medium">
+            Cadastre-se
           </Link>
         </p>
       </div>
@@ -112,8 +109,8 @@ export default function LoginPage() {
       fallback={
         <div className="bg-white rounded-lg shadow-xl p-8">
           <div className="text-center">
-            <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading...</p>
+            <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Carregando...</p>
           </div>
         </div>
       }
