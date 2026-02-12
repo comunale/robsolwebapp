@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -28,7 +28,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     const fetchStores = async () => {
@@ -40,7 +40,7 @@ export default function RegisterPage() {
       if (data) setStores(data)
     }
     fetchStores()
-  }, [])
+  }, [supabase])
 
   const handleWhatsAppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatWhatsApp(e.target.value)
@@ -96,14 +96,15 @@ export default function RegisterPage() {
           router.push('/login')
         }, 3000)
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Registration error:', err)
-      if (err.message?.includes('whatsapp')) {
+      const message = err instanceof Error ? err.message : ''
+      if (message.includes('whatsapp')) {
         setError('Este numero de WhatsApp ja esta cadastrado')
-      } else if (err.message?.includes('email')) {
+      } else if (message.includes('email')) {
         setError('Este email ja esta cadastrado')
       } else {
-        setError(err.message || 'Falha ao criar conta')
+        setError(message || 'Falha ao criar conta')
       }
       setLoading(false)
     }
@@ -177,7 +178,7 @@ export default function RegisterPage() {
               <option value="">Selecione sua loja...</option>
               {stores.map((store) => (
                 <option key={store.id} value={store.id}>
-                  {store.name} — {store.location || store.cnpj}
+                  {store.name} - {store.location || store.cnpj}
                 </option>
               ))}
             </select>

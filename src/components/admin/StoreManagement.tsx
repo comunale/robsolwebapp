@@ -25,7 +25,7 @@ export default function StoreManagement() {
       const data = await res.json()
       if (data.stores) setStores(data.stores)
     } catch (err) {
-      console.error('Failed to fetch stores:', err)
+      console.error('Falha ao buscar lojas:', err)
     } finally {
       setLoading(false)
     }
@@ -45,8 +45,8 @@ export default function StoreManagement() {
       if (!res.ok) throw new Error('Falha ao salvar loja')
       await fetchStores()
       resetForm()
-    } catch (err: any) {
-      alert(err.message)
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Falha ao salvar loja')
     } finally {
       setSaving(false)
     }
@@ -66,8 +66,8 @@ export default function StoreManagement() {
         body: JSON.stringify({ is_active: !store.is_active }),
       })
       await fetchStores()
-    } catch (err: any) {
-      alert(err.message)
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Falha ao atualizar status da loja')
     }
   }
 
@@ -76,8 +76,8 @@ export default function StoreManagement() {
     try {
       await fetch(`/api/stores/${storeId}`, { method: 'DELETE' })
       await fetchStores()
-    } catch (err: any) {
-      alert(err.message)
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Falha ao excluir loja')
     }
   }
 
@@ -102,7 +102,7 @@ export default function StoreManagement() {
       </AdminHeader>
 
       <div className="p-6">
-        {/* Form Modal */}
+        {/* Modal do formulario */}
         {showForm && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <h3 className="text-lg font-semibold mb-4">
@@ -161,7 +161,7 @@ export default function StoreManagement() {
           </div>
         )}
 
-        {/* Store List */}
+        {/* Lista de lojas */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50">
@@ -178,7 +178,7 @@ export default function StoreManagement() {
                 <tr key={store.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">{store.name}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{store.cnpj}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{store.location || '—'}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{store.location || '-'}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       store.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'

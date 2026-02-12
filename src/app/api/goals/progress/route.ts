@@ -14,12 +14,12 @@ export async function GET(request: Request) {
     } = await supabase.auth.getSession()
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
     }
 
     if (!campaignId) {
       return NextResponse.json(
-        { error: 'campaign_id is required' },
+        { error: 'campaign_id e obrigatorio' },
         { status: 400 }
       )
     }
@@ -98,7 +98,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ progress })
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch goal progress' },
+      { error: error.message || 'Falha ao buscar progresso das metas' },
       { status: 500 }
     )
   }

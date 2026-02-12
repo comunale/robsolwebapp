@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import AdminSidebar from '@/components/admin/AdminSidebar'
 
 export const metadata: Metadata = {
-  title: 'Admin Panel - Incentive Campaigns',
-  description: 'Manage campaigns, users, and coupons',
+  title: 'Painel Admin - Campanhas de Incentivo',
+  description: 'Gerencie campanhas, usuarios e cupons',
 }
 
 export default function AdminLayout({

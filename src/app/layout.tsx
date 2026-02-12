@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Incentive Campaigns",
-  description: "Manage campaigns, scan receipts, and earn rewards",
+  title: "Campanhas de Incentivo",
+  description: "Gerencie campanhas, escaneie cupons e ganhe recompensas",
 };
 
 export default function RootLayout({

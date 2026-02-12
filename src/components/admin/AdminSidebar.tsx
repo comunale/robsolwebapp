@@ -100,14 +100,14 @@ export default function AdminSidebar() {
 
   return (
     <aside className="w-64 bg-white border-r border-gray-200 min-h-screen fixed left-0 top-0 z-30">
-      {/* Brand */}
+      {/* Marca */}
       <div className="h-16 flex items-center px-6 border-b border-gray-200">
         <Link href="/admin" className="text-xl font-bold text-indigo-600">
-          Incentive<span className="text-gray-400 font-normal">Admin</span>
+          Robsol<span className="text-gray-400 font-normal">Admin</span>
         </Link>
       </div>
 
-      {/* Navigation */}
+      {/* Navegacao */}
       <nav className="p-4 space-y-1">
         {navItems.map((item) => (
           <Link

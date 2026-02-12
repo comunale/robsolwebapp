@@ -14,13 +14,13 @@ export async function scanCouponImage(
 ): Promise<{ success: boolean; data?: ExtractedData; error?: string }> {
   try {
     if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is not configured')
+      throw new Error('OPENAI_API_KEY nao esta configurada')
     }
 
     const keywordsText =
       campaignKeywords.length > 0
-        ? `Campaign eligible products (keywords): ${campaignKeywords.join(', ')}`
-        : 'No specific product keywords defined for this campaign.'
+        ? `Produtos elegiveis da campanha (palavras-chave): ${campaignKeywords.join(', ')}`
+        : 'Nenhuma palavra-chave especifica definida para esta campanha.'
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -82,7 +82,7 @@ Rules:
 
     const content = response.choices[0]?.message?.content
     if (!content) {
-      throw new Error('No response from OpenAI')
+      throw new Error('Sem resposta da OpenAI')
     }
 
     // Clean the response — remove markdown code fences if present
@@ -98,7 +98,7 @@ Rules:
     console.error('OCR scan error:', error)
     return {
       success: false,
-      error: error.message || 'Failed to scan coupon image',
+      error: error.message || 'Falha ao escanear imagem do cupom',
     }
   }
 }

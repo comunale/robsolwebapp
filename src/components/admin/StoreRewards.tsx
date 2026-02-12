@@ -34,7 +34,7 @@ export default function StoreRewards() {
       const data = await res.json()
       if (data.performance) setPerformance(data.performance)
     } catch (err) {
-      console.error('Failed to fetch store performance:', err)
+      console.error('Falha ao buscar desempenho das lojas:', err)
     } finally {
       setLoading(false)
     }
@@ -56,10 +56,10 @@ export default function StoreRewards() {
 
   return (
     <>
-      <AdminHeader title="Desempenho das Lojas" subtitle="Acompanhamento B2B — meta: +20% crescimento semanal" />
+      <AdminHeader title="Desempenho das Lojas" subtitle="Acompanhamento B2B - meta: +20% de crescimento semanal" />
 
       <div className="p-6">
-        {/* Summary Cards */}
+        {/* Cartoes de resumo */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
             <p className="text-sm text-gray-500">Total de Lojas</p>
@@ -79,7 +79,7 @@ export default function StoreRewards() {
           </div>
         </div>
 
-        {/* Performance Table */}
+        {/* Tabela de desempenho */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
@@ -104,7 +104,7 @@ export default function StoreRewards() {
                       <div className="font-medium text-gray-900 text-sm">{store.store_name}</div>
                       <div className="text-xs text-gray-500">{store.cnpj}</div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{store.location || '—'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{store.location || '-'}</td>
                     <td className="px-4 py-3 text-center text-sm font-medium">{store.salesperson_count}</td>
                     <td className="px-4 py-3 text-center text-sm">{store.approved_coupons}</td>
                     <td className="px-4 py-3 text-center text-sm font-medium text-indigo-600">{store.total_points}</td>

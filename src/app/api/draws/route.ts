@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     } = await supabase.auth.getSession()
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
     }
 
     const { data: profile } = await supabase
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       .single()
 
     if (profile?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 })
+      return NextResponse.json({ error: 'Acesso negado - apenas admin' }, { status: 403 })
     }
 
     const body = await request.json()
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
     if (!campaign_id) {
       return NextResponse.json(
-        { error: 'campaign_id is required' },
+        { error: 'campaign_id e obrigatorio' },
         { status: 400 }
       )
     }
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
     if (!eligible || eligible.length === 0) {
       return NextResponse.json(
-        { error: 'No eligible lucky numbers in the pool' },
+        { error: 'Nao ha numeros da sorte elegiveis para sorteio' },
         { status: 400 }
       )
     }
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      message: `${count} winner(s) drawn successfully`,
+      message: `${count} ganhador(es) sorteado(s) com sucesso`,
       winners: winners.map((w) => ({
         id: w.id,
         user_id: w.user_id,
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
     })
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || 'Failed to execute draw' },
+      { error: error.message || 'Falha ao executar sorteio' },
       { status: 500 }
     )
   }

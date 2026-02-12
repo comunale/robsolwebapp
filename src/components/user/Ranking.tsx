@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import CabecalhoUsuario from './CabecalhoUsuario'
@@ -24,38 +24,49 @@ export default function Ranking() {
   const [selectedCampaign, setSelectedCampaign] = useState<string>('')
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
-    if (user) fetchCampaigns()
-  }, [user])
+    if (!user) return
+    let active = true
+    const fetchCampaigns = async () => {
+      const { data } = await supabase
+        .from('campaigns')
+        .select('*')
+        .eq('is_active', true)
+        .order('title')
+      if (!active) return
+      if (data) {
+        setCampaigns(data as Campaign[])
+        if (data.length > 0) setSelectedCampaign(data[0].id)
+      }
+      setLoading(false)
+    }
+
+    void fetchCampaigns()
+    return () => {
+      active = false
+    }
+  }, [user, supabase])
 
   useEffect(() => {
-    if (selectedCampaign) fetchLeaderboard()
+    if (!selectedCampaign) return
+    let active = true
+    const fetchLeaderboard = async () => {
+      try {
+        const res = await fetch(`/api/leaderboard?campaign_id=${selectedCampaign}`)
+        const data = await res.json()
+        if (active && data.leaderboard) setLeaderboard(data.leaderboard)
+      } catch (err) {
+        console.error(err)
+      }
+    }
+
+    void fetchLeaderboard()
+    return () => {
+      active = false
+    }
   }, [selectedCampaign])
-
-  const fetchCampaigns = async () => {
-    const { data } = await supabase
-      .from('campaigns')
-      .select('*')
-      .eq('is_active', true)
-      .order('title')
-    if (data) {
-      setCampaigns(data as Campaign[])
-      if (data.length > 0) setSelectedCampaign(data[0].id)
-    }
-    setLoading(false)
-  }
-
-  const fetchLeaderboard = async () => {
-    try {
-      const res = await fetch(`/api/leaderboard?campaign_id=${selectedCampaign}`)
-      const data = await res.json()
-      if (data.leaderboard) setLeaderboard(data.leaderboard)
-    } catch (err) {
-      console.error(err)
-    }
-  }
 
   const rankColors = ['text-amber-500', 'text-gray-400', 'text-amber-700']
   const rankBg = ['bg-amber-50 border-amber-200', 'bg-gray-50 border-gray-200', 'bg-orange-50 border-orange-200']

@@ -11,7 +11,7 @@ export async function GET() {
     } = await supabase.auth.getSession()
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
     }
 
     const { data: profile } = await supabase
@@ -21,7 +21,7 @@ export async function GET() {
       .single()
 
     if (profile?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 })
+      return NextResponse.json({ error: 'Acesso negado - apenas admin' }, { status: 403 })
     }
 
     const { data: performance, error } = await supabase
@@ -34,7 +34,7 @@ export async function GET() {
     return NextResponse.json({ performance })
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch store performance' },
+      { error: error.message || 'Falha ao buscar desempenho das lojas' },
       { status: 500 }
     )
   }

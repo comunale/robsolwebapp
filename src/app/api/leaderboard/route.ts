@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     } = await supabase.auth.getSession()
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
     }
 
     let query = supabase
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ leaderboard })
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch leaderboard' },
+      { error: error.message || 'Falha ao buscar ranking' },
       { status: 500 }
     )
   }

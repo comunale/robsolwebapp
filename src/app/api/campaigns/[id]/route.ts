@@ -17,7 +17,7 @@ export async function GET(
     } = await supabase.auth.getSession()
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
     }
 
     const { data: campaign, error } = await supabase
@@ -58,7 +58,7 @@ export async function PATCH(
     } = await supabase.auth.getSession()
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
     }
 
     // Check if user is admin
@@ -69,7 +69,7 @@ export async function PATCH(
       .single()
 
     if (profile?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 })
+      return NextResponse.json({ error: 'Acesso negado - apenas admin' }, { status: 403 })
     }
 
     const body: UpdateCampaignInput = await request.json()
@@ -117,7 +117,7 @@ export async function DELETE(
     } = await supabase.auth.getSession()
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
     }
 
     // Check if user is admin
@@ -128,7 +128,7 @@ export async function DELETE(
       .single()
 
     if (profile?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 })
+      return NextResponse.json({ error: 'Acesso negado - apenas admin' }, { status: 403 })
     }
 
     const { error } = await supabase.from('campaigns').delete().eq('id', id)

@@ -15,7 +15,7 @@ export async function PATCH(
     } = await supabase.auth.getSession()
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
     }
 
     const { data: notification, error } = await supabase
@@ -31,7 +31,7 @@ export async function PATCH(
     return NextResponse.json({ notification })
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || 'Failed to update notification' },
+      { error: error.message || 'Falha ao atualizar notificacao' },
       { status: 500 }
     )
   }

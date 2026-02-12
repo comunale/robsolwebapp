@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import type { Campaign } from '@/types/campaign'
 
 interface DestaquesCampanhasProps {
@@ -19,8 +20,14 @@ export default function DestaquesCampanhas({ campaigns }: DestaquesCampanhasProp
             className="snap-start flex-shrink-0 w-64 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-4 text-white shadow-md"
           >
             {campaign.banner_url && (
-              <div className="w-full h-24 rounded-lg overflow-hidden mb-3 bg-white/10">
-                <img src={campaign.banner_url} alt={campaign.title} className="w-full h-full object-cover" />
+              <div className="relative w-full aspect-[4/3] md:aspect-video rounded-lg overflow-hidden mb-3 bg-white/10">
+                <Image
+                  src={campaign.banner_url}
+                  alt={campaign.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 320px"
+                  className="object-cover"
+                />
               </div>
             )}
             <h3 className="font-bold text-sm mb-1 truncate">{campaign.title}</h3>

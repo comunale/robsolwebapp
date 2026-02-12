@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     } = await supabase.auth.getSession()
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
     }
 
     // Check if admin
@@ -44,7 +44,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ lucky_numbers: luckyNumbers })
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch lucky numbers' },
+      { error: error.message || 'Falha ao buscar numeros da sorte' },
       { status: 500 }
     )
   }

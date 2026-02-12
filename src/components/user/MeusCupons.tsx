@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import CabecalhoUsuario from './CabecalhoUsuario'
@@ -19,18 +19,15 @@ export default function MeusCupons() {
   const { user, loading: authLoading } = useAuth()
   const [coupons, setCoupons] = useState<CouponRow[]>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    if (user) fetchCoupons()
-  }, [user])
-
-  const fetchCoupons = async () => {
+  const fetchCoupons = useCallback(async () => {
     try {
+      if (!user) return
       const { data } = await supabase
         .from('coupons')
         .select('id, status, points_awarded, created_at, campaigns(title)')
-        .eq('user_id', user!.id)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
       if (data) setCoupons(data as unknown as CouponRow[])
     } catch (err) {
@@ -38,7 +35,11 @@ export default function MeusCupons() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [supabase, user])
+
+  useEffect(() => {
+    if (user) void fetchCoupons()
+  }, [user, fetchCoupons])
 
   const statusConfig: Record<string, { label: string; bg: string; text: string }> = {
     pending: { label: 'Pendente', bg: 'bg-yellow-100', text: 'text-yellow-800' },
@@ -57,7 +58,6 @@ export default function MeusCupons() {
 
         {coupons.length === 0 ? (
           <div className="text-center py-16">
-            <div className="text-4xl mb-3">📋</div>
             <p className="text-gray-500 text-sm">Nenhum cupom enviado ainda.</p>
             <p className="text-gray-400 text-xs mt-1">Escaneie um cupom para comecar!</p>
           </div>

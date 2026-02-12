@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import AdminHeader from './AdminHeader'
@@ -24,7 +24,7 @@ export default function AnalyticsDashboard() {
   const { user, profile, loading: authLoading } = useAuth()
   const [data, setData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     if (!user || profile?.role !== 'admin') return
@@ -68,7 +68,7 @@ export default function AnalyticsDashboard() {
       setLoading(false)
     }
     fetchAnalytics()
-  }, [user, profile])
+  }, [user, profile, supabase])
 
   if (authLoading || loading) return <LoadingSpinner />
   if (!profile || profile.role !== 'admin' || !data) return null
@@ -94,10 +94,10 @@ export default function AnalyticsDashboard() {
 
   return (
     <>
-      <AdminHeader title="Analytics" subtitle="Metricas de campanhas e cupons" />
+      <AdminHeader title="Relatorios" subtitle="Metricas de campanhas e cupons" />
 
       <div className="p-8 space-y-8">
-        {/* Core Stats */}
+        {/* Indicadores principais */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {stats.map((s) => (
             <div key={s.label} className={`${s.bg} rounded-xl p-5`}>
@@ -108,7 +108,7 @@ export default function AnalyticsDashboard() {
           ))}
         </div>
 
-        {/* Gamification Stats */}
+        {/* Indicadores de gamificacao */}
         <div>
           <h3 className="font-semibold text-gray-900 mb-3">Gamificacao</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -122,7 +122,7 @@ export default function AnalyticsDashboard() {
           </div>
         </div>
 
-        {/* Coupon Status Breakdown */}
+        {/* Resumo por status de cupons */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
           <h3 className="font-semibold text-gray-900 mb-4">Status dos Cupons</h3>
           <div className="space-y-3">

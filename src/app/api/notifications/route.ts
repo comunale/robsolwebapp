@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     } = await supabase.auth.getSession()
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
     }
 
     let query = supabase
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ notifications })
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch notifications' },
+      { error: error.message || 'Falha ao buscar notificacoes' },
       { status: 500 }
     )
   }

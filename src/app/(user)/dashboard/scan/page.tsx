@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { createClient } from '@/lib/supabase/client'
 import { scanCouponImage } from '@/app/actions/scanCoupon'
 import { uploadCouponImage } from '@/lib/storage/imageStorage'
 import CabecalhoUsuario from '@/components/user/CabecalhoUsuario'
@@ -13,10 +13,9 @@ import type { Campaign } from '@/types/campaign'
 import type { ExtractedData } from '@/types/coupon'
 
 export default function ScanPage() {
-  const { user, profile, loading: authLoading } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const supabase = createClient()
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null)
@@ -99,8 +98,8 @@ export default function ScanPage() {
       }
 
       setExtractedData(result.data)
-    } catch (err: any) {
-      setError(err.message || 'Falha ao escanear a imagem')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Falha ao escanear a imagem')
     } finally {
       setScanning(false)
     }
@@ -140,8 +139,8 @@ export default function ScanPage() {
       setExtractedData(null)
       setSelectedCampaign(null)
       if (fileInputRef.current) fileInputRef.current.value = ''
-    } catch (err: any) {
-      setError(err.message || 'Falha ao enviar cupom')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Falha ao enviar cupom')
     } finally {
       setSubmitting(false)
     }
@@ -229,10 +228,17 @@ export default function ScanPage() {
           <h2 className="text-sm font-semibold text-gray-700 mb-2">2. Envie o Cupom</h2>
           <label
             htmlFor="receipt-upload"
-            className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-200 border-dashed rounded-xl cursor-pointer bg-white hover:bg-gray-50 transition overflow-hidden"
+            className="relative flex flex-col items-center justify-center w-full h-48 border-2 border-gray-200 border-dashed rounded-xl cursor-pointer bg-white hover:bg-gray-50 transition overflow-hidden"
           >
             {imagePreview ? (
-              <img src={imagePreview} alt="Preview do cupom" className="w-full h-full object-contain" />
+              <Image
+                src={imagePreview}
+                alt="Preview do cupom"
+                fill
+                unoptimized
+                sizes="100vw"
+                className="object-contain"
+              />
             ) : (
               <div className="flex flex-col items-center justify-center py-6">
                 <svg className="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -312,7 +318,7 @@ export default function ScanPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
             <h3 className="text-sm font-semibold text-gray-400 mb-1">Dados Extraidos</h3>
-            <p className="text-xs text-gray-400">Selecione uma campanha, envie o cupom e clique em "Escanear com IA"</p>
+            <p className="text-xs text-gray-400">Selecione uma campanha, envie o cupom e clique em &quot;Escanear com IA&quot;</p>
           </div>
         )}
 
@@ -394,7 +400,7 @@ export default function ScanPage() {
                       <th className="text-left py-2 pr-3 text-gray-600 font-medium text-xs">Produto</th>
                       <th className="text-center py-2 px-2 text-gray-600 font-medium text-xs">Qtd</th>
                       <th className="text-right py-2 px-2 text-gray-600 font-medium text-xs">Preco</th>
-                      <th className="text-center py-2 pl-2 text-gray-600 font-medium text-xs">Match</th>
+                      <th className="text-center py-2 pl-2 text-gray-600 font-medium text-xs">Correspondencia</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -403,7 +409,7 @@ export default function ScanPage() {
                         <td className="py-2 pr-3">
                           <p className="font-medium text-gray-900 text-xs">{item.name}</p>
                           {item.matched_keyword && (
-                            <span className="text-[10px] text-green-600">Match: {item.matched_keyword}</span>
+                            <span className="text-[10px] text-green-600">Correspondencia: {item.matched_keyword}</span>
                           )}
                         </td>
                         <td className="text-center py-2 px-2 text-gray-700 text-xs">{item.quantity ?? '-'}</td>

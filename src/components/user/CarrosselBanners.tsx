@@ -24,12 +24,14 @@ export default function CarrosselBanners({ topUsers }: CarrosselBannersProps) {
       gradient: 'from-indigo-600 to-purple-600',
     },
     ...(topUsers && topUsers.length > 0
-      ? [{
-          id: 'hall-of-fame',
-          title: 'Hall da Fama',
-          subtitle: topUsers.map((u, i) => `${i + 1}. ${u.full_name} — ${u.total_points} pts`).join(' | '),
-          gradient: 'from-amber-500 to-orange-600',
-        }]
+      ? [
+          {
+            id: 'hall-of-fame',
+            title: 'Hall da Fama',
+            subtitle: topUsers.map((u, i) => `${i + 1}. ${u.full_name} - ${u.total_points} pts`).join(' | '),
+            gradient: 'from-amber-500 to-orange-600',
+          },
+        ]
       : []),
     {
       id: 'tips',
@@ -65,16 +67,13 @@ export default function CarrosselBanners({ topUsers }: CarrosselBannersProps) {
           ))}
         </div>
 
-        {/* Dot Indicators */}
         {slides.length > 1 && (
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
             {slides.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrent(i)}
-                className={`w-2 h-2 rounded-full transition ${
-                  i === current ? 'bg-white' : 'bg-white/40'
-                }`}
+                className={`w-2 h-2 rounded-full transition ${i === current ? 'bg-white' : 'bg-white/40'}`}
               />
             ))}
           </div>

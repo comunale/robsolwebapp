@@ -14,7 +14,7 @@ const sizeMap = {
 export default function LoadingSpinner({
   size = 'lg',
   color = 'border-indigo-600',
-  text = 'Loading...',
+  text = 'Carregando...',
   fullScreen = true,
 }: LoadingSpinnerProps) {
   const spinner = (

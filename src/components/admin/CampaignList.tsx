@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useAuth } from '@/lib/hooks/useAuth'
 import AdminHeader from './AdminHeader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
@@ -25,8 +26,8 @@ export default function CampaignList() {
       if (!response.ok) throw new Error('Falha ao carregar campanhas')
       const data = await response.json()
       setCampaigns(data.campaigns || [])
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Falha ao carregar campanhas')
     } finally {
       setLoading(false)
     }
@@ -38,8 +39,8 @@ export default function CampaignList() {
       const response = await fetch(`/api/campaigns/${id}`, { method: 'DELETE' })
       if (!response.ok) throw new Error('Falha ao excluir campanha')
       await fetchCampaigns()
-    } catch (err: any) {
-      alert(err.message)
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Falha ao excluir campanha')
     }
   }
 
@@ -52,8 +53,8 @@ export default function CampaignList() {
       })
       if (!response.ok) throw new Error('Falha ao atualizar campanha')
       await fetchCampaigns()
-    } catch (err: any) {
-      alert(err.message)
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Falha ao atualizar campanha')
     }
   }
 
@@ -153,11 +154,13 @@ export default function CampaignList() {
                       </div>
                     </div>
                     {campaign.banner_url && (
-                      <div className="ml-6 flex-shrink-0">
-                        <img
+                      <div className="relative ml-6 flex-shrink-0 w-40 md:w-44 aspect-[4/3] md:aspect-video">
+                        <Image
                           src={campaign.banner_url}
                           alt={campaign.title}
-                          className="w-40 h-28 object-cover rounded-lg"
+                          fill
+                          sizes="(max-width: 768px) 160px, 176px"
+                          className="object-cover rounded-lg"
                         />
                       </div>
                     )}

@@ -11,7 +11,7 @@ export async function POST() {
     } = await supabase.auth.getSession()
 
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
     }
 
     const { error } = await supabase
@@ -22,10 +22,10 @@ export async function POST() {
 
     if (error) throw error
 
-    return NextResponse.json({ message: 'All notifications marked as read' })
+    return NextResponse.json({ message: 'Todas as notificacoes foram marcadas como lidas' })
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || 'Failed to mark notifications as read' },
+      { error: error.message || 'Falha ao marcar notificacoes como lidas' },
       { status: 500 }
     )
   }

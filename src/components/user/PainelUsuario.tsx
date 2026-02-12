@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/hooks/useAuth'
@@ -18,7 +18,7 @@ export default function PainelUsuario() {
   const router = useRouter()
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [topUsers, setTopUsers] = useState<{ full_name: string; total_points: number }[]>([])
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     if (!loading && !user) {
@@ -27,37 +27,40 @@ export default function PainelUsuario() {
   }, [user, loading, router])
 
   useEffect(() => {
-    if (user) {
-      fetchCampaigns()
-      fetchTopUsers()
+    if (!user) return
+    let active = true
+    const fetchData = async () => {
+      const [campaignsRes, topUsersRes] = await Promise.all([
+        supabase
+          .from('campaigns')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('profiles')
+          .select('full_name, total_points')
+          .eq('role', 'user')
+          .order('total_points', { ascending: false })
+          .limit(3),
+      ])
+
+      if (!active) return
+      if (campaignsRes.data) setCampaigns(campaignsRes.data as Campaign[])
+      if (topUsersRes.data) setTopUsers(topUsersRes.data)
     }
-  }, [user])
 
-  const fetchCampaigns = async () => {
-    const { data } = await supabase
-      .from('campaigns')
-      .select('*')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-    if (data) setCampaigns(data as Campaign[])
-  }
-
-  const fetchTopUsers = async () => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('full_name, total_points')
-      .eq('role', 'user')
-      .order('total_points', { ascending: false })
-      .limit(3)
-    if (data) setTopUsers(data)
-  }
+    void fetchData()
+    return () => {
+      active = false
+    }
+  }, [user, supabase])
 
   if (loading) return <LoadingSpinner />
   if (!user || !profile) return null
 
   const quickActions = [
     {
-      label: 'Escanear Cupom',
+      label: 'Escanear Cupons',
       href: '/dashboard/scan',
       icon: (
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -97,13 +100,13 @@ export default function PainelUsuario() {
         {/* Banner Carousel */}
         <CarrosselBanners topUsers={topUsers} />
 
-        {/* Campaign Highlights */}
+        {/* Destaques de campanhas */}
         <DestaquesCampanhas campaigns={campaigns} />
 
-        {/* Goal Progress */}
+        {/* Progresso das metas */}
         <ProgressoMetas campaigns={campaigns} />
 
-        {/* Quick Actions */}
+        {/* Acoes rapidas */}
         <section>
           <h2 className="text-sm font-semibold text-gray-700 mb-3 px-1">Acoes Rapidas</h2>
           <div className="grid grid-cols-2 gap-3">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
@@ -22,7 +22,7 @@ export default function DashboardOverview() {
     campaigns: 0, pendingCoupons: 0, users: 0,
     activeStores: 0, goalsCompleted: 0, luckyNumbers: 0,
   })
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     if (!user) return
@@ -44,7 +44,7 @@ export default function DashboardOverview() {
       })
     }
     fetchStats()
-  }, [user])
+  }, [user, supabase])
 
   if (loading) return <LoadingSpinner />
   if (!profile || profile.role !== 'admin') return null
@@ -62,7 +62,7 @@ export default function DashboardOverview() {
       <AdminHeader title="Painel" subtitle={`Bem-vindo(a) de volta, ${profile.full_name}`} />
 
       <div className="p-8 space-y-8">
-        {/* Stats */}
+        {/* Indicadores */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {cards.map((c) => (
             <Link key={c.label} href={c.href} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
@@ -72,7 +72,7 @@ export default function DashboardOverview() {
           ))}
         </div>
 
-        {/* Hero banner */}
+        {/* Banner principal */}
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-8 text-white">
           <h2 className="text-2xl font-bold mb-2">Painel de Controle</h2>
           <p className="text-indigo-100 mb-6">Gerencie campanhas, revise cupons e monitore o desempenho.</p>
@@ -86,7 +86,7 @@ export default function DashboardOverview() {
           </div>
         </div>
 
-        {/* Quick Actions Grid */}
+        {/* Grade de acoes rapidas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { label: 'Campanhas', desc: 'Criar e gerenciar campanhas', href: '/admin/campaigns', bg: 'bg-indigo-100', color: 'text-indigo-600' },
@@ -95,7 +95,7 @@ export default function DashboardOverview() {
             { label: 'Sorteios', desc: 'Realizar sorteios de campanhas', href: '/admin/draws', bg: 'bg-amber-100', color: 'text-amber-600' },
             { label: 'Usuarios', desc: 'Visualizar contas de usuarios', href: '/admin/users', bg: 'bg-green-100', color: 'text-green-600' },
             { label: 'Desempenho', desc: 'Desempenho das lojas', href: '/admin/stores/rewards', bg: 'bg-pink-100', color: 'text-pink-600' },
-            { label: 'Analytics', desc: 'Relatorios e metricas', href: '/admin/analytics', bg: 'bg-purple-100', color: 'text-purple-600' },
+            { label: 'Relatorios', desc: 'Relatorios e metricas', href: '/admin/analytics', bg: 'bg-purple-100', color: 'text-purple-600' },
           ].map((item) => (
             <Link key={item.href} href={item.href} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition">
               <div className={`w-10 h-10 ${item.bg} rounded-lg flex items-center justify-center mb-3`}>

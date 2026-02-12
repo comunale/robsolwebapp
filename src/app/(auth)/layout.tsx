@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Authentication - Incentive Campaigns',
-  description: 'Login or register to participate in incentive campaigns',
+  title: 'Autenticacao - Campanhas de Incentivo',
+  description: 'Entre ou cadastre-se para participar das campanhas de incentivo',
 }
 
 export default function AuthLayout({

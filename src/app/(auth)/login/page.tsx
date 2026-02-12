@@ -29,11 +29,11 @@ function LoginForm() {
     setLoading(true)
 
     try {
-      const { data, error } = await signIn(email, password)
+      const { error } = await signIn(email, password)
 
       if (error) throw error
-    } catch (err: any) {
-      setError(err.message || 'Falha ao fazer login')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Falha ao fazer login')
       setLoading(false)
     }
   }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import type { Notification } from '@/types/notification'
 
 interface NotificacoesProps {
@@ -12,11 +12,7 @@ export default function Notificacoes({ onClose, onUnreadCountChange }: Notificac
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchNotifications()
-  }, [])
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       const res = await fetch('/api/notifications')
       const data = await res.json()
@@ -29,30 +25,34 @@ export default function Notificacoes({ onClose, onUnreadCountChange }: Notificac
     } finally {
       setLoading(false)
     }
-  }
+  }, [onUnreadCountChange])
+
+  useEffect(() => {
+    void fetchNotifications()
+  }, [fetchNotifications])
 
   const markAsRead = async (id: string) => {
     await fetch(`/api/notifications/${id}`, { method: 'PATCH' })
-    setNotifications(prev =>
-      prev.map(n => n.id === id ? { ...n, is_read: true } : n)
+    setNotifications((prev) =>
+      prev.map((n) => n.id === id ? { ...n, is_read: true } : n)
     )
-    onUnreadCountChange(notifications.filter(n => !n.is_read && n.id !== id).length)
+    onUnreadCountChange(notifications.filter((n) => !n.is_read && n.id !== id).length)
   }
 
   const markAllRead = async () => {
     await fetch('/api/notifications/mark-all-read', { method: 'POST' })
-    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })))
     onUnreadCountChange(0)
   }
 
   const typeIcon: Record<string, string> = {
-    goal_completed: '🎯',
-    coupon_approved: '✅',
-    coupon_rejected: '❌',
-    lucky_number: '🍀',
-    draw_winner: '🏆',
-    campaign_new: '📢',
-    general: '📌',
+    goal_completed: 'ALVO',
+    coupon_approved: 'OK',
+    coupon_rejected: 'X',
+    lucky_number: '#',
+    draw_winner: 'WIN',
+    campaign_new: 'NEW',
+    general: 'INFO',
   }
 
   return (
@@ -87,7 +87,7 @@ export default function Notificacoes({ onClose, onUnreadCountChange }: Notificac
                 }`}
               >
                 <div className="flex gap-3">
-                  <span className="text-lg">{typeIcon[n.type] || '📌'}</span>
+                  <span className="text-xs font-bold w-10">{typeIcon[n.type] || 'INFO'}</span>
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm ${n.is_read ? 'text-gray-700' : 'text-gray-900 font-medium'}`}>
                       {n.title}

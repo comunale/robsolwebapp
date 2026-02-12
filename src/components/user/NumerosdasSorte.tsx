@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import CabecalhoUsuario from './CabecalhoUsuario'
@@ -15,43 +15,54 @@ export default function NumerosdasSorte() {
   const [selectedCampaign, setSelectedCampaign] = useState<string>('')
   const [numbers, setNumbers] = useState<LuckyNumber[]>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
-    if (user) fetchCampaigns()
-  }, [user])
+    if (!user) return
+    let active = true
+    const fetchCampaigns = async () => {
+      const { data } = await supabase
+        .from('campaigns')
+        .select('*')
+        .eq('is_active', true)
+        .order('title')
+      if (!active) return
+      if (data) {
+        setCampaigns(data as Campaign[])
+        if (data.length > 0) setSelectedCampaign(data[0].id)
+      }
+      setLoading(false)
+    }
+
+    void fetchCampaigns()
+    return () => {
+      active = false
+    }
+  }, [user, supabase])
 
   useEffect(() => {
-    if (selectedCampaign) fetchNumbers()
+    if (!selectedCampaign) return
+    let active = true
+    const fetchNumbers = async () => {
+      try {
+        const res = await fetch(`/api/lucky-numbers?campaign_id=${selectedCampaign}`)
+        const data = await res.json()
+        if (active && data.lucky_numbers) setNumbers(data.lucky_numbers)
+      } catch (err) {
+        console.error(err)
+      }
+    }
+
+    void fetchNumbers()
+    return () => {
+      active = false
+    }
   }, [selectedCampaign])
-
-  const fetchCampaigns = async () => {
-    const { data } = await supabase
-      .from('campaigns')
-      .select('*')
-      .eq('is_active', true)
-      .order('title')
-    if (data) {
-      setCampaigns(data as Campaign[])
-      if (data.length > 0) setSelectedCampaign(data[0].id)
-    }
-    setLoading(false)
-  }
-
-  const fetchNumbers = async () => {
-    try {
-      const res = await fetch(`/api/lucky-numbers?campaign_id=${selectedCampaign}`)
-      const data = await res.json()
-      if (data.lucky_numbers) setNumbers(data.lucky_numbers)
-    } catch (err) {
-      console.error(err)
-    }
-  }
 
   if (authLoading || loading) return <LoadingSpinner />
   if (!user) return null
 
-  const winners = numbers.filter(n => n.is_winner)
+  const winners = numbers.filter((n) => n.is_winner)
 
   return (
     <>
@@ -71,7 +82,6 @@ export default function NumerosdasSorte() {
 
         {numbers.length === 0 ? (
           <div className="text-center py-16">
-            <div className="text-4xl mb-3">🍀</div>
             <p className="text-gray-500 text-sm">Nenhum numero da sorte ainda.</p>
             <p className="text-gray-400 text-xs mt-1">Complete metas para ganhar numeros!</p>
           </div>
@@ -81,14 +91,14 @@ export default function NumerosdasSorte() {
               {numbers.map((n) => (
                 <div
                   key={n.id}
-                  className={`aspect-square rounded-xl flex items-center justify-center text-lg font-bold border-2 transition ${
+                  className={`aspect-square rounded-xl flex items-center justify-center text-lg font-bold border-2 transition relative ${
                     n.is_winner
                       ? 'bg-gradient-to-br from-amber-100 to-yellow-200 border-amber-400 text-amber-800 shadow-md'
                       : 'bg-white border-gray-200 text-gray-700'
                   }`}
                 >
                   {n.number}
-                  {n.is_winner && <span className="text-xs absolute">🏆</span>}
+                  {n.is_winner && <span className="text-xs absolute">#</span>}
                 </div>
               ))}
             </div>
