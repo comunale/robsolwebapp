@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 
 const navItems = [
   {
-    label: 'Dashboard',
+    label: 'Painel',
     href: '/admin',
     icon: (
       <path
@@ -17,7 +17,7 @@ const navItems = [
     ),
   },
   {
-    label: 'Campaigns',
+    label: 'Campanhas',
     href: '/admin/campaigns',
     icon: (
       <path
@@ -29,7 +29,7 @@ const navItems = [
     ),
   },
   {
-    label: 'Coupons',
+    label: 'Cupons',
     href: '/admin/coupons',
     icon: (
       <path
@@ -41,7 +41,7 @@ const navItems = [
     ),
   },
   {
-    label: 'Users',
+    label: 'Usuarios',
     href: '/admin/users',
     icon: (
       <path
@@ -53,7 +53,7 @@ const navItems = [
     ),
   },
   {
-    label: 'Analytics',
+    label: 'Relatorios',
     href: '/admin/analytics',
     icon: (
       <path

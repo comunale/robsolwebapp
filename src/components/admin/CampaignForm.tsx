@@ -59,11 +59,11 @@ export default function CampaignForm() {
     const file = e.target.files?.[0]
     if (file) {
       if (!file.type.startsWith('image/')) {
-        setError('Please select a valid image file')
+        setError('Por favor, selecione um arquivo de imagem valido')
         return
       }
       if (file.size > 5 * 1024 * 1024) {
-        setError('Image size must be less than 5MB')
+        setError('O tamanho da imagem deve ser menor que 5MB')
         return
       }
       setBannerFile(file)
@@ -89,7 +89,7 @@ export default function CampaignForm() {
 
     try {
       if (new Date(endDate) < new Date(startDate)) {
-        throw new Error('End date must be after start date')
+        throw new Error('A data final deve ser posterior a data inicial')
       }
 
       const tempCampaignId = crypto.randomUUID()
@@ -99,7 +99,7 @@ export default function CampaignForm() {
         const { data: buckets } = await supabase.storage.listBuckets()
         const bucketExists = buckets?.some(b => b.name === 'incentive-campaigns')
         if (!bucketExists) {
-          throw new Error('Storage bucket "incentive-campaigns" not found. Please create it in your Supabase dashboard.')
+          throw new Error('Bucket de armazenamento "incentive-campaigns" nao encontrado. Crie-o no painel do Supabase.')
         }
         bannerUrl = await uploadCampaignBanner(bannerFile, tempCampaignId)
       }
@@ -126,12 +126,12 @@ export default function CampaignForm() {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to create campaign')
+        throw new Error(data.error || 'Falha ao criar campanha')
       }
 
       router.push('/admin/campaigns')
     } catch (err: any) {
-      setError(err.message || 'Failed to create campaign')
+      setError(err.message || 'Falha ao criar campanha')
       setLoading(false)
     }
   }
@@ -141,7 +141,7 @@ export default function CampaignForm() {
 
   return (
     <>
-      <AdminHeader title="New Campaign" subtitle="Set up a new incentive campaign" />
+      <AdminHeader title="Nova Campanha" subtitle="Configure uma nova campanha de incentivo" />
 
       <div className="p-8 max-w-3xl">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
@@ -149,7 +149,7 @@ export default function CampaignForm() {
             {/* Title */}
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                Campaign Title <span className="text-red-500">*</span>
+                Titulo da Campanha <span className="text-red-500">*</span>
               </label>
               <input
                 id="title"
@@ -158,14 +158,14 @@ export default function CampaignForm() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
-                placeholder="e.g., Summer Promotion 2026"
+                placeholder="Ex.: Promocao de Verao 2026"
               />
             </div>
 
             {/* Description */}
             <div>
               <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                Description
+                Descricao
               </label>
               <textarea
                 id="description"
@@ -173,7 +173,7 @@ export default function CampaignForm() {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
-                placeholder="Describe the campaign and its objectives..."
+                placeholder="Descreva a campanha e seus objetivos..."
               />
             </div>
 
@@ -181,7 +181,7 @@ export default function CampaignForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-2">
-                  Start Date <span className="text-red-500">*</span>
+                  Data de Inicio <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="startDate"
@@ -194,7 +194,7 @@ export default function CampaignForm() {
               </div>
               <div>
                 <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-2">
-                  End Date <span className="text-red-500">*</span>
+                  Data de Fim <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="endDate"
@@ -217,17 +217,17 @@ export default function CampaignForm() {
                 className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
               />
               <label htmlFor="isActive" className="ml-2 text-sm text-gray-700">
-                Set campaign as active immediately
+                Ativar campanha imediatamente
               </label>
             </div>
 
             {/* Target Keywords */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Target Keywords (Eligible Products)
+                Palavras-chave (Produtos Elegiveis)
               </label>
               <p className="text-xs text-gray-500 mb-2">
-                Add product names or brands that qualify for this campaign. The AI will match these against receipt items.
+                Adicione nomes de produtos ou marcas que se qualificam para esta campanha. A IA ira compara-los com os itens do cupom.
               </p>
               <div className="flex gap-2 mb-2">
                 <input
@@ -241,14 +241,14 @@ export default function CampaignForm() {
                     }
                   }}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
-                  placeholder="e.g., Coca-Cola, Beer, Heineken..."
+                  placeholder="Ex.: Coca-Cola, Cerveja, Heineken..."
                 />
                 <button
                   type="button"
                   onClick={addKeyword}
                   className="px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg font-medium transition"
                 >
-                  Add
+                  Adicionar
                 </button>
               </div>
               {keywords.length > 0 && (
@@ -267,11 +267,11 @@ export default function CampaignForm() {
 
             {/* Campaign Settings */}
             <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Campaign Settings</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Configuracoes da Campanha</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Points per Coupon</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Pontos por Cupom</label>
                   <input
                     type="number"
                     min={1}
@@ -279,7 +279,7 @@ export default function CampaignForm() {
                     onChange={(e) => setPointsPerCoupon(parseInt(e.target.value) || 10)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Default points awarded per approved coupon</p>
+                  <p className="text-xs text-gray-500 mt-1">Pontos padrao concedidos por cupom aprovado</p>
                 </div>
 
                 <div className="space-y-3">
@@ -291,17 +291,17 @@ export default function CampaignForm() {
                       onChange={(e) => setHasDraws(e.target.checked)}
                       className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                     />
-                    <label htmlFor="hasDraws" className="ml-2 text-sm text-gray-700">Enable Draws (Sorteios)</label>
+                    <label htmlFor="hasDraws" className="ml-2 text-sm text-gray-700">Habilitar Sorteios</label>
                   </div>
                   {hasDraws && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Draw Type</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Sorteio</label>
                       <select
                         value={drawType}
                         onChange={(e) => setDrawType(e.target.value as 'manual' | 'random')}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white"
                       >
-                        <option value="random">Random</option>
+                        <option value="random">Aleatorio</option>
                         <option value="manual">Manual</option>
                       </select>
                     </div>
@@ -312,48 +312,48 @@ export default function CampaignForm() {
               {/* Goals */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <label className="text-sm font-medium text-gray-700">Goals (Metas)</label>
+                  <label className="text-sm font-medium text-gray-700">Metas</label>
                   <button
                     type="button"
                     onClick={addGoal}
                     className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
                   >
-                    + Add Goal
+                    + Adicionar Meta
                   </button>
                 </div>
                 <p className="text-xs text-gray-500 mb-3">
-                  Define targets that award bonus points and lucky numbers when met.
+                  Defina metas que concedem pontos bonus e numeros da sorte ao serem atingidas.
                 </p>
                 {goals.map((goal, i) => (
                   <div key={goal.id} className="border border-gray-200 rounded-lg p-4 mb-3 bg-gray-50">
                     <div className="flex justify-between items-start mb-3">
-                      <span className="text-xs font-medium text-gray-500">Goal {i + 1}</span>
-                      <button type="button" onClick={() => removeGoal(i)} className="text-red-500 hover:text-red-700 text-sm">Remove</button>
+                      <span className="text-xs font-medium text-gray-500">Meta {i + 1}</span>
+                      <button type="button" onClick={() => removeGoal(i)} className="text-red-500 hover:text-red-700 text-sm">Remover</button>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       <div className="col-span-2 md:col-span-1">
-                        <label className="block text-xs text-gray-600 mb-1">Label</label>
+                        <label className="block text-xs text-gray-600 mb-1">Nome</label>
                         <input
                           type="text"
                           value={goal.label}
                           onChange={(e) => updateGoal(i, 'label', e.target.value)}
                           className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                          placeholder="e.g., Meta Semanal"
+                          placeholder="Ex.: Meta Semanal"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-600 mb-1">Period</label>
+                        <label className="block text-xs text-gray-600 mb-1">Periodo</label>
                         <select
                           value={goal.period}
                           onChange={(e) => updateGoal(i, 'period', e.target.value)}
                           className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white"
                         >
-                          <option value="weekly">Weekly</option>
-                          <option value="monthly">Monthly</option>
+                          <option value="weekly">Semanal</option>
+                          <option value="monthly">Mensal</option>
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-600 mb-1">Target (coupons)</label>
+                        <label className="block text-xs text-gray-600 mb-1">Alvo (cupons)</label>
                         <input
                           type="number"
                           min={1}
@@ -363,7 +363,7 @@ export default function CampaignForm() {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-600 mb-1">Bonus Points</label>
+                        <label className="block text-xs text-gray-600 mb-1">Pontos Bonus</label>
                         <input
                           type="number"
                           min={0}
@@ -373,7 +373,7 @@ export default function CampaignForm() {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-600 mb-1">Lucky Numbers</label>
+                        <label className="block text-xs text-gray-600 mb-1">Numeros da Sorte</label>
                         <input
                           type="number"
                           min={0}
@@ -390,7 +390,7 @@ export default function CampaignForm() {
 
             {/* Banner Upload */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Campaign Banner</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Banner da Campanha</label>
               <div className="flex items-center justify-center w-full">
                 <label
                   htmlFor="banner-upload"
@@ -398,7 +398,7 @@ export default function CampaignForm() {
                 >
                   {bannerPreview ? (
                     <div className="relative w-full h-full">
-                      <img src={bannerPreview} alt="Banner preview" className="w-full h-full object-cover rounded-lg" />
+                      <img src={bannerPreview} alt="Preview do banner" className="w-full h-full object-cover rounded-lg" />
                       <button
                         type="button"
                         onClick={(e) => { e.preventDefault(); setBannerFile(null); setBannerPreview(null) }}
@@ -414,8 +414,8 @@ export default function CampaignForm() {
                       <svg className="w-12 h-12 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                       </svg>
-                      <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                      <p className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
+                      <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Clique para enviar</span> ou arraste e solte</p>
+                      <p className="text-xs text-gray-500">PNG, JPG, GIF ate 5MB</p>
                     </div>
                   )}
                   <input id="banner-upload" type="file" accept="image/*" onChange={handleBannerChange} className="hidden" />
@@ -435,13 +435,13 @@ export default function CampaignForm() {
                 disabled={loading}
                 className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-medium py-3 px-6 rounded-lg transition"
               >
-                {loading ? 'Creating Campaign...' : 'Create Campaign'}
+                {loading ? 'Criando Campanha...' : 'Criar Campanha'}
               </button>
               <Link
                 href="/admin/campaigns"
                 className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition text-center"
               >
-                Cancel
+                Cancelar
               </Link>
             </div>
           </form>

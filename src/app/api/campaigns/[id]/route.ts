@@ -26,17 +26,18 @@ export async function GET(
       .eq('id', id)
       .single()
 
-    if (error) throw error
-
-    if (!campaign) {
-      return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Campanha nao encontrada' }, { status: 404 })
+      }
+      throw error
     }
 
     return NextResponse.json({ campaign })
   } catch (error: any) {
     console.error('Error fetching campaign:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch campaign' },
+      { error: error.message || 'Falha ao buscar campanha' },
       { status: 500 }
     )
   }
@@ -84,17 +85,18 @@ export async function PATCH(
       .select()
       .single()
 
-    if (error) throw error
-
-    if (!campaign) {
-      return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Campanha nao encontrada' }, { status: 404 })
+      }
+      throw error
     }
 
     return NextResponse.json({ campaign })
   } catch (error: any) {
     console.error('Error updating campaign:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to update campaign' },
+      { error: error.message || 'Falha ao atualizar campanha' },
       { status: 500 }
     )
   }
@@ -133,11 +135,11 @@ export async function DELETE(
 
     if (error) throw error
 
-    return NextResponse.json({ message: 'Campaign deleted successfully' })
+    return NextResponse.json({ message: 'Campanha excluida com sucesso' })
   } catch (error: any) {
     console.error('Error deleting campaign:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to delete campaign' },
+      { error: error.message || 'Falha ao excluir campanha' },
       { status: 500 }
     )
   }

@@ -36,7 +36,7 @@ export default function AdminHeader({ title, subtitle, children }: AdminHeaderPr
             onClick={handleSignOut}
             className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition"
           >
-            Sign Out
+            Sair
           </button>
         </div>
       </div>

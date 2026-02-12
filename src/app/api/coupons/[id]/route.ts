@@ -24,12 +24,17 @@ export async function GET(
       .eq('id', id)
       .single()
 
-    if (error) throw error
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Cupom nao encontrado' }, { status: 404 })
+      }
+      throw error
+    }
 
     return NextResponse.json({ coupon })
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch coupon' },
+      { error: error.message || 'Falha ao buscar cupom' },
       { status: 500 }
     )
   }
@@ -68,7 +73,7 @@ export async function PATCH(
 
     if (!status || !['approved', 'rejected'].includes(status)) {
       return NextResponse.json(
-        { error: 'Invalid status. Must be "approved" or "rejected"' },
+        { error: 'Status invalido. Deve ser "approved" ou "rejected"' },
         { status: 400 }
       )
     }
@@ -80,11 +85,16 @@ export async function PATCH(
       .eq('id', id)
       .single()
 
-    if (fetchError) throw fetchError
+    if (fetchError) {
+      if (fetchError.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Cupom nao encontrado' }, { status: 404 })
+      }
+      throw fetchError
+    }
 
     if (existingCoupon.status !== 'pending') {
       return NextResponse.json(
-        { error: 'This coupon has already been reviewed' },
+        { error: 'Este cupom ja foi revisado' },
         { status: 400 }
       )
     }
@@ -133,7 +143,7 @@ export async function PATCH(
   } catch (error: any) {
     console.error('Error reviewing coupon:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to review coupon' },
+      { error: error.message || 'Falha ao revisar cupom' },
       { status: 500 }
     )
   }

@@ -28,7 +28,7 @@ export async function GET(request: Request) {
   } catch (error: any) {
     console.error('Error fetching campaigns:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch campaigns' },
+      { error: error.message || 'Falha ao buscar campanhas' },
       { status: 500 }
     )
   }
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     // Validate required fields
     if (!body.title || !body.start_date || !body.end_date) {
       return NextResponse.json(
-        { error: 'Missing required fields: title, start_date, end_date' },
+        { error: 'Campos obrigatorios ausentes: titulo, data_inicio, data_fim' },
         { status: 400 }
       )
     }
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('Error creating campaign:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to create campaign' },
+      { error: error.message || 'Falha ao criar campanha' },
       { status: 500 }
     )
   }

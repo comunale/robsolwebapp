@@ -59,7 +59,7 @@ export default function DashboardOverview() {
 
   return (
     <>
-      <AdminHeader title="Dashboard" subtitle={`Welcome back, ${profile.full_name}`} />
+      <AdminHeader title="Painel" subtitle={`Bem-vindo(a) de volta, ${profile.full_name}`} />
 
       <div className="p-8 space-y-8">
         {/* Stats */}

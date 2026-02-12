@@ -42,7 +42,7 @@ export default function StoreManagement() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       })
-      if (!res.ok) throw new Error('Failed to save store')
+      if (!res.ok) throw new Error('Falha ao salvar loja')
       await fetchStores()
       resetForm()
     } catch (err: any) {
@@ -72,7 +72,7 @@ export default function StoreManagement() {
   }
 
   const handleDelete = async (storeId: string) => {
-    if (!confirm('Are you sure you want to delete this store?')) return
+    if (!confirm('Tem certeza que deseja excluir esta loja?')) return
     try {
       await fetch(`/api/stores/${storeId}`, { method: 'DELETE' })
       await fetchStores()
@@ -92,12 +92,12 @@ export default function StoreManagement() {
 
   return (
     <>
-      <AdminHeader title="Store Management" subtitle={`${stores.length} stores registered`}>
+      <AdminHeader title="Gestao de Lojas" subtitle={`${stores.length} loja(s) cadastrada(s)`}>
         <button
           onClick={() => { resetForm(); setShowForm(true) }}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
         >
-          + Add Store
+          + Adicionar Loja
         </button>
       </AdminHeader>
 
@@ -106,18 +106,18 @@ export default function StoreManagement() {
         {showForm && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <h3 className="text-lg font-semibold mb-4">
-              {editingStore ? 'Edit Store' : 'New Store'}
+              {editingStore ? 'Editar Loja' : 'Nova Loja'}
             </h3>
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                  placeholder="Store name"
+                  placeholder="Nome da loja"
                 />
               </div>
               <div>
@@ -132,13 +132,13 @@ export default function StoreManagement() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Localizacao</label>
                 <input
                   type="text"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                  placeholder="City, State"
+                  placeholder="Cidade, Estado"
                 />
               </div>
               <div className="md:col-span-3 flex gap-3">
@@ -147,14 +147,14 @@ export default function StoreManagement() {
                   disabled={saving}
                   className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white px-6 py-2 rounded-lg text-sm font-medium transition"
                 >
-                  {saving ? 'Saving...' : editingStore ? 'Update' : 'Create'}
+                  {saving ? 'Salvando...' : editingStore ? 'Atualizar' : 'Criar'}
                 </button>
                 <button
                   type="button"
                   onClick={resetForm}
                   className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2 rounded-lg text-sm font-medium transition"
                 >
-                  Cancel
+                  Cancelar
                 </button>
               </div>
             </form>
@@ -166,11 +166,11 @@ export default function StoreManagement() {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nome</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CNPJ</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Localizacao</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acoes</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -183,22 +183,22 @@ export default function StoreManagement() {
                     <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       store.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
                     }`}>
-                      {store.is_active ? 'Active' : 'Inactive'}
+                      {store.is_active ? 'Ativa' : 'Inativa'}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right space-x-2">
-                    <button onClick={() => handleEdit(store)} className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Edit</button>
+                    <button onClick={() => handleEdit(store)} className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Editar</button>
                     <button onClick={() => handleToggleActive(store)} className="text-yellow-600 hover:text-yellow-800 text-sm font-medium">
-                      {store.is_active ? 'Deactivate' : 'Activate'}
+                      {store.is_active ? 'Desativar' : 'Ativar'}
                     </button>
-                    <button onClick={() => handleDelete(store.id)} className="text-red-600 hover:text-red-800 text-sm font-medium">Delete</button>
+                    <button onClick={() => handleDelete(store.id)} className="text-red-600 hover:text-red-800 text-sm font-medium">Excluir</button>
                   </td>
                 </tr>
               ))}
               {stores.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                    No stores registered yet. Click &quot;+ Add Store&quot; to get started.
+                    Nenhuma loja cadastrada. Clique em &quot;+ Adicionar Loja&quot; para comecar.
                   </td>
                 </tr>
               )}

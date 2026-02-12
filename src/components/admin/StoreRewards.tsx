@@ -56,23 +56,23 @@ export default function StoreRewards() {
 
   return (
     <>
-      <AdminHeader title="Store Rewards" subtitle="B2B performance tracking — target: +20% weekly growth" />
+      <AdminHeader title="Desempenho das Lojas" subtitle="Acompanhamento B2B — meta: +20% crescimento semanal" />
 
       <div className="p-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-            <p className="text-sm text-gray-500">Total Stores</p>
+            <p className="text-sm text-gray-500">Total de Lojas</p>
             <p className="text-2xl font-bold text-gray-900">{performance.length}</p>
           </div>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-            <p className="text-sm text-gray-500">Total Salespeople</p>
+            <p className="text-sm text-gray-500">Total de Vendedores</p>
             <p className="text-2xl font-bold text-indigo-600">
               {performance.reduce((sum, s) => sum + s.salesperson_count, 0)}
             </p>
           </div>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-            <p className="text-sm text-gray-500">Goals Completed</p>
+            <p className="text-sm text-gray-500">Metas Concluidas</p>
             <p className="text-2xl font-bold text-green-600">
               {performance.reduce((sum, s) => sum + s.goals_completed, 0)}
             </p>
@@ -84,15 +84,15 @@ export default function StoreRewards() {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Store</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Team</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Approved</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Points</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Goals</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">This Week</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Last Week</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Growth</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Loja</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Localizacao</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Equipe</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Aprovados</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Pontos</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Metas</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Esta Semana</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Semana Anterior</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Crescimento</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -122,7 +122,7 @@ export default function StoreRewards() {
               {performance.length === 0 && (
                 <tr>
                   <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
-                    No store data available yet.
+                    Nenhum dado de loja disponivel ainda.
                   </td>
                 </tr>
               )}

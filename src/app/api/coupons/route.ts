@@ -50,7 +50,7 @@ export async function GET(request: Request) {
   } catch (error: any) {
     console.error('Error fetching coupons:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch coupons' },
+      { error: error.message || 'Falha ao buscar cupons' },
       { status: 500 }
     )
   }
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('Error creating coupon:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to create coupon' },
+      { error: error.message || 'Falha ao criar cupom' },
       { status: 500 }
     )
   }

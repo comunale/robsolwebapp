@@ -90,18 +90,18 @@ export default function DrawManager() {
 
   return (
     <>
-      <AdminHeader title="Draw Manager" subtitle="Execute lucky number draws for campaigns" />
+      <AdminHeader title="Gerenciador de Sorteios" subtitle="Realize sorteios de numeros da sorte para campanhas" />
 
       <div className="p-6 space-y-6">
         {/* Campaign Selection */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Select Campaign</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Selecionar Campanha</label>
           <select
             value={selectedCampaign}
             onChange={(e) => setSelectedCampaign(e.target.value)}
             className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white"
           >
-            <option value="">Choose a campaign...</option>
+            <option value="">Escolha uma campanha...</option>
             {campaigns.map((c) => (
               <option key={c.id} value={c.id}>{c.title}</option>
             ))}
@@ -113,25 +113,25 @@ export default function DrawManager() {
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-                <p className="text-sm text-gray-500">Total Numbers</p>
+                <p className="text-sm text-gray-500">Total de Numeros</p>
                 <p className="text-2xl font-bold text-gray-900">{totalNumbers}</p>
               </div>
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-                <p className="text-sm text-gray-500">Eligible for Draw</p>
+                <p className="text-sm text-gray-500">Elegiveis para Sorteio</p>
                 <p className="text-2xl font-bold text-indigo-600">{eligibleNumbers}</p>
               </div>
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-                <p className="text-sm text-gray-500">Winners So Far</p>
+                <p className="text-sm text-gray-500">Ganhadores Ate Agora</p>
                 <p className="text-2xl font-bold text-green-600">{winners.length}</p>
               </div>
             </div>
 
             {/* Draw Controls */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold mb-4">Execute Draw</h3>
+              <h3 className="text-lg font-semibold mb-4">Realizar Sorteio</h3>
               <div className="flex items-end gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Winners to draw</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ganhadores a sortear</label>
                   <input
                     type="number"
                     min={1}
@@ -146,14 +146,14 @@ export default function DrawManager() {
                   disabled={drawing || eligibleNumbers === 0}
                   className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg font-medium transition"
                 >
-                  {drawing ? 'Drawing...' : 'Execute Draw'}
+                  {drawing ? 'Sorteando...' : 'Realizar Sorteio'}
                 </button>
               </div>
 
               {/* Last Draw Results */}
               {lastWinners.length > 0 && (
                 <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="font-semibold text-green-800 mb-2">Winners drawn:</p>
+                  <p className="font-semibold text-green-800 mb-2">Ganhadores sorteados:</p>
                   <div className="flex flex-wrap gap-2">
                     {lastWinners.map((w) => (
                       <span key={w.number} className="bg-green-200 text-green-900 px-3 py-1 rounded-full text-sm font-bold">
@@ -167,9 +167,9 @@ export default function DrawManager() {
 
             {/* All Numbers */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold mb-4">All Lucky Numbers</h3>
+              <h3 className="text-lg font-semibold mb-4">Todos os Numeros da Sorte</h3>
               {luckyNumbers.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No lucky numbers generated yet for this campaign.</p>
+                <p className="text-gray-500 text-center py-8">Nenhum numero da sorte gerado para esta campanha.</p>
               ) : (
                 <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
                   {luckyNumbers.map((n) => (
@@ -192,7 +192,7 @@ export default function DrawManager() {
             {/* Winners History */}
             {winners.length > 0 && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold mb-4">Winners</h3>
+                <h3 className="text-lg font-semibold mb-4">Ganhadores</h3>
                 <div className="space-y-2">
                   {winners.map((w) => (
                     <div key={w.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
@@ -200,7 +200,7 @@ export default function DrawManager() {
                         <span className="bg-green-200 text-green-900 px-3 py-1 rounded-full text-sm font-bold">
                           #{w.number}
                         </span>
-                        <span className="text-sm font-medium text-gray-900">{w.full_name || 'Unknown'}</span>
+                        <span className="text-sm font-medium text-gray-900">{w.full_name || 'Desconhecido'}</span>
                       </div>
                       {w.drawn_at && (
                         <span className="text-xs text-gray-500">

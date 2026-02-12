@@ -22,7 +22,7 @@ export default function CampaignList() {
   const fetchCampaigns = async () => {
     try {
       const response = await fetch('/api/campaigns')
-      if (!response.ok) throw new Error('Failed to fetch campaigns')
+      if (!response.ok) throw new Error('Falha ao carregar campanhas')
       const data = await response.json()
       setCampaigns(data.campaigns || [])
     } catch (err: any) {
@@ -36,7 +36,7 @@ export default function CampaignList() {
     if (!confirm('Tem certeza que deseja excluir esta campanha?')) return
     try {
       const response = await fetch(`/api/campaigns/${id}`, { method: 'DELETE' })
-      if (!response.ok) throw new Error('Failed to delete campaign')
+      if (!response.ok) throw new Error('Falha ao excluir campanha')
       await fetchCampaigns()
     } catch (err: any) {
       alert(err.message)
@@ -50,7 +50,7 @@ export default function CampaignList() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_active: !campaign.is_active }),
       })
-      if (!response.ok) throw new Error('Failed to update campaign')
+      if (!response.ok) throw new Error('Falha ao atualizar campanha')
       await fetchCampaigns()
     } catch (err: any) {
       alert(err.message)
