@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { useAuth } from '@/lib/hooks/useAuth'
 import AdminHeader from './AdminHeader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
@@ -30,11 +31,7 @@ export default function CouponModeration() {
   const [reviewing, setReviewing] = useState(false)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    if (user && profile?.role === 'admin') fetchCoupons()
-  }, [user, profile, filter])
-
-  const fetchCoupons = async () => {
+  const fetchCoupons = useCallback(async () => {
     setLoading(true)
     try {
       const params = filter !== 'all' ? `?status=${filter}` : ''
@@ -42,12 +39,18 @@ export default function CouponModeration() {
       if (!res.ok) throw new Error('Falha ao carregar cupons')
       const data = await res.json()
       setCoupons(data.coupons || [])
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Falha ao carregar cupons')
     } finally {
       setLoading(false)
     }
-  }
+  }, [filter])
+
+  useEffect(() => {
+    if (user && profile?.role === 'admin') {
+      void fetchCoupons()
+    }
+  }, [user, profile, fetchCoupons])
 
   // When a coupon is selected, load its campaign's default points
   useEffect(() => {
@@ -87,8 +90,8 @@ export default function CouponModeration() {
       setSelectedCoupon(null)
       setReviewPoints(10)
       await fetchCoupons()
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Falha ao revisar cupom')
     } finally {
       setReviewing(false)
     }
@@ -150,8 +153,14 @@ export default function CouponModeration() {
                 {/* Left: Photo */}
                 <div>
                   <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Foto do Cupom</h3>
-                  <div className="rounded-lg border overflow-hidden bg-gray-100">
-                    <img src={selectedCoupon.image_url} alt="Cupom" className="w-full object-contain max-h-[500px]" />
+                  <div className="relative rounded-lg border overflow-hidden bg-gray-100 w-full min-h-[320px] max-h-[500px]">
+                    <Image
+                      src={selectedCoupon.image_url}
+                      alt="Cupom"
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      className="object-contain"
+                    />
                   </div>
                 </div>
 
@@ -282,7 +291,7 @@ export default function CouponModeration() {
                 <div className="p-6 border-t bg-gray-50 text-center">
                   <span className={`px-4 py-2 rounded-full text-sm font-medium ${statusColors[selectedCoupon.status]}`}>
                     {statusLabels[selectedCoupon.status]}
-                    {selectedCoupon.status === 'approved' && ` — ${selectedCoupon.points_awarded} pts concedidos`}
+                    {selectedCoupon.status === 'approved' && ` - ${selectedCoupon.points_awarded} pts concedidos`}
                   </span>
                 </div>
               )}
@@ -313,8 +322,14 @@ export default function CouponModeration() {
                 onClick={() => setSelectedCoupon(coupon)}
                 className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition cursor-pointer overflow-hidden"
               >
-                <div className="h-40 bg-gray-100 overflow-hidden">
-                  <img src={coupon.image_url} alt="Cupom" className="w-full h-full object-cover" />
+                <div className="relative h-40 bg-gray-100 overflow-hidden">
+                  <Image
+                    src={coupon.image_url}
+                    alt="Cupom"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 33vw"
+                    className="object-cover"
+                  />
                 </div>
                 <div className="p-4">
                   <div className="flex justify-between items-start mb-2">

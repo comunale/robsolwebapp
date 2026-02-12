@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import AdminHeader from './AdminHeader'
@@ -42,7 +42,7 @@ export default function UserManagementTable() {
   const [selectedCampaignExport, setSelectedCampaignExport] = useState('')
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     if (!user || profile?.role !== 'admin') return
@@ -62,7 +62,7 @@ export default function UserManagementTable() {
       setLoading(false)
     }
     fetchData()
-  }, [user, profile])
+  }, [user, profile, supabase])
 
   const handleExportGeneral = () => {
     const headers = ['Nome', 'Loja', 'WhatsApp', 'Email', 'Data de Cadastro']

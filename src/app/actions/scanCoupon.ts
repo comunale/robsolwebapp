@@ -94,11 +94,12 @@ Rules:
     const extractedData: ExtractedData = JSON.parse(cleaned)
 
     return { success: true, data: extractedData }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('OCR scan error:', error)
+    const message = error instanceof Error ? error.message : 'Falha ao escanear imagem do cupom'
     return {
       success: false,
-      error: error.message || 'Falha ao escanear imagem do cupom',
+      error: message,
     }
   }
 }

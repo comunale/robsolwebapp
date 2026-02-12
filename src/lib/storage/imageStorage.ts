@@ -17,7 +17,7 @@ export const uploadCampaignBanner = async (
   const fileExt = file.name.split('.').pop()
   const filePath = `campaigns/${campaignId}/banner.${fileExt}`
 
-  const { data, error } = await supabase.storage
+  const { error } = await supabase.storage
     .from(BUCKET_NAME)
     .upload(filePath, file, {
       cacheControl: '3600',
@@ -49,13 +49,12 @@ export const uploadCouponImage = async (
 
   // Generate unique filename
   const timestamp = Date.now()
-  const fileExt = file.name.split('.').pop()
   const fileName = `${timestamp}_${file.name}`
 
   // Storage path: coupons/{campaign_id}/{user_id}/{filename}
   const filePath = `coupons/${campaignId}/${userId}/${fileName}`
 
-  const { data, error } = await supabase.storage
+  const { error } = await supabase.storage
     .from(BUCKET_NAME)
     .upload(filePath, file, {
       cacheControl: '3600',

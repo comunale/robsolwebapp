@@ -47,10 +47,11 @@ export async function GET(request: Request) {
     if (error) throw error
 
     return NextResponse.json({ coupons })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao buscar cupons'
     console.error('Error fetching coupons:', error)
     return NextResponse.json(
-      { error: error.message || 'Falha ao buscar cupons' },
+      { error: message },
       { status: 500 }
     )
   }
@@ -87,10 +88,11 @@ export async function POST(request: Request) {
     if (error) throw error
 
     return NextResponse.json({ coupon }, { status: 201 })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao criar cupom'
     console.error('Error creating coupon:', error)
     return NextResponse.json(
-      { error: error.message || 'Falha ao criar cupom' },
+      { error: message },
       { status: 500 }
     )
   }

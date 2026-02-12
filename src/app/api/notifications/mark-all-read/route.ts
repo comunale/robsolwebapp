@@ -23,9 +23,10 @@ export async function POST() {
     if (error) throw error
 
     return NextResponse.json({ message: 'Todas as notificacoes foram marcadas como lidas' })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao marcar notificacoes como lidas'
     return NextResponse.json(
-      { error: error.message || 'Falha ao marcar notificacoes como lidas' },
+      { error: message },
       { status: 500 }
     )
   }

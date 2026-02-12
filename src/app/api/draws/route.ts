@@ -91,9 +91,10 @@ export async function POST(request: Request) {
         number: w.number,
       })),
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao executar sorteio'
     return NextResponse.json(
-      { error: error.message || 'Falha ao executar sorteio' },
+      { error: message },
       { status: 500 }
     )
   }

@@ -42,9 +42,10 @@ export async function GET(request: Request) {
     if (error) throw error
 
     return NextResponse.json({ lucky_numbers: luckyNumbers })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao buscar numeros da sorte'
     return NextResponse.json(
-      { error: error.message || 'Falha ao buscar numeros da sorte' },
+      { error: message },
       { status: 500 }
     )
   }

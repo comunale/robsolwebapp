@@ -35,9 +35,10 @@ export async function GET(request: Request) {
     if (error) throw error
 
     return NextResponse.json({ leaderboard })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao buscar ranking'
     return NextResponse.json(
-      { error: error.message || 'Falha ao buscar ranking' },
+      { error: message },
       { status: 500 }
     )
   }

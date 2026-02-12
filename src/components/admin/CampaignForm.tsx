@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { uploadCampaignBanner } from '@/lib/storage/imageStorage'
 import AdminHeader from './AdminHeader'
@@ -96,8 +97,8 @@ export default function CampaignForm() {
       if (bannerFile) {
         try {
           bannerUrl = await uploadCampaignBanner(bannerFile, tempCampaignId)
-        } catch (uploadErr: any) {
-          const msg = uploadErr.message || ''
+        } catch (uploadErr: unknown) {
+          const msg = uploadErr instanceof Error ? uploadErr.message : ''
           if (msg.includes('Bucket not found') || msg.includes('not found')) {
             throw new Error('Bucket de armazenamento "incentive-campaigns" nao encontrado. Crie-o no painel do Supabase.')
           }
@@ -131,8 +132,8 @@ export default function CampaignForm() {
       }
 
       router.push('/admin/campaigns')
-    } catch (err: any) {
-      setError(err.message || 'Falha ao criar campanha')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Falha ao criar campanha')
       setLoading(false)
     }
   }
@@ -399,7 +400,14 @@ export default function CampaignForm() {
                 >
                   {bannerPreview ? (
                     <div className="relative w-full h-full">
-                      <img src={bannerPreview} alt="Preview do banner" className="w-full h-full object-cover rounded-lg" />
+                      <Image
+                        src={bannerPreview}
+                        alt="Preview do banner"
+                        fill
+                        unoptimized
+                        sizes="100vw"
+                        className="object-cover rounded-lg"
+                      />
                       <button
                         type="button"
                         onClick={(e) => { e.preventDefault(); setBannerFile(null); setBannerPreview(null) }}

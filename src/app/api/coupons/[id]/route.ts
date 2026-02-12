@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 
 // GET /api/coupons/[id]
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -32,9 +32,10 @@ export async function GET(
     }
 
     return NextResponse.json({ coupon })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao buscar cupom'
     return NextResponse.json(
-      { error: error.message || 'Falha ao buscar cupom' },
+      { error: message },
       { status: 500 }
     )
   }
@@ -140,10 +141,11 @@ export async function PATCH(
     })
 
     return NextResponse.json({ coupon })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao revisar cupom'
     console.error('Error reviewing coupon:', error)
     return NextResponse.json(
-      { error: error.message || 'Falha ao revisar cupom' },
+      { error: message },
       { status: 500 }
     )
   }

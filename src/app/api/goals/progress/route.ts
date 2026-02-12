@@ -96,9 +96,10 @@ export async function GET(request: Request) {
     )
 
     return NextResponse.json({ progress })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao buscar progresso das metas'
     return NextResponse.json(
-      { error: error.message || 'Falha ao buscar progresso das metas' },
+      { error: message },
       { status: 500 }
     )
   }

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 
 // PATCH /api/notifications/[id] - Mark notification as read
 export async function PATCH(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -29,9 +29,10 @@ export async function PATCH(
     if (error) throw error
 
     return NextResponse.json({ notification })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao atualizar notificacao'
     return NextResponse.json(
-      { error: error.message || 'Falha ao atualizar notificacao' },
+      { error: message },
       { status: 500 }
     )
   }

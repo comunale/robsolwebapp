@@ -32,9 +32,10 @@ export async function GET() {
     if (error) throw error
 
     return NextResponse.json({ performance })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao buscar desempenho das lojas'
     return NextResponse.json(
-      { error: error.message || 'Falha ao buscar desempenho das lojas' },
+      { error: message },
       { status: 500 }
     )
   }

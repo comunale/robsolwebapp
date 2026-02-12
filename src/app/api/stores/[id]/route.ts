@@ -4,7 +4,7 @@ import type { UpdateStoreInput } from '@/types/store'
 
 // GET /api/stores/[id]
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -33,9 +33,10 @@ export async function GET(
     }
 
     return NextResponse.json({ store })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao buscar loja'
     return NextResponse.json(
-      { error: error.message || 'Falha ao buscar loja' },
+      { error: message },
       { status: 500 }
     )
   }
@@ -85,9 +86,10 @@ export async function PATCH(
     }
 
     return NextResponse.json({ store })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao atualizar loja'
     return NextResponse.json(
-      { error: error.message || 'Falha ao atualizar loja' },
+      { error: message },
       { status: 500 }
     )
   }
@@ -95,7 +97,7 @@ export async function PATCH(
 
 // DELETE /api/stores/[id] - Delete a store (admin only)
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -125,9 +127,10 @@ export async function DELETE(
     if (error) throw error
 
     return NextResponse.json({ message: 'Loja excluida com sucesso' })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao excluir loja'
     return NextResponse.json(
-      { error: error.message || 'Falha ao excluir loja' },
+      { error: message },
       { status: 500 }
     )
   }

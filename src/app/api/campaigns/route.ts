@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import type { CreateCampaignInput } from '@/types/campaign'
 
 // GET /api/campaigns - Get all campaigns
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const supabase = await createClient()
 
@@ -25,10 +25,11 @@ export async function GET(request: Request) {
     if (error) throw error
 
     return NextResponse.json({ campaigns })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao buscar campanhas'
     console.error('Error fetching campaigns:', error)
     return NextResponse.json(
-      { error: error.message || 'Falha ao buscar campanhas' },
+      { error: message },
       { status: 500 }
     )
   }
@@ -88,10 +89,11 @@ export async function POST(request: Request) {
     if (error) throw error
 
     return NextResponse.json({ campaign }, { status: 201 })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao criar campanha'
     console.error('Error creating campaign:', error)
     return NextResponse.json(
-      { error: error.message || 'Falha ao criar campanha' },
+      { error: message },
       { status: 500 }
     )
   }

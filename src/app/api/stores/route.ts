@@ -23,9 +23,10 @@ export async function GET() {
     if (error) throw error
 
     return NextResponse.json({ stores })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao buscar lojas'
     return NextResponse.json(
-      { error: error.message || 'Falha ao buscar lojas' },
+      { error: message },
       { status: 500 }
     )
   }
@@ -77,9 +78,10 @@ export async function POST(request: Request) {
     if (error) throw error
 
     return NextResponse.json({ store }, { status: 201 })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao criar loja'
     return NextResponse.json(
-      { error: error.message || 'Falha ao criar loja' },
+      { error: message },
       { status: 500 }
     )
   }

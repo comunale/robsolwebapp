@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import AdminHeader from './AdminHeader'
@@ -17,17 +17,9 @@ export default function DrawManager() {
   const [drawing, setDrawing] = useState(false)
   const [drawCount, setDrawCount] = useState(1)
   const [lastWinners, setLastWinners] = useState<{ number: number; user_id: string }[]>([])
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    if (user && profile?.role === 'admin') fetchCampaigns()
-  }, [user, profile])
-
-  useEffect(() => {
-    if (selectedCampaign) fetchLuckyNumbers()
-  }, [selectedCampaign])
-
-  const fetchCampaigns = async () => {
+  const fetchCampaigns = useCallback(async () => {
     try {
       const { data } = await supabase
         .from('campaigns')
@@ -40,9 +32,9 @@ export default function DrawManager() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [supabase])
 
-  const fetchLuckyNumbers = async () => {
+  const fetchLuckyNumbers = useCallback(async () => {
     try {
       const { data } = await supabase
         .from('lucky_numbers')
@@ -50,7 +42,7 @@ export default function DrawManager() {
         .eq('campaign_id', selectedCampaign)
         .order('number')
       if (data) {
-        setLuckyNumbers(data.map((n: any) => ({
+        setLuckyNumbers(data.map((n: LuckyNumber & { profiles?: { full_name: string } | null }) => ({
           ...n,
           full_name: n.profiles?.full_name,
         })))
@@ -58,7 +50,19 @@ export default function DrawManager() {
     } catch (err) {
       console.error(err)
     }
-  }
+  }, [selectedCampaign, supabase])
+
+  useEffect(() => {
+    if (user && profile?.role === 'admin') {
+      void fetchCampaigns()
+    }
+  }, [user, profile, fetchCampaigns])
+
+  useEffect(() => {
+    if (selectedCampaign) {
+      void fetchLuckyNumbers()
+    }
+  }, [selectedCampaign, fetchLuckyNumbers])
 
   const executeDraw = async () => {
     if (!selectedCampaign) return
@@ -74,8 +78,8 @@ export default function DrawManager() {
       if (!res.ok) throw new Error(data.error)
       setLastWinners(data.winners)
       await fetchLuckyNumbers()
-    } catch (err: any) {
-      alert(err.message)
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Falha ao executar sorteio')
     } finally {
       setDrawing(false)
     }

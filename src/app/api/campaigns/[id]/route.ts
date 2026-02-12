@@ -4,7 +4,7 @@ import type { UpdateCampaignInput } from '@/types/campaign'
 
 // GET /api/campaigns/[id] - Get a single campaign
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -34,10 +34,11 @@ export async function GET(
     }
 
     return NextResponse.json({ campaign })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao buscar campanha'
     console.error('Error fetching campaign:', error)
     return NextResponse.json(
-      { error: error.message || 'Falha ao buscar campanha' },
+      { error: message },
       { status: 500 }
     )
   }
@@ -93,10 +94,11 @@ export async function PATCH(
     }
 
     return NextResponse.json({ campaign })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao atualizar campanha'
     console.error('Error updating campaign:', error)
     return NextResponse.json(
-      { error: error.message || 'Falha ao atualizar campanha' },
+      { error: message },
       { status: 500 }
     )
   }
@@ -104,7 +106,7 @@ export async function PATCH(
 
 // DELETE /api/campaigns/[id] - Delete a campaign
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -136,10 +138,11 @@ export async function DELETE(
     if (error) throw error
 
     return NextResponse.json({ message: 'Campanha excluida com sucesso' })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Falha ao excluir campanha'
     console.error('Error deleting campaign:', error)
     return NextResponse.json(
-      { error: error.message || 'Falha ao excluir campanha' },
+      { error: message },
       { status: 500 }
     )
   }
