@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { uploadCampaignBanner } from '@/lib/storage/imageStorage'
-import { createClient } from '@/lib/supabase/client'
 import AdminHeader from './AdminHeader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import type { GoalConfig } from '@/types/goal'
@@ -15,7 +14,6 @@ export default function CampaignForm() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const supabase = createClient()
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -96,12 +94,15 @@ export default function CampaignForm() {
       let bannerUrl: string | null = null
 
       if (bannerFile) {
-        const { data: buckets } = await supabase.storage.listBuckets()
-        const bucketExists = buckets?.some(b => b.name === 'incentive-campaigns')
-        if (!bucketExists) {
-          throw new Error('Bucket de armazenamento "incentive-campaigns" nao encontrado. Crie-o no painel do Supabase.')
+        try {
+          bannerUrl = await uploadCampaignBanner(bannerFile, tempCampaignId)
+        } catch (uploadErr: any) {
+          const msg = uploadErr.message || ''
+          if (msg.includes('Bucket not found') || msg.includes('not found')) {
+            throw new Error('Bucket de armazenamento "incentive-campaigns" nao encontrado. Crie-o no painel do Supabase.')
+          }
+          throw new Error(`Falha ao enviar banner: ${msg}`)
         }
-        bannerUrl = await uploadCampaignBanner(bannerFile, tempCampaignId)
       }
 
       const response = await fetch('/api/campaigns', {

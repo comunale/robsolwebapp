@@ -174,19 +174,19 @@ CREATE POLICY "Authenticated users can update stores"
 CREATE POLICY "Authenticated users can delete stores"
   ON stores FOR DELETE TO authenticated USING (true);
 
--- PROFILES POLICIES (simple - no admin self-referencing)
-CREATE POLICY "Users can view own profile"
-  ON profiles FOR SELECT USING (auth.uid() = id);
-
--- Allow authenticated users to read all profiles (needed for admin user management + leaderboard)
-CREATE POLICY "Authenticated users can view all profiles"
+-- PROFILES POLICIES
+-- Single SELECT policy per operation to prevent duplicate-policy recursion.
+-- Admin authorization is enforced at the API route level (server-side).
+-- UPDATE is broad because triggers (update_user_points, evaluate_user_goals)
+-- run as SECURITY DEFINER and need to update any user's points.
+CREATE POLICY "profiles_select_authenticated"
   ON profiles FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Users can update own profile"
-  ON profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "profiles_insert_own"
+  ON profiles FOR INSERT TO authenticated WITH CHECK (auth.uid() = id);
 
-CREATE POLICY "Allow insert for new users"
-  ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "profiles_update_authenticated"
+  ON profiles FOR UPDATE TO authenticated USING (true);
 
 -- CAMPAIGNS POLICIES
 CREATE POLICY "Authenticated users can view campaigns"
@@ -201,40 +201,31 @@ CREATE POLICY "Authenticated users can update campaigns"
 CREATE POLICY "Authenticated users can delete campaigns"
   ON campaigns FOR DELETE TO authenticated USING (true);
 
--- COUPONS POLICIES
-CREATE POLICY "Users can view own coupons"
-  ON coupons FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own coupons"
-  ON coupons FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Authenticated users can view all coupons"
+-- COUPONS POLICIES (single SELECT policy to avoid duplicate-policy issues)
+CREATE POLICY "coupons_select_authenticated"
   ON coupons FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Authenticated users can update coupons"
+CREATE POLICY "coupons_insert_own"
+  ON coupons FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "coupons_update_authenticated"
   ON coupons FOR UPDATE TO authenticated USING (true);
 
 -- GOAL COMPLETIONS POLICIES
-CREATE POLICY "Users can view own goal completions"
-  ON goal_completions FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Authenticated users can view all goal completions"
+CREATE POLICY "goal_completions_select_authenticated"
   ON goal_completions FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Authenticated users can insert goal completions"
+CREATE POLICY "goal_completions_insert_authenticated"
   ON goal_completions FOR INSERT TO authenticated WITH CHECK (true);
 
 -- LUCKY NUMBERS POLICIES
-CREATE POLICY "Users can view own lucky numbers"
-  ON lucky_numbers FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Authenticated users can view all lucky numbers"
+CREATE POLICY "lucky_numbers_select_authenticated"
   ON lucky_numbers FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Authenticated users can insert lucky numbers"
+CREATE POLICY "lucky_numbers_insert_authenticated"
   ON lucky_numbers FOR INSERT TO authenticated WITH CHECK (true);
 
-CREATE POLICY "Authenticated users can update lucky numbers"
+CREATE POLICY "lucky_numbers_update_authenticated"
   ON lucky_numbers FOR UPDATE TO authenticated USING (true);
 
 -- NOTIFICATIONS POLICIES

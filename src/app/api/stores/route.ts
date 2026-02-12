@@ -25,7 +25,7 @@ export async function GET() {
     return NextResponse.json({ stores })
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch stores' },
+      { error: error.message || 'Falha ao buscar lojas' },
       { status: 500 }
     )
   }
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
 
     if (!body.name || !body.cnpj) {
       return NextResponse.json(
-        { error: 'Missing required fields: name, cnpj' },
+        { error: 'Campos obrigatorios ausentes: nome, cnpj' },
         { status: 400 }
       )
     }
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ store }, { status: 201 })
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || 'Failed to create store' },
+      { error: error.message || 'Falha ao criar loja' },
       { status: 500 }
     )
   }

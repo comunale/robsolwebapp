@@ -25,12 +25,17 @@ export async function GET(
       .eq('id', id)
       .single()
 
-    if (error) throw error
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Loja nao encontrada' }, { status: 404 })
+      }
+      throw error
+    }
 
     return NextResponse.json({ store })
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch store' },
+      { error: error.message || 'Falha ao buscar loja' },
       { status: 500 }
     )
   }
@@ -72,12 +77,17 @@ export async function PATCH(
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Loja nao encontrada' }, { status: 404 })
+      }
+      throw error
+    }
 
     return NextResponse.json({ store })
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || 'Failed to update store' },
+      { error: error.message || 'Falha ao atualizar loja' },
       { status: 500 }
     )
   }
@@ -114,10 +124,10 @@ export async function DELETE(
 
     if (error) throw error
 
-    return NextResponse.json({ message: 'Store deleted successfully' })
+    return NextResponse.json({ message: 'Loja excluida com sucesso' })
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || 'Failed to delete store' },
+      { error: error.message || 'Falha ao excluir loja' },
       { status: 500 }
     )
   }
