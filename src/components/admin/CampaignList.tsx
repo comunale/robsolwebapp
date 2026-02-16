@@ -153,15 +153,26 @@ export default function CampaignList() {
                         <span><span className="font-medium">Criada em:</span> {new Date(campaign.created_at).toLocaleDateString('pt-BR')}</span>
                       </div>
                     </div>
-                    {campaign.banner_url && (
+                    {(campaign.banner_url || campaign.banner_url_mobile) && (
                       <div className="relative ml-6 flex-shrink-0 w-40 md:w-44 aspect-[4/3] md:aspect-video">
-                        <Image
-                          src={campaign.banner_url}
-                          alt={campaign.title}
-                          fill
-                          sizes="(max-width: 768px) 160px, 176px"
-                          className="object-cover rounded-lg"
-                        />
+                        {campaign.banner_url_mobile && (
+                          <Image
+                            src={campaign.banner_url_mobile}
+                            alt={campaign.title}
+                            fill
+                            sizes="160px"
+                            className="object-cover rounded-lg md:hidden"
+                          />
+                        )}
+                        {campaign.banner_url && (
+                          <Image
+                            src={campaign.banner_url}
+                            alt={campaign.title}
+                            fill
+                            sizes="176px"
+                            className={`object-cover rounded-lg ${campaign.banner_url_mobile ? 'hidden md:block' : ''}`}
+                          />
+                        )}
                       </div>
                     )}
                   </div>

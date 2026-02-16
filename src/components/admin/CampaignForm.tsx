@@ -1,19 +1,25 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { uploadCampaignBanner } from '@/lib/storage/imageStorage'
+import { uploadCampaignBanner, uploadCampaignBannerMobile } from '@/lib/storage/imageStorage'
 import AdminHeader from './AdminHeader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
-import type { GoalConfig } from '@/types/goal'
+import type { GoalConfig, CampaignSettings } from '@/types/goal'
 
-export default function CampaignForm() {
+interface CampaignFormProps {
+  campaignId?: string
+}
+
+export default function CampaignForm({ campaignId }: CampaignFormProps) {
+  const isEditMode = !!campaignId
   const { user, profile, loading: authLoading } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [fetching, setFetching] = useState(isEditMode)
   const [error, setError] = useState('')
 
   const [title, setTitle] = useState('')
@@ -25,12 +31,55 @@ export default function CampaignForm() {
   const [keywordInput, setKeywordInput] = useState('')
   const [bannerFile, setBannerFile] = useState<File | null>(null)
   const [bannerPreview, setBannerPreview] = useState<string | null>(null)
+  const [existingBannerUrl, setExistingBannerUrl] = useState<string | null>(null)
+  const [mobileBannerFile, setMobileBannerFile] = useState<File | null>(null)
+  const [mobileBannerPreview, setMobileBannerPreview] = useState<string | null>(null)
+  const [existingMobileBannerUrl, setExistingMobileBannerUrl] = useState<string | null>(null)
 
   // Campaign Settings
   const [pointsPerCoupon, setPointsPerCoupon] = useState(10)
   const [hasDraws, setHasDraws] = useState(false)
   const [drawType, setDrawType] = useState<'manual' | 'random'>('random')
   const [goals, setGoals] = useState<GoalConfig[]>([])
+
+  // Fetch existing campaign data in edit mode
+  useEffect(() => {
+    if (!isEditMode || !user) return
+    const fetchCampaign = async () => {
+      try {
+        const response = await fetch(`/api/campaigns/${campaignId}`)
+        if (!response.ok) throw new Error('Falha ao carregar campanha')
+        const data = await response.json()
+        const c = data.campaign
+        setTitle(c.title || '')
+        setDescription(c.description || '')
+        setStartDate(c.start_date ? c.start_date.split('T')[0] : '')
+        setEndDate(c.end_date ? c.end_date.split('T')[0] : '')
+        setIsActive(c.is_active ?? true)
+        setKeywords(c.keywords || [])
+        if (c.banner_url) {
+          setExistingBannerUrl(c.banner_url)
+          setBannerPreview(c.banner_url)
+        }
+        if (c.banner_url_mobile) {
+          setExistingMobileBannerUrl(c.banner_url_mobile)
+          setMobileBannerPreview(c.banner_url_mobile)
+        }
+        const settings = c.settings as CampaignSettings | null
+        if (settings) {
+          setPointsPerCoupon(settings.points_per_coupon ?? 10)
+          setHasDraws(settings.has_draws ?? false)
+          setDrawType(settings.draw_type || 'random')
+          setGoals(settings.goals || [])
+        }
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Falha ao carregar campanha')
+      } finally {
+        setFetching(false)
+      }
+    }
+    fetchCampaign()
+  }, [isEditMode, campaignId, user])
 
   const addGoal = () => {
     setGoals([...goals, {
@@ -73,6 +122,25 @@ export default function CampaignForm() {
     }
   }
 
+  const handleMobileBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setError('Por favor, selecione um arquivo de imagem valido')
+        return
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setError('O tamanho da imagem deve ser menor que 5MB')
+        return
+      }
+      setMobileBannerFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => setMobileBannerPreview(reader.result as string)
+      reader.readAsDataURL(file)
+      setError('')
+    }
+  }
+
   const addKeyword = () => {
     const kw = keywordInput.trim()
     if (kw && !keywords.includes(kw)) {
@@ -91,59 +159,78 @@ export default function CampaignForm() {
         throw new Error('A data final deve ser posterior a data inicial')
       }
 
-      const tempCampaignId = crypto.randomUUID()
-      let bannerUrl: string | null = null
+      let bannerUrl: string | null = existingBannerUrl
+      let mobileBannerUrl: string | null = existingMobileBannerUrl
+      const uploadId = isEditMode ? campaignId! : crypto.randomUUID()
 
       if (bannerFile) {
         try {
-          bannerUrl = await uploadCampaignBanner(bannerFile, tempCampaignId)
+          bannerUrl = await uploadCampaignBanner(bannerFile, uploadId)
         } catch (uploadErr: unknown) {
           const msg = uploadErr instanceof Error ? uploadErr.message : ''
           if (msg.includes('Bucket not found') || msg.includes('not found')) {
             throw new Error('Bucket de armazenamento "incentive-campaigns" nao encontrado. Crie-o no painel do Supabase.')
           }
-          throw new Error(`Falha ao enviar banner: ${msg}`)
+          throw new Error(`Falha ao enviar banner desktop: ${msg}`)
         }
       }
 
-      const response = await fetch('/api/campaigns', {
-        method: 'POST',
+      if (mobileBannerFile) {
+        try {
+          mobileBannerUrl = await uploadCampaignBannerMobile(mobileBannerFile, uploadId)
+        } catch (uploadErr: unknown) {
+          const msg = uploadErr instanceof Error ? uploadErr.message : ''
+          throw new Error(`Falha ao enviar banner mobile: ${msg}`)
+        }
+      }
+
+      const payload = {
+        title,
+        description: description || null,
+        start_date: startDate,
+        end_date: endDate,
+        is_active: isActive,
+        banner_url: bannerUrl,
+        banner_url_mobile: mobileBannerUrl,
+        keywords,
+        settings: {
+          points_per_coupon: pointsPerCoupon,
+          has_draws: hasDraws,
+          draw_type: hasDraws ? drawType : null,
+          goals: goals.filter(g => g.label.trim()),
+        },
+      }
+
+      const url = isEditMode ? `/api/campaigns/${campaignId}` : '/api/campaigns'
+      const method = isEditMode ? 'PATCH' : 'POST'
+
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          description: description || null,
-          start_date: startDate,
-          end_date: endDate,
-          is_active: isActive,
-          banner_url: bannerUrl,
-          keywords,
-          settings: {
-            points_per_coupon: pointsPerCoupon,
-            has_draws: hasDraws,
-            draw_type: hasDraws ? drawType : null,
-            goals: goals.filter(g => g.label.trim()),
-          },
-        }),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Falha ao criar campanha')
+        throw new Error(data.error || (isEditMode ? 'Falha ao atualizar campanha' : 'Falha ao criar campanha'))
       }
 
       router.push('/admin/campaigns')
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Falha ao criar campanha')
+      setError(err instanceof Error ? err.message : (isEditMode ? 'Falha ao atualizar campanha' : 'Falha ao criar campanha'))
       setLoading(false)
     }
   }
 
-  if (authLoading) return <LoadingSpinner />
+  if (authLoading || fetching) return <LoadingSpinner />
   if (!user || profile?.role !== 'admin') return null
 
   return (
     <>
-      <AdminHeader title="Nova Campanha" subtitle="Configure uma nova campanha de incentivo" />
+      <AdminHeader
+        title={isEditMode ? 'Editar Campanha' : 'Nova Campanha'}
+        subtitle={isEditMode ? 'Atualize as informacoes da campanha' : 'Configure uma nova campanha de incentivo'}
+      />
 
       <div className="p-8 max-w-3xl">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
@@ -390,45 +477,97 @@ export default function CampaignForm() {
               </div>
             </div>
 
-            {/* Banner Upload */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Banner da Campanha</label>
-              <div className="flex items-center justify-center w-full">
-                <label
-                  htmlFor="banner-upload"
-                  className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition"
-                >
-                  {bannerPreview ? (
-                    <div className="relative w-full h-full">
-                      <Image
-                        src={bannerPreview}
-                        alt="Preview do banner"
-                        fill
-                        unoptimized
-                        sizes="100vw"
-                        className="object-cover rounded-lg"
-                      />
-                      <button
-                        type="button"
-                        onClick={(e) => { e.preventDefault(); setBannerFile(null); setBannerPreview(null) }}
-                        className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 transition"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            {/* Banner Uploads */}
+            <div className="border-t border-gray-200 pt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">Banners da Campanha</h3>
+              <p className="text-xs text-gray-500 mb-4">
+                Envie imagens otimizadas para cada formato. O banner desktop aparece em telas grandes (paisagem 16:9) e o mobile em celulares (formato 4:3).
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Desktop Banner */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Banner Desktop <span className="text-xs text-gray-400">(16:9 paisagem)</span>
+                  </label>
+                  <label
+                    htmlFor="banner-upload"
+                    className="flex flex-col items-center justify-center w-full aspect-video border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition"
+                  >
+                    {bannerPreview ? (
+                      <div className="relative w-full h-full">
+                        <Image
+                          src={bannerPreview}
+                          alt="Preview do banner desktop"
+                          fill
+                          unoptimized
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                          className="object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); setBannerFile(null); setBannerPreview(null); setExistingBannerUrl(null) }}
+                          className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-4">
+                        <svg className="w-10 h-10 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <svg className="w-12 h-12 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                      </svg>
-                      <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Clique para enviar</span> ou arraste e solte</p>
-                      <p className="text-xs text-gray-500">PNG, JPG, GIF ate 5MB</p>
-                    </div>
-                  )}
-                  <input id="banner-upload" type="file" accept="image/*" onChange={handleBannerChange} className="hidden" />
-                </label>
+                        <p className="text-xs text-gray-500"><span className="font-semibold">Clique para enviar</span></p>
+                        <p className="text-xs text-gray-400">Recomendado: 1280x720px</p>
+                      </div>
+                    )}
+                    <input id="banner-upload" type="file" accept="image/*" onChange={handleBannerChange} className="hidden" />
+                  </label>
+                </div>
+
+                {/* Mobile Banner */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Banner Mobile <span className="text-xs text-gray-400">(4:3 retrato)</span>
+                  </label>
+                  <label
+                    htmlFor="mobile-banner-upload"
+                    className="flex flex-col items-center justify-center w-full aspect-[4/3] border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition"
+                  >
+                    {mobileBannerPreview ? (
+                      <div className="relative w-full h-full">
+                        <Image
+                          src={mobileBannerPreview}
+                          alt="Preview do banner mobile"
+                          fill
+                          unoptimized
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                          className="object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); setMobileBannerFile(null); setMobileBannerPreview(null); setExistingMobileBannerUrl(null) }}
+                          className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-4">
+                        <svg className="w-10 h-10 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p className="text-xs text-gray-500"><span className="font-semibold">Clique para enviar</span></p>
+                        <p className="text-xs text-gray-400">Recomendado: 640x480px</p>
+                      </div>
+                    )}
+                    <input id="mobile-banner-upload" type="file" accept="image/*" onChange={handleMobileBannerChange} className="hidden" />
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -444,7 +583,9 @@ export default function CampaignForm() {
                 disabled={loading}
                 className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-medium py-3 px-6 rounded-lg transition"
               >
-                {loading ? 'Criando Campanha...' : 'Criar Campanha'}
+                {loading
+                  ? (isEditMode ? 'Salvando...' : 'Criando Campanha...')
+                  : (isEditMode ? 'Salvar Alteracoes' : 'Criar Campanha')}
               </button>
               <Link
                 href="/admin/campaigns"

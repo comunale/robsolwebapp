@@ -8,6 +8,7 @@ export interface Campaign {
   end_date: string
   is_active: boolean
   banner_url: string | null
+  banner_url_mobile: string | null
   keywords: string[]
   settings: CampaignSettings | null
   created_at: string
@@ -21,6 +22,7 @@ export interface CreateCampaignInput {
   end_date: string
   is_active: boolean
   banner_url: string | null
+  banner_url_mobile: string | null
   keywords?: string[]
   settings?: CampaignSettings | null
 }
@@ -32,6 +34,7 @@ export interface UpdateCampaignInput {
   end_date?: string
   is_active?: boolean
   banner_url?: string | null
+  banner_url_mobile?: string | null
   keywords?: string[]
   settings?: CampaignSettings | null
 }

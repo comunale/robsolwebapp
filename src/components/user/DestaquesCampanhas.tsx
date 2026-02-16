@@ -19,15 +19,28 @@ export default function DestaquesCampanhas({ campaigns }: DestaquesCampanhasProp
             key={campaign.id}
             className="snap-start flex-shrink-0 w-64 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-4 text-white shadow-md"
           >
-            {campaign.banner_url && (
+            {(campaign.banner_url || campaign.banner_url_mobile) && (
               <div className="relative w-full aspect-[4/3] md:aspect-video rounded-lg overflow-hidden mb-3 bg-white/10">
-                <Image
-                  src={campaign.banner_url}
-                  alt={campaign.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 320px"
-                  className="object-cover"
-                />
+                {/* Mobile banner (shown on small screens) */}
+                {campaign.banner_url_mobile && (
+                  <Image
+                    src={campaign.banner_url_mobile}
+                    alt={campaign.title}
+                    fill
+                    sizes="256px"
+                    className="object-cover md:hidden"
+                  />
+                )}
+                {/* Desktop banner (shown on md+ screens), fallback for mobile if no mobile banner */}
+                {campaign.banner_url && (
+                  <Image
+                    src={campaign.banner_url}
+                    alt={campaign.title}
+                    fill
+                    sizes="320px"
+                    className={`object-cover ${campaign.banner_url_mobile ? 'hidden md:block' : ''}`}
+                  />
+                )}
               </div>
             )}
             <h3 className="font-bold text-sm mb-1 truncate">{campaign.title}</h3>

@@ -34,6 +34,37 @@ export const uploadCampaignBanner = async (
 }
 
 /**
+ * Uploads a campaign mobile banner image to Supabase Storage
+ * @param file - The image file to upload
+ * @param campaignId - The campaign ID
+ * @returns The public URL of the uploaded image
+ */
+export const uploadCampaignBannerMobile = async (
+  file: File,
+  campaignId: string
+): Promise<string> => {
+  const supabase = createClient()
+
+  const fileExt = file.name.split('.').pop()
+  const filePath = `campaigns/${campaignId}/banner-mobile.${fileExt}`
+
+  const { error } = await supabase.storage
+    .from(BUCKET_NAME)
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: true,
+    })
+
+  if (error) throw error
+
+  const { data: { publicUrl } } = supabase.storage
+    .from(BUCKET_NAME)
+    .getPublicUrl(filePath)
+
+  return publicUrl
+}
+
+/**
  * Uploads a coupon image to Supabase Storage
  * @param file - The image file to upload
  * @param userId - The user ID
