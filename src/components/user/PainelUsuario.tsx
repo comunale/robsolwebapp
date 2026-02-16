@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
@@ -15,16 +14,9 @@ import type { Campaign } from '@/types/campaign'
 
 export default function PainelUsuario() {
   const { user, profile, loading } = useAuth()
-  const router = useRouter()
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [topUsers, setTopUsers] = useState<{ full_name: string; total_points: number }[]>([])
   const supabase = useMemo(() => createClient(), [])
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login')
-    }
-  }, [user, loading, router])
 
   useEffect(() => {
     if (!user) return

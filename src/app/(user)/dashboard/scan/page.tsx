@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { scanCouponImage } from '@/app/actions/scanCoupon'
@@ -14,7 +13,6 @@ import type { ExtractedData } from '@/types/coupon'
 
 export default function ScanPage() {
   const { user, loading: authLoading } = useAuth()
-  const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -26,10 +24,6 @@ export default function ScanPage() {
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-
-  useEffect(() => {
-    if (!authLoading && !user) router.push('/login')
-  }, [user, authLoading, router])
 
   useEffect(() => {
     const fetchCampaigns = async () => {

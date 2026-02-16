@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import type { Profile } from '@/types/user'
@@ -10,6 +10,7 @@ export function useAuth() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const supabase = useMemo(() => createClient(), [])
+  const initializedRef = useRef(false)
 
   const fetchProfile = useCallback(async (userId: string) => {
     try {
@@ -23,34 +24,20 @@ export function useAuth() {
       setProfile(data)
     } catch (error) {
       console.error('Error fetching profile:', error)
+      setProfile(null)
     }
   }, [supabase])
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-
-        if (session?.user) {
-          setUser(session.user)
-          await fetchProfile(session.user.id)
-        }
-      } catch (error) {
-        console.error('Error getting session:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    void getInitialSession()
-
-    // Listen for auth changes
+    // Use onAuthStateChange as the single source of truth.
+    // It fires INITIAL_SESSION on mount, so no need for a separate getSession call.
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Skip duplicate INITIAL_SESSION events
+      if (event === 'INITIAL_SESSION' && initializedRef.current) return
+      if (event === 'INITIAL_SESSION') initializedRef.current = true
+
       setUser(session?.user ?? null)
       if (session?.user) {
         await fetchProfile(session.user.id)
