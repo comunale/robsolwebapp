@@ -6,7 +6,13 @@
       "Bash(ls:*)",
       "Bash(npm run build:*)",
       "Bash(npx next build:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npx supabase:*)",
+      "Bash(node migrations/run-migration.mjs)",
+      "Bash(nslookup:*)",
+      "Bash(curl:*)",
+      "Bash(del \"c:\\\\github\\\\robsolwebapp\\\\migrations\\\\run-migration.mjs\")",
+      "Bash(node:*)"
     ]
   }
 }
