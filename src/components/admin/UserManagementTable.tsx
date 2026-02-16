@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
-import { useAuth } from '@/lib/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import AdminHeader from './AdminHeader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
@@ -36,7 +35,6 @@ function downloadCSV(filename: string, headers: string[], rows: string[][]) {
 }
 
 export default function UserManagementTable() {
-  const { user, profile, loading: authLoading } = useAuth()
   const [users, setUsers] = useState<ProfileWithStore[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [selectedCampaignExport, setSelectedCampaignExport] = useState('')
@@ -45,7 +43,6 @@ export default function UserManagementTable() {
   const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
-    if (!user || profile?.role !== 'admin') return
     const fetchData = async () => {
       const [usersRes, campaignsRes] = await Promise.all([
         supabase
@@ -62,7 +59,7 @@ export default function UserManagementTable() {
       setLoading(false)
     }
     fetchData()
-  }, [user, profile, supabase])
+  }, [supabase])
 
   const handleExportGeneral = () => {
     const headers = ['Nome', 'Loja', 'WhatsApp', 'Email', 'Data de Cadastro']
@@ -150,8 +147,7 @@ export default function UserManagementTable() {
     }
   }
 
-  if (authLoading || loading) return <LoadingSpinner />
-  if (!profile || profile.role !== 'admin') return null
+  if (loading) return <LoadingSpinner />
 
   return (
     <>

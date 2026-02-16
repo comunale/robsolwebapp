@@ -3,22 +3,18 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useAuth } from '@/lib/hooks/useAuth'
 import AdminHeader from './AdminHeader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import type { Campaign } from '@/types/campaign'
 
 export default function CampaignList() {
-  const { user, profile, loading: authLoading } = useAuth()
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (user && profile?.role === 'admin') {
-      fetchCampaigns()
-    }
-  }, [user, profile])
+    fetchCampaigns()
+  }, [])
 
   const fetchCampaigns = async () => {
     try {
@@ -58,8 +54,7 @@ export default function CampaignList() {
     }
   }
 
-  if (authLoading || loading) return <LoadingSpinner />
-  if (!profile || profile.role !== 'admin') return null
+  if (loading) return <LoadingSpinner />
 
   return (
     <>

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
-import { useAuth } from '@/lib/hooks/useAuth'
 import AdminHeader from './AdminHeader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import type { CouponWithRelations, CouponStatus } from '@/types/coupon'
@@ -21,8 +20,6 @@ const statusLabels: Record<string, string> = {
 }
 
 export default function CouponModeration() {
-  const { user, profile, loading: authLoading } = useAuth()
-
   const [coupons, setCoupons] = useState<CouponWithRelations[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<CouponStatus | 'all'>('pending')
@@ -47,10 +44,8 @@ export default function CouponModeration() {
   }, [filter])
 
   useEffect(() => {
-    if (user && profile?.role === 'admin') {
-      void fetchCoupons()
-    }
-  }, [user, profile, fetchCoupons])
+    void fetchCoupons()
+  }, [fetchCoupons])
 
   // When a coupon is selected, load its campaign's default points
   useEffect(() => {
@@ -69,7 +64,7 @@ export default function CouponModeration() {
       }
     }
     loadCampaignPoints()
-  }, [selectedCoupon])
+  }, [selectedCoupon?.campaign_id])
 
   const handleReview = async (couponId: string, status: 'approved' | 'rejected') => {
     setReviewing(true)
@@ -96,9 +91,6 @@ export default function CouponModeration() {
       setReviewing(false)
     }
   }
-
-  if (authLoading) return <LoadingSpinner />
-  if (!profile || profile.role !== 'admin') return null
 
   return (
     <>

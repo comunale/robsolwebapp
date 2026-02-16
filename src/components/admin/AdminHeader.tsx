@@ -1,7 +1,7 @@
 'use client'
 
-import { useAuth } from '@/lib/hooks/useAuth'
 import { useRouter } from 'next/navigation'
+import { useAdmin } from './AdminGuard'
 
 interface AdminHeaderProps {
   title: string
@@ -10,7 +10,7 @@ interface AdminHeaderProps {
 }
 
 export default function AdminHeader({ title, subtitle, children }: AdminHeaderProps) {
-  const { profile, signOut } = useAuth()
+  const { profile, signOut } = useAdmin()
   const router = useRouter()
 
   const handleSignOut = async () => {
@@ -30,7 +30,7 @@ export default function AdminHeader({ title, subtitle, children }: AdminHeaderPr
         <div className="flex items-center gap-4">
           {children}
           <span className="text-sm text-gray-600">
-            {profile?.full_name}
+            {profile.full_name}
           </span>
           <button
             onClick={handleSignOut}

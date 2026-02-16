@@ -1,13 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/lib/hooks/useAuth'
 import AdminHeader from './AdminHeader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import type { Store } from '@/types/store'
 
 export default function StoreManagement() {
-  const { user, profile, loading: authLoading } = useAuth()
   const [stores, setStores] = useState<Store[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -16,8 +14,8 @@ export default function StoreManagement() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (user && profile?.role === 'admin') fetchStores()
-  }, [user, profile])
+    fetchStores()
+  }, [])
 
   const fetchStores = async () => {
     try {
@@ -87,8 +85,7 @@ export default function StoreManagement() {
     setFormData({ name: '', cnpj: '', location: '' })
   }
 
-  if (authLoading || loading) return <LoadingSpinner />
-  if (!user || profile?.role !== 'admin') return null
+  if (loading) return <LoadingSpinner />
 
   return (
     <>

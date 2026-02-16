@@ -2,10 +2,9 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
-import { useAuth } from '@/lib/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import AdminHeader from './AdminHeader'
-import LoadingSpinner from '@/components/shared/LoadingSpinner'
+import { useAdmin } from './AdminGuard'
 
 interface Stats {
   campaigns: number
@@ -17,7 +16,7 @@ interface Stats {
 }
 
 export default function DashboardOverview() {
-  const { user, profile, loading } = useAuth()
+  const { profile } = useAdmin()
   const [stats, setStats] = useState<Stats>({
     campaigns: 0, pendingCoupons: 0, users: 0,
     activeStores: 0, goalsCompleted: 0, luckyNumbers: 0,
@@ -25,7 +24,6 @@ export default function DashboardOverview() {
   const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
-    if (!user) return
     const fetchStats = async () => {
       const [campRes, coupRes, storeRes, goalRes, luckyRes] = await Promise.all([
         supabase.from('campaigns').select('id', { count: 'exact', head: true }),
@@ -44,10 +42,7 @@ export default function DashboardOverview() {
       })
     }
     fetchStats()
-  }, [user, supabase])
-
-  if (loading) return <LoadingSpinner />
-  if (!profile || profile.role !== 'admin') return null
+  }, [supabase])
 
   const cards = [
     { label: 'Campanhas', value: stats.campaigns, color: 'text-blue-600', bg: 'bg-blue-100', href: '/admin/campaigns' },

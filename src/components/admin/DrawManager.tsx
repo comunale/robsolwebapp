@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useAuth } from '@/lib/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import AdminHeader from './AdminHeader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
@@ -9,7 +8,6 @@ import type { Campaign } from '@/types/campaign'
 import type { LuckyNumber } from '@/types/goal'
 
 export default function DrawManager() {
-  const { user, profile, loading: authLoading } = useAuth()
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [selectedCampaign, setSelectedCampaign] = useState<string>('')
   const [luckyNumbers, setLuckyNumbers] = useState<(LuckyNumber & { full_name?: string })[]>([])
@@ -53,10 +51,8 @@ export default function DrawManager() {
   }, [selectedCampaign, supabase])
 
   useEffect(() => {
-    if (user && profile?.role === 'admin') {
-      void fetchCampaigns()
-    }
-  }, [user, profile, fetchCampaigns])
+    void fetchCampaigns()
+  }, [fetchCampaigns])
 
   useEffect(() => {
     if (selectedCampaign) {
@@ -89,8 +85,7 @@ export default function DrawManager() {
   const eligibleNumbers = luckyNumbers.filter((n) => !n.is_winner).length
   const winners = luckyNumbers.filter((n) => n.is_winner)
 
-  if (authLoading || loading) return <LoadingSpinner />
-  if (!user || profile?.role !== 'admin') return null
+  if (loading) return <LoadingSpinner />
 
   return (
     <>

@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useAuth } from '@/lib/hooks/useAuth'
 import { uploadCampaignBanner, uploadCampaignBannerMobile } from '@/lib/storage/imageStorage'
 import AdminHeader from './AdminHeader'
+import { useAdmin } from './AdminGuard'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import type { GoalConfig, CampaignSettings } from '@/types/goal'
 
@@ -16,7 +16,7 @@ interface CampaignFormProps {
 
 export default function CampaignForm({ campaignId }: CampaignFormProps) {
   const isEditMode = !!campaignId
-  const { user, profile, loading: authLoading } = useAuth()
+  const { user } = useAdmin()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(isEditMode)
@@ -44,7 +44,7 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
 
   // Fetch existing campaign data in edit mode
   useEffect(() => {
-    if (!isEditMode || !user) return
+    if (!isEditMode) return
     const fetchCampaign = async () => {
       try {
         const response = await fetch(`/api/campaigns/${campaignId}`)
@@ -79,7 +79,7 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
       }
     }
     fetchCampaign()
-  }, [isEditMode, campaignId, user])
+  }, [isEditMode, campaignId])
 
   const addGoal = () => {
     setGoals([...goals, {
@@ -222,8 +222,7 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
     }
   }
 
-  if (authLoading || fetching) return <LoadingSpinner />
-  if (!user || profile?.role !== 'admin') return null
+  if (fetching) return <LoadingSpinner />
 
   return (
     <>

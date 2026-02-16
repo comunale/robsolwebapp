@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
-import { useAuth } from '@/lib/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import AdminHeader from './AdminHeader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
@@ -21,13 +20,11 @@ interface AnalyticsData {
 }
 
 export default function AnalyticsDashboard() {
-  const { user, profile, loading: authLoading } = useAuth()
   const [data, setData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
   const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
-    if (!user || profile?.role !== 'admin') return
     const fetchAnalytics = async () => {
       const [
         campAll, campActive, coupAll, coupPending, coupApproved, coupRejected,
@@ -68,10 +65,9 @@ export default function AnalyticsDashboard() {
       setLoading(false)
     }
     fetchAnalytics()
-  }, [user, profile, supabase])
+  }, [supabase])
 
-  if (authLoading || loading) return <LoadingSpinner />
-  if (!profile || profile.role !== 'admin' || !data) return null
+  if (loading || !data) return <LoadingSpinner />
 
   const approvalRate =
     data.totalCoupons > 0

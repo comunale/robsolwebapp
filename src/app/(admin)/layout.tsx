@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import AdminSidebar from '@/components/admin/AdminSidebar'
+import AdminGuard from '@/components/admin/AdminGuard'
 
 export const metadata: Metadata = {
   title: 'Painel Admin - Campanhas de Incentivo',
@@ -14,7 +15,9 @@ export default function AdminLayout({
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminSidebar />
-      <div className="ml-64">{children}</div>
+      <div className="ml-64">
+        <AdminGuard>{children}</AdminGuard>
+      </div>
     </div>
   )
 }

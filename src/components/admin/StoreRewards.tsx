@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/lib/hooks/useAuth'
 import AdminHeader from './AdminHeader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 
@@ -20,13 +19,12 @@ interface StorePerformanceRow {
 }
 
 export default function StoreRewards() {
-  const { user, profile, loading: authLoading } = useAuth()
   const [performance, setPerformance] = useState<StorePerformanceRow[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (user && profile?.role === 'admin') fetchPerformance()
-  }, [user, profile])
+    fetchPerformance()
+  }, [])
 
   const fetchPerformance = async () => {
     try {
@@ -51,8 +49,7 @@ export default function StoreRewards() {
     return 'text-red-700 bg-red-100'
   }
 
-  if (authLoading || loading) return <LoadingSpinner />
-  if (!user || profile?.role !== 'admin') return null
+  if (loading) return <LoadingSpinner />
 
   return (
     <>
