@@ -1,53 +1,62 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import Image from 'next/image'
+import { createClient } from '@/lib/supabase/client'
 
-interface BannerSlide {
+interface MuralSlide {
   id: string
   title: string
-  subtitle?: string
-  gradient: string
+  subtitle: string | null
+  image_url: string | null
+  bg_color: string
+  text_color: string
 }
 
-interface CarrosselBannersProps {
-  topUsers?: { full_name: string; total_points: number }[]
+const DEFAULT_SLIDE: MuralSlide = {
+  id: 'default',
+  title: 'Robsol VIP',
+  subtitle: 'Escaneie cupons, acumule pontos e concorra a prêmios!',
+  image_url: null,
+  bg_color: 'linear-gradient(135deg, #6366f1, #9333ea)',
+  text_color: '#ffffff',
 }
 
-export default function CarrosselBanners({ topUsers }: CarrosselBannersProps) {
+export default function CarrosselBanners() {
+  const [slides, setSlides] = useState<MuralSlide[]>([])
   const [current, setCurrent] = useState(0)
-
-  const slides: BannerSlide[] = [
-    {
-      id: 'welcome',
-      title: 'Robsol VIP',
-      subtitle: 'Escaneie cupons, acumule pontos e concorra a premios!',
-      gradient: 'from-indigo-600 to-purple-600',
-    },
-    ...(topUsers && topUsers.length > 0
-      ? [
-          {
-            id: 'hall-of-fame',
-            title: 'Hall da Fama',
-            subtitle: topUsers.map((u, i) => `${i + 1}. ${u.full_name} - ${u.total_points} pts`).join(' | '),
-            gradient: 'from-amber-500 to-orange-600',
-          },
-        ]
-      : []),
-    {
-      id: 'tips',
-      title: 'Dica Rapida',
-      subtitle: 'Tire fotos claras e bem iluminadas dos seus cupons para aprovacao mais rapida!',
-      gradient: 'from-green-500 to-emerald-600',
-    },
-  ]
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
-    if (slides.length <= 1) return
+    let mounted = true
+    const fetchSlides = async () => {
+      const { data } = await supabase
+        .from('mural_slides')
+        .select('id, title, subtitle, image_url, bg_color, text_color')
+        .eq('is_active', true)
+        .order('priority', { ascending: true })
+      if (mounted && data && data.length > 0) {
+        setSlides(data as MuralSlide[])
+      }
+    }
+    void fetchSlides()
+    return () => { mounted = false }
+  }, [supabase])
+
+  const activeSlides = slides.length > 0 ? slides : [DEFAULT_SLIDE]
+
+  useEffect(() => {
+    if (activeSlides.length <= 1) return
     const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % slides.length)
+      setCurrent((prev) => (prev + 1) % activeSlides.length)
     }, 5000)
     return () => clearInterval(timer)
-  }, [slides.length])
+  }, [activeSlides.length])
+
+  // Reset to first slide when slides change
+  useEffect(() => {
+    setCurrent(0)
+  }, [slides])
 
   return (
     <section className="mb-6">
@@ -56,24 +65,44 @@ export default function CarrosselBanners({ topUsers }: CarrosselBannersProps) {
           className="flex transition-transform duration-500 ease-in-out"
           style={{ transform: `translateX(-${current * 100}%)` }}
         >
-          {slides.map((slide) => (
+          {activeSlides.map((slide) => (
             <div
               key={slide.id}
-              className={`w-full flex-shrink-0 bg-gradient-to-r ${slide.gradient} p-6 text-white min-h-[120px] flex flex-col justify-center`}
+              className="w-full flex-shrink-0 min-h-[120px] flex flex-col justify-center relative overflow-hidden"
+              style={{ background: slide.image_url ? '#1f2937' : slide.bg_color }}
             >
-              <h3 className="font-bold text-lg">{slide.title}</h3>
-              {slide.subtitle && <p className="text-white/90 text-sm mt-1">{slide.subtitle}</p>}
+              {slide.image_url && (
+                <Image
+                  src={slide.image_url}
+                  alt={slide.title}
+                  fill
+                  sizes="100vw"
+                  className="object-cover opacity-70"
+                />
+              )}
+              <div
+                className="relative z-10 p-6"
+                style={{ color: slide.text_color }}
+              >
+                <h3 className="font-bold text-lg leading-tight">{slide.title}</h3>
+                {slide.subtitle && (
+                  <p className="text-sm mt-1 opacity-90">{slide.subtitle}</p>
+                )}
+              </div>
             </div>
           ))}
         </div>
 
-        {slides.length > 1 && (
+        {activeSlides.length > 1 && (
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
-            {slides.map((_, i) => (
+            {activeSlides.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrent(i)}
-                className={`w-2 h-2 rounded-full transition ${i === current ? 'bg-white' : 'bg-white/40'}`}
+                className={`w-2 h-2 rounded-full transition ${
+                  i === current ? 'bg-white' : 'bg-white/40'
+                }`}
+                aria-label={`Slide ${i + 1}`}
               />
             ))}
           </div>

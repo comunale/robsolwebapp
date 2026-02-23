@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import type { Campaign } from '@/types/campaign'
 
 interface DestaquesCampanhasProps {
@@ -15,9 +16,10 @@ export default function DestaquesCampanhas({ campaigns }: DestaquesCampanhasProp
       <h2 className="text-sm font-semibold text-gray-700 mb-3 px-1">Campanhas Ativas</h2>
       <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
         {campaigns.map((campaign) => (
-          <div
+          <Link
             key={campaign.id}
-            className="snap-start flex-shrink-0 w-64 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-4 text-white shadow-md"
+            href={`/campaigns/${campaign.id}`}
+            className="snap-start flex-shrink-0 w-64 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-4 text-white shadow-md hover:shadow-lg transition-shadow"
           >
             {(campaign.banner_url || campaign.banner_url_mobile) && (
               <div className="relative w-full aspect-[4/3] md:aspect-video rounded-lg overflow-hidden mb-3 bg-white/10">
@@ -60,7 +62,7 @@ export default function DestaquesCampanhas({ campaigns }: DestaquesCampanhasProp
                 {campaign.settings.goals.length} meta(s) disponivel(is)
               </div>
             )}
-          </div>
+          </Link>
         ))}
       </div>
     </section>

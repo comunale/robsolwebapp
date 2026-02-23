@@ -15,30 +15,20 @@ import type { Campaign } from '@/types/campaign'
 export default function PainelUsuario() {
   const { user, profile, loading } = useAuth()
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
-  const [topUsers, setTopUsers] = useState<{ full_name: string; total_points: number }[]>([])
   const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     if (!user) return
     let active = true
     const fetchData = async () => {
-      const [campaignsRes, topUsersRes] = await Promise.all([
-        supabase
-          .from('campaigns')
-          .select('*')
-          .eq('is_active', true)
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('profiles')
-          .select('full_name, total_points')
-          .eq('role', 'user')
-          .order('total_points', { ascending: false })
-          .limit(3),
-      ])
+      const campaignsRes = await supabase
+        .from('campaigns')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
 
       if (!active) return
       if (campaignsRes.data) setCampaigns(campaignsRes.data as Campaign[])
-      if (topUsersRes.data) setTopUsers(topUsersRes.data)
     }
 
     void fetchData()
@@ -90,7 +80,7 @@ export default function PainelUsuario() {
       <CabecalhoUsuario />
       <main className="max-w-lg mx-auto px-4 py-4 pb-24">
         {/* Banner Carousel */}
-        <CarrosselBanners topUsers={topUsers} />
+        <CarrosselBanners />
 
         {/* Destaques de campanhas */}
         <DestaquesCampanhas campaigns={campaigns} />

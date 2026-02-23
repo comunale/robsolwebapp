@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { createClient } from '@/lib/supabase/client'
 import { scanCouponImage } from '@/app/actions/scanCoupon'
 import { uploadCouponImage } from '@/lib/storage/imageStorage'
 import CabecalhoUsuario from '@/components/user/CabecalhoUsuario'
@@ -13,9 +15,11 @@ import type { ExtractedData } from '@/types/coupon'
 
 export default function ScanPage() {
   const { user, loading: authLoading } = useAuth()
+  const supabase = useMemo(() => createClient(), [])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set())
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
@@ -26,19 +30,33 @@ export default function ScanPage() {
   const [success, setSuccess] = useState('')
 
   useEffect(() => {
-    const fetchCampaigns = async () => {
-      const res = await fetch('/api/campaigns')
-      if (res.ok) {
-        const data = await res.json()
-        const active = (data.campaigns || []).filter(
-          (c: Campaign) =>
-            c.is_active && new Date(c.end_date) >= new Date()
-        )
-        setCampaigns(active)
+    if (!user) return
+    let active = true
+
+    const fetchData = async () => {
+      const [campaignsRes, participantsRes] = await Promise.all([
+        supabase
+          .from('campaigns')
+          .select('*')
+          .eq('is_active', true)
+          .gte('end_date', new Date().toISOString())
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('campaign_participants')
+          .select('campaign_id')
+          .eq('user_id', user.id),
+      ])
+
+      if (!active) return
+      if (campaignsRes.data) setCampaigns(campaignsRes.data as Campaign[])
+      if (participantsRes.data) {
+        setJoinedIds(new Set(participantsRes.data.map((p: { campaign_id: string }) => p.campaign_id)))
       }
     }
-    if (user) fetchCampaigns()
-  }, [user])
+
+    void fetchData()
+    return () => { active = false }
+  }, [user, supabase])
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -149,6 +167,8 @@ export default function ScanPage() {
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
+  const isSelectedJoined = selectedCampaign ? joinedIds.has(selectedCampaign.id) : false
+
   if (authLoading) return <LoadingSpinner />
   if (!user) return null
 
@@ -185,34 +205,70 @@ export default function ScanPage() {
             </p>
           ) : (
             <div className="space-y-2">
-              {campaigns.map((campaign) => (
-                <button
-                  key={campaign.id}
-                  onClick={() => {
-                    setSelectedCampaign(campaign)
-                    setExtractedData(null)
-                  }}
-                  className={`w-full text-left p-3 rounded-xl border-2 transition text-sm ${
-                    selectedCampaign?.id === campaign.id
-                      ? 'border-indigo-500 bg-indigo-50'
-                      : 'border-gray-100 bg-white hover:border-gray-200'
-                  }`}
-                >
-                  <p className="font-semibold text-gray-900">{campaign.title}</p>
-                  {campaign.keywords?.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1.5">
-                      {campaign.keywords.map((kw, i) => (
-                        <span key={i} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full">
-                          {kw}
+              {campaigns.map((campaign) => {
+                const isJoined = joinedIds.has(campaign.id)
+                const isSelected = selectedCampaign?.id === campaign.id
+                return (
+                  <button
+                    key={campaign.id}
+                    onClick={() => {
+                      setSelectedCampaign(campaign)
+                      setExtractedData(null)
+                    }}
+                    className={`w-full text-left p-3 rounded-xl border-2 transition text-sm ${
+                      isSelected
+                        ? 'border-indigo-500 bg-indigo-50'
+                        : 'border-gray-100 bg-white hover:border-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-semibold text-gray-900">{campaign.title}</p>
+                      {isJoined ? (
+                        <span className="flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                          Participando
                         </span>
-                      ))}
+                      ) : (
+                        <span className="flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                          Não inscrito
+                        </span>
+                      )}
                     </div>
-                  )}
-                  <p className="text-xs text-gray-500 mt-1.5">
-                    Encerra em {new Date(campaign.end_date).toLocaleDateString('pt-BR')}
-                  </p>
-                </button>
-              ))}
+                    {campaign.keywords?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {campaign.keywords.map((kw, i) => (
+                          <span key={i} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full">
+                            {kw}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-500 mt-1.5">
+                      Encerra em {new Date(campaign.end_date).toLocaleDateString('pt-BR')}
+                    </p>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Join-gate warning */}
+          {selectedCampaign && !isSelectedJoined && (
+            <div className="mt-3 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <p className="text-sm font-semibold text-amber-800">Entre na campanha para enviar cupons</p>
+                <p className="text-xs text-amber-600 mt-0.5 mb-2">
+                  Você precisa participar desta campanha antes de escanear cupons.
+                </p>
+                <Link
+                  href={`/campaigns/${selectedCampaign.id}`}
+                  className="inline-block bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition"
+                >
+                  Participar agora
+                </Link>
+              </div>
             </div>
           )}
         </div>
@@ -269,7 +325,7 @@ export default function ScanPage() {
           <div className="flex gap-2">
             <button
               onClick={handleScan}
-              disabled={!selectedCampaign || !imageFile || scanning}
+              disabled={!selectedCampaign || !imageFile || scanning || !isSelectedJoined}
               className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white font-medium py-3 px-4 rounded-xl transition text-sm"
             >
               {scanning ? (
