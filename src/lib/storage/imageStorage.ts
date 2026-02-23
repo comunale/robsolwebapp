@@ -124,6 +124,38 @@ export const deleteImage = async (imageUrl: string): Promise<void> => {
 }
 
 /**
+ * Uploads a mural slide image to the 'mural-slides' Supabase Storage bucket.
+ * Ideal dimensions: 1200 × 400px (3:1 aspect ratio).
+ * @param file - The image file to upload
+ * @param slideId - A unique identifier for the slide (used in the path)
+ * @returns The public URL of the uploaded image
+ */
+export const uploadMuralSlideImage = async (
+  file: File,
+  slideId: string
+): Promise<string> => {
+  const supabase = createClient()
+
+  const fileExt = file.name.split('.').pop()
+  const filePath = `slides/${slideId}/image.${fileExt}`
+
+  const { error } = await supabase.storage
+    .from('mural-slides')
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: true,
+    })
+
+  if (error) throw error
+
+  const { data: { publicUrl } } = supabase.storage
+    .from('mural-slides')
+    .getPublicUrl(filePath)
+
+  return publicUrl
+}
+
+/**
  * Deletes a campaign banner from Supabase Storage
  * @param campaignId - The campaign ID
  */

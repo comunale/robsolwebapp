@@ -480,15 +480,18 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
             <div className="border-t border-gray-200 pt-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-1">Banners da Campanha</h3>
               <p className="text-xs text-gray-500 mb-4">
-                Envie imagens otimizadas para cada formato. O banner desktop aparece em telas grandes (paisagem 16:9) e o mobile em celulares (formato 4:3).
+                Envie imagens otimizadas para cada formato. O banner desktop usa proporção <strong>16:9</strong> e o mobile usa <strong>4:3</strong>.
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Desktop Banner */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Banner Desktop <span className="text-xs text-gray-400">(16:9 paisagem)</span>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Banner Desktop
                   </label>
+                  <p className="text-xs text-gray-400 mb-2">
+                    Ideal: <strong>1200 × 675 px</strong> · Proporção 16:9 · máx. 5MB
+                  </p>
                   <label
                     htmlFor="banner-upload"
                     className="flex flex-col items-center justify-center w-full aspect-video border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition"
@@ -519,7 +522,7 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
                         <p className="text-xs text-gray-500"><span className="font-semibold">Clique para enviar</span></p>
-                        <p className="text-xs text-gray-400">Recomendado: 1280x720px</p>
+                        <p className="text-xs text-gray-400">1200 × 675 px recomendado</p>
                       </div>
                     )}
                     <input id="banner-upload" type="file" accept="image/*" onChange={handleBannerChange} className="hidden" />
@@ -528,9 +531,12 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
 
                 {/* Mobile Banner */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Banner Mobile <span className="text-xs text-gray-400">(4:3 retrato)</span>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Banner Mobile
                   </label>
+                  <p className="text-xs text-gray-400 mb-2">
+                    Ideal: <strong>900 × 675 px</strong> · Proporção 4:3 · máx. 5MB
+                  </p>
                   <label
                     htmlFor="mobile-banner-upload"
                     className="flex flex-col items-center justify-center w-full aspect-[4/3] border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition"
@@ -561,7 +567,7 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
                         <p className="text-xs text-gray-500"><span className="font-semibold">Clique para enviar</span></p>
-                        <p className="text-xs text-gray-400">Recomendado: 640x480px</p>
+                        <p className="text-xs text-gray-400">900 × 675 px recomendado</p>
                       </div>
                     )}
                     <input id="mobile-banner-upload" type="file" accept="image/*" onChange={handleMobileBannerChange} className="hidden" />

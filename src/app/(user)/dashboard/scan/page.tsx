@@ -20,6 +20,7 @@ export default function ScanPage() {
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set())
+  const [dataReady, setDataReady] = useState(false)
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
@@ -52,6 +53,7 @@ export default function ScanPage() {
       if (participantsRes.data) {
         setJoinedIds(new Set(participantsRes.data.map((p: { campaign_id: string }) => p.campaign_id)))
       }
+      setDataReady(true)
     }
 
     void fetchData()
@@ -175,7 +177,7 @@ export default function ScanPage() {
   return (
     <>
       <CabecalhoUsuario />
-      <main className="max-w-lg mx-auto px-4 py-4 pb-24">
+      <main className="max-w-lg md:max-w-2xl mx-auto px-4 md:px-8 py-4 pb-24 md:pb-8">
         <h1 className="text-xl font-bold text-gray-900 mb-4">Escanear Cupom</h1>
         <p className="text-sm text-gray-500 mb-6">
           Envie a foto do seu cupom e nossa IA vai extrair os dados automaticamente
@@ -199,7 +201,11 @@ export default function ScanPage() {
         {/* Passo 1: Selecionar Campanha */}
         <div className="mb-4">
           <h2 className="text-sm font-semibold text-gray-700 mb-2">1. Selecione a Campanha</h2>
-          {campaigns.length === 0 ? (
+          {!dataReady ? (
+            <div className="bg-white rounded-xl p-4 border border-gray-100 text-center">
+              <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto" />
+            </div>
+          ) : campaigns.length === 0 ? (
             <p className="text-gray-500 text-sm bg-white rounded-xl p-4 border border-gray-100">
               Nenhuma campanha ativa no momento.
             </p>
@@ -325,7 +331,7 @@ export default function ScanPage() {
           <div className="flex gap-2">
             <button
               onClick={handleScan}
-              disabled={!selectedCampaign || !imageFile || scanning || !isSelectedJoined}
+              disabled={!dataReady || !selectedCampaign || !imageFile || scanning || !isSelectedJoined}
               className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white font-medium py-3 px-4 rounded-xl transition text-sm"
             >
               {scanning ? (

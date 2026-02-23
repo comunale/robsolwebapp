@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import SidebarUsuario from '@/components/user/SidebarUsuario'
 
 export const metadata: Metadata = {
   title: 'Painel - Robsol VIP',
@@ -11,8 +12,14 @@ export default function UserLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {children}
+    <div className="min-h-screen bg-gray-50">
+      {/* Desktop sidebar — hidden on mobile, shown on md+ */}
+      <SidebarUsuario />
+
+      {/* Content area — full width on mobile, offset by sidebar on desktop */}
+      <div className="md:ml-64">
+        {children}
+      </div>
     </div>
   )
 }

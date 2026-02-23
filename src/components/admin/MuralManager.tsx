@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
+import { uploadMuralSlideImage } from '@/lib/storage/imageStorage'
 import AdminHeader from './AdminHeader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 
@@ -20,7 +22,6 @@ interface MuralSlide {
 const EMPTY_FORM = {
   title: '',
   subtitle: '',
-  image_url: '',
   bg_color: '#6366f1',
   text_color: '#ffffff',
   priority: 0,
@@ -34,6 +35,9 @@ export default function MuralManager() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null)
   const [error, setError] = useState('')
   const supabase = useMemo(() => createClient(), [])
 
@@ -54,6 +58,9 @@ export default function MuralManager() {
   const openCreate = () => {
     setEditingId(null)
     setForm(EMPTY_FORM)
+    setImageFile(null)
+    setImagePreview(null)
+    setCurrentImageUrl(null)
     setError('')
     setShowForm(true)
   }
@@ -63,12 +70,14 @@ export default function MuralManager() {
     setForm({
       title: slide.title,
       subtitle: slide.subtitle ?? '',
-      image_url: slide.image_url ?? '',
       bg_color: slide.bg_color,
       text_color: slide.text_color,
       priority: slide.priority,
       is_active: slide.is_active,
     })
+    setImageFile(null)
+    setImagePreview(slide.image_url)
+    setCurrentImageUrl(slide.image_url)
     setError('')
     setShowForm(true)
   }
@@ -76,7 +85,28 @@ export default function MuralManager() {
   const cancelForm = () => {
     setShowForm(false)
     setEditingId(null)
+    setImageFile(null)
+    setImagePreview(null)
+    setCurrentImageUrl(null)
     setError('')
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      setError('Selecione um arquivo de imagem válido')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('A imagem deve ter no máximo 5MB')
+      return
+    }
+    setImageFile(file)
+    setError('')
+    const reader = new FileReader()
+    reader.onloadend = () => setImagePreview(reader.result as string)
+    reader.readAsDataURL(file)
   }
 
   const handleSave = async () => {
@@ -87,10 +117,17 @@ export default function MuralManager() {
     setSaving(true)
     setError('')
 
+    // Upload new image if one was selected
+    let resolvedImageUrl = currentImageUrl
+    if (imageFile) {
+      const tempId = editingId || `new-${Date.now()}`
+      resolvedImageUrl = await uploadMuralSlideImage(imageFile, tempId)
+    }
+
     const payload = {
       title: form.title.trim(),
       subtitle: form.subtitle.trim() || null,
-      image_url: form.image_url.trim() || null,
+      image_url: resolvedImageUrl,
       bg_color: form.bg_color,
       text_color: form.text_color,
       priority: form.priority,
@@ -201,19 +238,47 @@ export default function MuralManager() {
                 />
               </div>
 
-              {/* Image URL */}
+              {/* Image upload */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  URL da imagem{' '}
+                  Imagem do slide{' '}
                   <span className="text-gray-400 font-normal">(opcional — substitui a cor de fundo)</span>
                 </label>
-                <input
-                  type="url"
-                  value={form.image_url}
-                  onChange={(e) => setForm((f) => ({ ...f, image_url: e.target.value }))}
-                  placeholder="https://..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                />
+                <div className="flex items-start gap-4">
+                  <label className="cursor-pointer flex-shrink-0">
+                    <div className="border-2 border-dashed border-gray-300 hover:border-indigo-400 rounded-lg p-4 text-center transition bg-gray-50 hover:bg-indigo-50 w-36">
+                      {imagePreview ? (
+                        <div className="relative w-28 h-10 mx-auto">
+                          <Image src={imagePreview} alt="preview" fill className="object-cover rounded" unoptimized />
+                        </div>
+                      ) : (
+                        <svg className="w-8 h-8 text-gray-300 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                      <span className="text-xs text-indigo-600 font-medium">
+                        {imagePreview ? 'Trocar' : 'Selecionar'}
+                      </span>
+                    </div>
+                    <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                  </label>
+                  <div className="text-xs text-gray-500 pt-1 space-y-1">
+                    <p className="font-semibold text-gray-700">Tamanho ideal: 1200 × 400 px</p>
+                    <p>Proporção: <strong>3:1</strong> (banner panorâmico)</p>
+                    <p>Formatos: JPG, PNG, WebP</p>
+                    <p>Tamanho máximo: 5MB</p>
+                    <p className="text-gray-400">Se não enviar imagem, a cor de fundo abaixo será usada.</p>
+                    {imagePreview && (
+                      <button
+                        type="button"
+                        onClick={() => { setImageFile(null); setImagePreview(null); setCurrentImageUrl(null) }}
+                        className="text-red-500 hover:text-red-700 font-medium"
+                      >
+                        Remover imagem
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Bg Color */}
@@ -291,14 +356,14 @@ export default function MuralManager() {
               <div
                 className="rounded-xl p-6 min-h-[100px] flex flex-col justify-center relative overflow-hidden"
                 style={{
-                  background: form.image_url ? '#1f2937' : form.bg_color,
+                  background: imagePreview ? '#1f2937' : form.bg_color,
                   color: form.text_color,
                 }}
               >
-                {form.image_url && (
+                {imagePreview && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={form.image_url}
+                    src={imagePreview}
                     alt="preview"
                     className="absolute inset-0 w-full h-full object-cover opacity-60"
                   />
