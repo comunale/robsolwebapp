@@ -30,49 +30,37 @@ export async function middleware(request: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // Protect admin routes
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    if (!session) {
-      const redirectUrl = new URL('/login', request.url)
-      redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
-      return NextResponse.redirect(redirectUrl)
-    }
+  const pathname = request.nextUrl.pathname
+  const isAdminRoute = pathname.startsWith('/admin')
+  const isDashboardRoute = pathname.startsWith('/dashboard')
+  const isAuthPage = pathname === '/login' || pathname === '/register'
 
-    // Check if user has admin role
+  // Redirect unauthenticated users to login
+  if (!session && (isAdminRoute || isDashboardRoute)) {
+    const redirectUrl = new URL('/login', request.url)
+    redirectUrl.searchParams.set('redirectTo', pathname)
+    return NextResponse.redirect(redirectUrl)
+  }
+
+  // For routes that need role check, fetch profile once
+  if (session && (isAdminRoute || isAuthPage)) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', session.user.id)
       .single()
 
-    if (profile?.role !== 'admin') {
+    const isAdmin = profile?.role === 'admin'
+
+    // Non-admins on admin routes → redirect to dashboard
+    if (isAdminRoute && !isAdmin) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
-  }
 
-  // Protect user dashboard routes
-  if (request.nextUrl.pathname.startsWith('/dashboard')) {
-    if (!session) {
-      const redirectUrl = new URL('/login', request.url)
-      redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
-      return NextResponse.redirect(redirectUrl)
+    // Authenticated users on auth pages → redirect to appropriate dashboard
+    if (isAuthPage) {
+      return NextResponse.redirect(new URL(isAdmin ? '/admin' : '/dashboard', request.url))
     }
-  }
-
-  // Redirect authenticated users away from auth pages
-  if (
-    session &&
-    (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register')
-  ) {
-    // Get user role to redirect appropriately
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', session.user.id)
-      .single()
-
-    const redirectPath = profile?.role === 'admin' ? '/admin' : '/dashboard'
-    return NextResponse.redirect(new URL(redirectPath, request.url))
   }
 
   return response

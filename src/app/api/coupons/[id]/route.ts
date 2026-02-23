@@ -20,7 +20,7 @@ export async function GET(
 
     const { data: coupon, error } = await supabase
       .from('coupons')
-      .select('*, profiles(full_name, email), campaigns(title, keywords)')
+      .select('*, profiles!coupons_user_id_fkey(full_name, email), campaigns(title, keywords)')
       .eq('id', id)
       .single()
 

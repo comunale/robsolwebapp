@@ -26,7 +26,7 @@ export async function GET(request: Request) {
 
     let query = supabase
       .from('coupons')
-      .select('*, profiles(full_name, email), campaigns(title, keywords)')
+      .select('*, profiles!coupons_user_id_fkey(full_name, email), campaigns(title, keywords)')
       .order('created_at', { ascending: false })
 
     // If user (not admin), only show their own coupons
