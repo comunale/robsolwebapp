@@ -156,23 +156,67 @@ export default function CouponModeration() {
                   </div>
                 </div>
 
-                {/* Right: AI Extracted Data */}
+                {/* Right: Data Panel */}
                 <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Dados Extraidos pela IA</h3>
+                  {/* Submission type badge */}
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Dados do Envio</h3>
+                    {selectedCoupon.extracted_data?.submission_type === 'manual' ? (
+                      <span className="px-2.5 py-1 bg-orange-100 text-orange-700 text-xs font-semibold rounded-full">
+                        Entrada Manual
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
+                        Extraído por IA
+                      </span>
+                    )}
+                  </div>
 
                   {selectedCoupon.extracted_data ? (
                     <>
+                      {/* Manual submission highlight */}
+                      {selectedCoupon.extracted_data.submission_type === 'manual' && (
+                        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+                          <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide mb-3">
+                            Identificação declarada pelo usuário
+                          </p>
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div className="col-span-2 bg-white rounded-lg p-3">
+                              <span className="text-xs text-gray-500">Modelo do Óculos</span>
+                              <p className="font-semibold text-gray-900 text-base mt-0.5">
+                                {selectedCoupon.extracted_data.manual_model || 'Não informado'}
+                              </p>
+                            </div>
+                            <div className="bg-white rounded-lg p-3">
+                              <span className="text-xs text-gray-500">Quantidade</span>
+                              <p className="font-semibold text-gray-900 text-base mt-0.5">
+                                {selectedCoupon.extracted_data.manual_quantity ?? 'N/D'}
+                              </p>
+                            </div>
+                            {selectedCoupon.extracted_data.receipt_number && (
+                              <div className="bg-white rounded-lg p-3">
+                                <span className="text-xs text-gray-500">Nº Fiscal (IA)</span>
+                                <p className="font-medium text-indigo-700 text-sm mt-0.5">
+                                  {selectedCoupon.extracted_data.receipt_number}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* AI keyword match status */}
                       <div className={`p-4 rounded-lg ${
                         selectedCoupon.extracted_data.has_matching_products
                           ? 'bg-green-50 border border-green-200'
                           : 'bg-yellow-50 border border-yellow-200'
                       }`}>
-                        <p className={`font-semibold ${
+                        <p className={`font-semibold text-sm ${
                           selectedCoupon.extracted_data.has_matching_products ? 'text-green-800' : 'text-yellow-800'
                         }`}>
                           {selectedCoupon.extracted_data.has_matching_products
-                            ? 'Produtos correspondentes encontrados'
-                            : 'Nenhum produto correspondente'}
+                            ? 'IA identificou produtos correspondentes'
+                            : 'IA não identificou produtos correspondentes'}
                         </p>
                         {selectedCoupon.extracted_data.matched_keywords?.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
@@ -183,63 +227,75 @@ export default function CouponModeration() {
                         )}
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          <span className="text-gray-500">Cliente</span>
-                          <p className="font-medium">{selectedCoupon.extracted_data.customer_name || 'N/D'}</p>
+                      {/* AI extracted info grid (AI submissions only) */}
+                      {selectedCoupon.extracted_data.submission_type !== 'manual' && (
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          {selectedCoupon.extracted_data.receipt_number && (
+                            <div className="col-span-2 bg-indigo-50 rounded-lg p-3">
+                              <span className="text-xs text-indigo-500">Nº Cupom Fiscal</span>
+                              <p className="font-semibold text-indigo-800">{selectedCoupon.extracted_data.receipt_number}</p>
+                            </div>
+                          )}
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <span className="text-xs text-gray-500">Cliente</span>
+                            <p className="font-medium">{selectedCoupon.extracted_data.customer_name || 'N/D'}</p>
+                          </div>
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <span className="text-xs text-gray-500">Data</span>
+                            <p className="font-medium">{selectedCoupon.extracted_data.date || 'N/D'}</p>
+                          </div>
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <span className="text-xs text-gray-500">Loja</span>
+                            <p className="font-medium">{selectedCoupon.extracted_data.store || 'N/D'}</p>
+                          </div>
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <span className="text-xs text-gray-500">Total</span>
+                            <p className="font-medium text-lg">
+                              {selectedCoupon.extracted_data.total != null
+                                ? `R$ ${selectedCoupon.extracted_data.total.toFixed(2)}`
+                                : 'N/D'}
+                            </p>
+                          </div>
                         </div>
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          <span className="text-gray-500">Data</span>
-                          <p className="font-medium">{selectedCoupon.extracted_data.date || 'N/D'}</p>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          <span className="text-gray-500">Loja</span>
-                          <p className="font-medium">{selectedCoupon.extracted_data.store || 'N/D'}</p>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          <span className="text-gray-500">Total</span>
-                          <p className="font-medium text-lg">
-                            {selectedCoupon.extracted_data.total != null
-                              ? `R$ ${selectedCoupon.extracted_data.total.toFixed(2)}`
-                              : 'N/D'}
-                          </p>
-                        </div>
-                      </div>
+                      )}
 
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-700 mb-2">
-                          Produtos ({selectedCoupon.extracted_data.items?.length || 0})
-                        </h4>
-                        <div className="max-h-48 overflow-y-auto border rounded-lg">
-                          <table className="w-full text-sm">
-                            <thead className="bg-gray-50 sticky top-0">
-                              <tr>
-                                <th className="text-left py-2 px-3 font-medium text-gray-600">Produto</th>
-                                <th className="text-center py-2 px-2 font-medium text-gray-600">Qtd</th>
-                                <th className="text-right py-2 px-3 font-medium text-gray-600">Preco</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {selectedCoupon.extracted_data.items?.map((item, i) => (
-                                <tr key={i} className={`border-t ${item.matched_keyword ? 'bg-green-50' : ''}`}>
-                                  <td className="py-2 px-3">
-                                    {item.name}
-                                    {item.matched_keyword && (
-                                      <span className="ml-2 px-1.5 py-0.5 bg-green-200 text-green-800 text-xs rounded">
-                                        {item.matched_keyword}
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td className="text-center py-2 px-2">{item.quantity ?? '-'}</td>
-                                  <td className="text-right py-2 px-3">
-                                    {item.price != null ? `R$ ${item.price.toFixed(2)}` : '-'}
-                                  </td>
+                      {/* Products table */}
+                      {selectedCoupon.extracted_data.items?.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                            Produtos da IA ({selectedCoupon.extracted_data.items.length})
+                          </h4>
+                          <div className="max-h-48 overflow-y-auto border rounded-lg">
+                            <table className="w-full text-sm">
+                              <thead className="bg-gray-50 sticky top-0">
+                                <tr>
+                                  <th className="text-left py-2 px-3 font-medium text-gray-600">Produto</th>
+                                  <th className="text-center py-2 px-2 font-medium text-gray-600">Qtd</th>
+                                  <th className="text-right py-2 px-3 font-medium text-gray-600">Preço</th>
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                              </thead>
+                              <tbody>
+                                {selectedCoupon.extracted_data.items.map((item, i) => (
+                                  <tr key={i} className={`border-t ${item.matched_keyword ? 'bg-green-50' : ''}`}>
+                                    <td className="py-2 px-3">
+                                      {item.name}
+                                      {item.matched_keyword && (
+                                        <span className="ml-2 px-1.5 py-0.5 bg-green-200 text-green-800 text-xs rounded">
+                                          {item.matched_keyword}
+                                        </span>
+                                      )}
+                                    </td>
+                                    <td className="text-center py-2 px-2">{item.quantity ?? '-'}</td>
+                                    <td className="text-right py-2 px-3">
+                                      {item.price != null ? `R$ ${item.price.toFixed(2)}` : '-'}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </>
                   ) : (
                     <p className="text-gray-500">Nenhum dado extraido pela IA para este cupom.</p>
@@ -348,7 +404,9 @@ export default function CouponModeration() {
                       )}
                     </div>
                   )}
-                  <p className="text-xs text-gray-400 mt-2">{new Date(coupon.created_at).toLocaleDateString('pt-BR')}</p>
+                  <p className="text-xs text-gray-400 mt-2" suppressHydrationWarning>
+                    {new Date(coupon.created_at).toLocaleDateString('pt-BR')}
+                  </p>
                 </div>
               </div>
             ))}

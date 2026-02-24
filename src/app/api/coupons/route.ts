@@ -71,14 +71,32 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
+    const { campaign_id, image_url, extracted_data } = body
+
+    // Anti-fraud: block duplicate receipt numbers within the same campaign
+    if (extracted_data?.receipt_number) {
+      const { data: duplicate } = await supabase
+        .from('coupons')
+        .select('id')
+        .eq('campaign_id', campaign_id)
+        .filter('extracted_data->>receipt_number', 'eq', extracted_data.receipt_number)
+        .maybeSingle()
+
+      if (duplicate) {
+        return NextResponse.json(
+          { error: 'Este cupom fiscal já foi enviado nesta campanha.' },
+          { status: 409 }
+        )
+      }
+    }
 
     const { data: coupon, error } = await supabase
       .from('coupons')
       .insert({
         user_id: session.user.id,
-        campaign_id: body.campaign_id,
-        image_url: body.image_url,
-        extracted_data: body.extracted_data || null,
+        campaign_id,
+        image_url,
+        extracted_data: extracted_data || null,
         status: 'pending',
         points_awarded: 0,
       })

@@ -12,7 +12,8 @@
       "Bash(nslookup:*)",
       "Bash(curl:*)",
       "Bash(del \"c:\\\\github\\\\robsolwebapp\\\\migrations\\\\run-migration.mjs\")",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(find \"c:\\\\github\\\\robsolwebapp\\\\src\\\\app\\\\\\(admin\\)\\\\admin\" -type f -name \"*.tsx\" -o -name \"*.ts\")"
     ]
   }
 }

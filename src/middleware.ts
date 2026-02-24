@@ -33,10 +33,11 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const isAdminRoute = pathname.startsWith('/admin')
   const isDashboardRoute = pathname.startsWith('/dashboard')
+  const isCampanhasRoute = pathname.startsWith('/campanhas') || pathname.startsWith('/campaigns')
   const isAuthPage = pathname === '/login' || pathname === '/register'
 
   // Redirect unauthenticated users to login
-  if (!session && (isAdminRoute || isDashboardRoute)) {
+  if (!session && (isAdminRoute || isDashboardRoute || isCampanhasRoute)) {
     const redirectUrl = new URL('/login', request.url)
     redirectUrl.searchParams.set('redirectTo', pathname)
     return NextResponse.redirect(redirectUrl)
@@ -67,5 +68,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/dashboard/:path*', '/login', '/register'],
+  matcher: ['/admin/:path*', '/dashboard/:path*', '/campanhas/:path*', '/campanhas', '/campaigns/:path*', '/login', '/register'],
 }

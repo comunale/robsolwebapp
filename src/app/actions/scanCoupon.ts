@@ -39,6 +39,7 @@ Respond with this exact JSON structure:
   "date": "YYYY-MM-DD if visible or null",
   "store": "store name if visible or null",
   "total": 0.00,
+  "receipt_number": "NF, NFCe, fiscal document number, or order number if visible or null",
   "items": [
     {
       "name": "product name",
@@ -58,6 +59,7 @@ Rules:
 - "matched_keywords" is a deduplicated list of all keywords that had at least one matching product.
 - "has_matching_products" is true if at least one product matches a campaign keyword.
 - If no keywords are defined for the campaign, set "has_matching_products" to true and "matched_keywords" to [].
+- Extract the fiscal document or order number (NF, NFCe, COO, cupom number, pedido number) into "receipt_number". This is critical for anti-fraud.
 - Use null for fields you cannot extract.
 - Prices must be numbers, not strings.`,
         },

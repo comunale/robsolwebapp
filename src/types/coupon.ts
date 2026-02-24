@@ -13,9 +13,13 @@ export interface ExtractedData {
   date?: string
   store?: string
   total?: number
+  receipt_number?: string
   items: CouponItem[]
   matched_keywords: string[]
   has_matching_products: boolean
+  submission_type?: 'ai' | 'manual'
+  manual_model?: string
+  manual_quantity?: number
 }
 
 export interface Coupon {
