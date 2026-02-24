@@ -109,7 +109,7 @@ export default function ScanPage() {
   }
 
   const handleScan = async () => {
-    if (!imageFile || !selectedCampaign) {
+    if (!imageFile || !selectedCampaign || !imagePreview) {
       setError('Selecione uma campanha e envie uma imagem primeiro')
       return
     }
@@ -118,13 +118,9 @@ export default function ScanPage() {
     setError('')
 
     try {
-      const buffer = await imageFile.arrayBuffer()
-      const bytes = new Uint8Array(buffer)
-      let binary = ''
-      for (let i = 0; i < bytes.byteLength; i++) {
-        binary += String.fromCharCode(bytes[i])
-      }
-      const base64 = btoa(binary)
+      // imagePreview is already a data URL ("data:<mime>;base64,<data>")
+      // produced by FileReader in handleImageChange — no need to re-encode.
+      const base64 = imagePreview.split(',')[1]
 
       const result = await scanCouponImage(
         base64,

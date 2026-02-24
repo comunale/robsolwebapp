@@ -14,7 +14,8 @@
       "Bash(del \"c:\\\\github\\\\robsolwebapp\\\\migrations\\\\run-migration.mjs\")",
       "Bash(node:*)",
       "Bash(find \"c:\\\\github\\\\robsolwebapp\\\\src\\\\app\\\\\\(admin\\)\\\\admin\" -type f -name \"*.tsx\" -o -name \"*.ts\")",
-      "mcp__claude_ai_Vercel__list_teams"
+      "mcp__claude_ai_Vercel__list_teams",
+      "Bash(npx -y @supabase/mcp-server-supabase@latest --help)"
     ]
   }
 }
