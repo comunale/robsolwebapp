@@ -33,6 +33,7 @@ export interface Coupon {
   created_at: string
   reviewed_at: string | null
   reviewed_by: string | null
+  rejection_reason: string | null
 }
 
 export interface CouponWithRelations extends Coupon {

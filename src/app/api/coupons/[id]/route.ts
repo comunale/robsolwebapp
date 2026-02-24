@@ -70,7 +70,7 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { status, points_awarded } = body
+    const { status, points_awarded, rejection_reason } = body
 
     if (!status || !['approved', 'rejected'].includes(status)) {
       return NextResponse.json(
@@ -119,6 +119,7 @@ export async function PATCH(
         points_awarded: finalPoints,
         reviewed_at: new Date().toISOString(),
         reviewed_by: session.user.id,
+        rejection_reason: status === 'rejected' ? (rejection_reason || null) : null,
       })
       .eq('id', id)
       .select()
@@ -130,13 +131,17 @@ export async function PATCH(
     // Goals are evaluated by the trigger (trigger_goal_evaluation)
 
     // Create notification for the user
+    const rejectionBody = rejection_reason
+      ? `Seu cupom foi rejeitado. Motivo: ${rejection_reason}`
+      : 'Seu cupom foi rejeitado. Tente novamente com uma foto mais clara.'
+
     await supabase.from('notifications').insert({
       user_id: existingCoupon.user_id,
       type: status === 'approved' ? 'coupon_approved' : 'coupon_rejected',
       title: status === 'approved' ? 'Cupom aprovado!' : 'Cupom rejeitado',
       body: status === 'approved'
         ? `Seu cupom foi aprovado! Voce ganhou ${finalPoints} pontos.`
-        : 'Seu cupom foi rejeitado. Tente novamente com uma foto mais clara.',
+        : rejectionBody,
       data: { coupon_id: id, campaign_id: existingCoupon.campaign_id },
     })
 
