@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import AdminHeader from './AdminHeader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
@@ -41,6 +41,11 @@ export default function CouponModeration() {
   // Image viewer controls
   const [imageZoom, setImageZoom] = useState(1)
   const [imageRotation, setImageRotation] = useState(0)
+  const [imagePan, setImagePan] = useState({ x: 0, y: 0 })
+  const [isDraggingState, setIsDraggingState] = useState(false)
+  const isDragging = useRef(false)
+  const dragStart = useRef({ x: 0, y: 0 })
+  const panAtDragStart = useRef({ x: 0, y: 0 })
 
   // Rejection reason modal
   const [showRejectModal, setShowRejectModal] = useState(false)
@@ -51,6 +56,9 @@ export default function CouponModeration() {
   useEffect(() => {
     setImageZoom(1)
     setImageRotation(0)
+    setImagePan({ x: 0, y: 0 })
+    isDragging.current = false
+    setIsDraggingState(false)
   }, [selectedCoupon?.id])
 
   const fetchCoupons = useCallback(async () => {
@@ -145,6 +153,28 @@ export default function CouponModeration() {
     setCustomRejectionReason('')
   }
 
+  const handleImageMouseDown = (e: React.MouseEvent) => {
+    if (imageZoom <= 1) return
+    e.preventDefault()
+    isDragging.current = true
+    setIsDraggingState(true)
+    dragStart.current = { x: e.clientX, y: e.clientY }
+    panAtDragStart.current = { ...imagePan }
+  }
+
+  const handleImageMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging.current) return
+    const dx = e.clientX - dragStart.current.x
+    const dy = e.clientY - dragStart.current.y
+    setImagePan({ x: panAtDragStart.current.x + dx, y: panAtDragStart.current.y + dy })
+  }
+
+  const handleImageMouseUpOrLeave = () => {
+    if (!isDragging.current) return
+    isDragging.current = false
+    setIsDraggingState(false)
+  }
+
   const canConfirmReject =
     !!selectedRejectionReason &&
     (selectedRejectionReason !== 'Outro motivo' || customRejectionReason.trim().length > 0)
@@ -208,14 +238,22 @@ export default function CouponModeration() {
                   {/* Image frame */}
                   <div
                     className="relative rounded-lg border overflow-hidden bg-gray-900 w-full"
-                    style={{ height: '380px' }}
+                    style={{
+                      height: '380px',
+                      cursor: imageZoom > 1 ? (isDraggingState ? 'grabbing' : 'grab') : 'default',
+                      userSelect: 'none',
+                    }}
+                    onMouseDown={handleImageMouseDown}
+                    onMouseMove={handleImageMouseMove}
+                    onMouseUp={handleImageMouseUpOrLeave}
+                    onMouseLeave={handleImageMouseUpOrLeave}
                   >
                     <div
                       style={{
                         position: 'absolute',
                         inset: 0,
-                        transform: `scale(${imageZoom}) rotate(${imageRotation}deg)`,
-                        transition: 'transform 0.2s ease',
+                        transform: `translate(${imagePan.x}px, ${imagePan.y}px) scale(${imageZoom}) rotate(${imageRotation}deg)`,
+                        transition: isDraggingState ? 'none' : 'transform 0.2s ease',
                         transformOrigin: 'center center',
                       }}
                     >
@@ -284,7 +322,7 @@ export default function CouponModeration() {
 
                     {/* Reset */}
                     <button
-                      onClick={() => { setImageZoom(1); setImageRotation(0) }}
+                      onClick={() => { setImageZoom(1); setImageRotation(0); setImagePan({ x: 0, y: 0 }) }}
                       className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-200 transition"
                     >
                       Reset

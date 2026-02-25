@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import { scanCouponImage } from '@/app/actions/scanCoupon'
@@ -94,6 +95,7 @@ export default function ScanPage() {
   const { user, loading: authLoading } = useAuth()
   const supabase = useMemo(() => createClient(), [])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const searchParams = useSearchParams()
 
   // Campaign & participation data
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -148,6 +150,15 @@ export default function ScanPage() {
     void fetchData()
     return () => { active = false }
   }, [user, supabase])
+
+  // Auto-select campaign from URL param (e.g. coming from "Corrigir e Reenviar")
+  useEffect(() => {
+    if (!dataReady || campaigns.length === 0) return
+    const preselect = searchParams.get('campaign_id')
+    if (!preselect || selectedCampaign) return
+    const match = campaigns.find((c) => c.id === preselect)
+    if (match) setSelectedCampaign(match)
+  }, [dataReady, campaigns, searchParams, selectedCampaign])
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]

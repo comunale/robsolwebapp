@@ -77,11 +77,12 @@ Respond with this exact JSON structure:
 }
 
 Rules:
-- Extract ALL products/items visible on the receipt.
-- For each item, check if it matches any campaign keyword (case-insensitive, partial match allowed).
-- If an item matches, put the matched keyword in "matched_keyword".
-- "matched_keywords" is a deduplicated list of all keywords that had at least one matching product.
-- "has_matching_products" is true if at least one product matches a campaign keyword.
+- Extract ALL products/items visible on the receipt exactly as printed.
+- Keyword matching is STRICT: a product matches a keyword ONLY if the keyword string appears verbatim (as a literal substring) inside the product name on the receipt. Case-insensitive comparison is allowed, but NO semantic inference, NO synonyms, NO brand associations, NO category guessing.
+  Example: keyword "ray-ban" ONLY matches if the receipt literally contains "ray-ban", "Ray-Ban", "RAY-BAN" etc. It does NOT match "oculos", "armacao", "otica", or any other word, even if you believe the brand is implied.
+- If an item matches by the strict rule above, put the matched keyword in "matched_keyword"; otherwise set "matched_keyword" to null.
+- "matched_keywords" is a deduplicated list of all keywords that had at least one strictly matching product.
+- "has_matching_products" is true ONLY if at least one product matches a keyword by the strict rule above.
 - If no keywords are defined for the campaign, set "has_matching_products" to true and "matched_keywords" to [].
 - Extract the fiscal document or order number (NF, NFCe, COO, cupom number, pedido number) into "receipt_number". This is critical for anti-fraud.
 - Use null for fields you cannot extract.
