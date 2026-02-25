@@ -78,8 +78,13 @@ Respond with this exact JSON structure:
 
 Rules:
 - Extract ALL products/items visible on the receipt exactly as printed.
-- Keyword matching is STRICT: a product matches a keyword ONLY if the keyword string appears verbatim (as a literal substring) inside the product name on the receipt. Case-insensitive comparison is allowed, but NO semantic inference, NO synonyms, NO brand associations, NO category guessing.
-  Example: keyword "ray-ban" ONLY matches if the receipt literally contains "ray-ban", "Ray-Ban", "RAY-BAN" etc. It does NOT match "oculos", "armacao", "otica", or any other word, even if you believe the brand is implied.
+- Keyword matching is CHARACTER-LEVEL SUBSTRING ONLY. A product matches a keyword if and only if the exact keyword character sequence appears somewhere inside the product name string when both are lowercased. This is a pure string containment check — nothing more.
+  FORBIDDEN: semantic inference, synonyms, brand associations, category matching, phonetic similarity, abbreviation expansion, translation, or any other form of inference.
+  CORRECT example: keyword "ray-ban" matches "Ray-Ban Clubmaster" ✓ (literal substring present)
+  WRONG example: keyword "ray-ban" matching "oculos escuros" ✗ (no literal substring)
+  WRONG example: keyword "sabrina sato" matching "SMART HAYTEK AR." ✗ (completely different character sequences — no substring match exists)
+  WRONG example: keyword "nike" matching "tenis esportivo" ✗ (category match, not literal)
+- To check a match: take the product name from the receipt, lowercase it, check if the lowercased keyword is a substring. If yes → match. If no → null. No other logic applies.
 - If an item matches by the strict rule above, put the matched keyword in "matched_keyword"; otherwise set "matched_keyword" to null.
 - "matched_keywords" is a deduplicated list of all keywords that had at least one strictly matching product.
 - "has_matching_products" is true ONLY if at least one product matches a keyword by the strict rule above.

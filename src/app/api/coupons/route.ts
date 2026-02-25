@@ -8,6 +8,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
     const campaignId = searchParams.get('campaign_id')
+    const userId = searchParams.get('user_id')
 
     const {
       data: { session },
@@ -40,6 +41,11 @@ export async function GET(request: Request) {
 
     if (campaignId) {
       query = query.eq('campaign_id', campaignId)
+    }
+
+    // Admin-only user filter (non-admins already filtered to their own user_id above)
+    if (userId && profile?.role === 'admin') {
+      query = query.eq('user_id', userId)
     }
 
     const { data: coupons, error } = await query

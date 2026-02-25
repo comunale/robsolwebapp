@@ -7,8 +7,21 @@ import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import type { Profile } from '@/types/user'
 import type { Campaign } from '@/types/campaign'
 
+interface StoreOption {
+  id: string
+  name: string
+}
+
 interface ProfileWithStore extends Profile {
   stores?: { name: string } | null
+}
+
+interface EditForm {
+  full_name: string
+  email: string
+  whatsapp: string
+  store_id: string
+  role: string
 }
 
 function formatWhatsAppDisplay(digits: string): string {
@@ -34,17 +47,31 @@ function downloadCSV(filename: string, headers: string[], rows: string[][]) {
   URL.revokeObjectURL(url)
 }
 
+const roleBadge: Record<string, { label: string; className: string }> = {
+  admin: { label: 'Admin', className: 'bg-purple-100 text-purple-700' },
+  moderator: { label: 'Moderador', className: 'bg-blue-100 text-blue-700' },
+  user: { label: 'Usuário', className: 'bg-gray-100 text-gray-700' },
+}
+
 export default function UserManagementTable() {
   const [users, setUsers] = useState<ProfileWithStore[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [stores, setStores] = useState<StoreOption[]>([])
   const [selectedCampaignExport, setSelectedCampaignExport] = useState('')
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
+
+  // Edit modal state
+  const [editingUser, setEditingUser] = useState<ProfileWithStore | null>(null)
+  const [editForm, setEditForm] = useState<EditForm>({ full_name: '', email: '', whatsapp: '', store_id: '', role: 'user' })
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
+
   const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     const fetchData = async () => {
-      const [usersRes, campaignsRes] = await Promise.all([
+      const [usersRes, campaignsRes, storesRes] = await Promise.all([
         supabase
           .from('profiles')
           .select('*, stores(name)')
@@ -53,21 +80,76 @@ export default function UserManagementTable() {
           .from('campaigns')
           .select('*')
           .order('title'),
+        supabase
+          .from('stores')
+          .select('id, name')
+          .order('name'),
       ])
       setUsers((usersRes.data as unknown as ProfileWithStore[]) || [])
       setCampaigns((campaignsRes.data as Campaign[]) || [])
+      setStores((storesRes.data as StoreOption[]) || [])
       setLoading(false)
     }
     fetchData()
   }, [supabase])
 
+  // ── Edit modal ────────────────────────────────────────────────────────────
+  const openEdit = (user: ProfileWithStore) => {
+    setEditingUser(user)
+    setEditForm({
+      full_name: user.full_name || '',
+      email: user.email || '',
+      whatsapp: user.whatsapp || '',
+      store_id: user.store_id || '',
+      role: user.role || 'user',
+    })
+    setSaveError('')
+  }
+
+  const closeEdit = () => {
+    setEditingUser(null)
+    setSaveError('')
+  }
+
+  const handleSave = async () => {
+    if (!editingUser) return
+    setSaving(true)
+    setSaveError('')
+    try {
+      const res = await fetch(`/api/users/${editingUser.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: editForm.full_name.trim(),
+          email: editForm.email.trim(),
+          whatsapp: editForm.whatsapp.replace(/\D/g, ''),
+          store_id: editForm.store_id || null,
+          role: editForm.role,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erro ao salvar')
+
+      // Merge updated profile back into list
+      const updated = data.profile as ProfileWithStore
+      setUsers(prev => prev.map(u => u.id === updated.id ? { ...u, ...updated } : u))
+      closeEdit()
+    } catch (err: unknown) {
+      setSaveError(err instanceof Error ? err.message : 'Erro ao salvar')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // ── CSV exports ───────────────────────────────────────────────────────────
   const handleExportGeneral = () => {
-    const headers = ['Nome', 'Loja', 'WhatsApp', 'Email', 'Data de Cadastro']
+    const headers = ['Nome', 'Loja', 'WhatsApp', 'Email', 'Perfil', 'Data de Cadastro']
     const rows = users.map(u => [
       u.full_name || 'Sem nome',
       u.stores?.name || '-',
       formatWhatsAppDisplay(u.whatsapp),
       u.email,
+      roleBadge[u.role]?.label || u.role,
       new Date(u.created_at).toLocaleDateString('pt-BR'),
     ])
     const date = new Date().toISOString().slice(0, 10)
@@ -82,7 +164,6 @@ export default function UserManagementTable() {
       const campaign = campaigns.find(c => c.id === selectedCampaignExport)
       if (!campaign) return
 
-      // Fetch campaign-specific data: coupons with points, lucky numbers
       const [couponsRes, luckyRes] = await Promise.all([
         supabase
           .from('coupons')
@@ -98,7 +179,6 @@ export default function UserManagementTable() {
       const couponsData = couponsRes.data || []
       const luckyData = luckyRes.data || []
 
-      // Aggregate per user
       const userPoints: Record<string, number> = {}
       const userCoupons: Record<string, number> = {}
       for (const c of couponsData) {
@@ -151,14 +231,13 @@ export default function UserManagementTable() {
 
   return (
     <>
-      <AdminHeader title="Gestao de Usuarios" subtitle="Visualize e exporte dados dos usuarios cadastrados" />
+      <AdminHeader title="Gestao de Usuarios" subtitle="Visualize, edite e exporte dados dos usuarios cadastrados" />
 
       <div className="p-8">
         {/* Export Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
           <h3 className="text-sm font-semibold text-gray-900 mb-4">Exportar Dados</h3>
           <div className="flex flex-wrap gap-4 items-end">
-            {/* Option A: General Export */}
             <div>
               <p className="text-xs text-gray-500 mb-2">Exportacao Geral</p>
               <button
@@ -172,10 +251,8 @@ export default function UserManagementTable() {
               </button>
             </div>
 
-            {/* Divider */}
             <div className="hidden sm:block w-px h-12 bg-gray-200" />
 
-            {/* Option B: Campaign Export */}
             <div className="flex items-end gap-2">
               <div>
                 <p className="text-xs text-gray-500 mb-2">Exportacao por Campanha</p>
@@ -217,44 +294,57 @@ export default function UserManagementTable() {
                   <th className="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Perfil</th>
                   <th className="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Pontos</th>
                   <th className="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Cadastro</th>
+                  <th className="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {users.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
+                    <td colSpan={8} className="px-6 py-12 text-center text-gray-400">
                       Nenhum usuario encontrado
                     </td>
                   </tr>
                 ) : (
-                  users.map((u) => (
-                    <tr key={u.id} className="hover:bg-gray-50 transition">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold text-sm">
-                            {u.full_name?.charAt(0)?.toUpperCase() || '?'}
+                  users.map((u) => {
+                    const badge = roleBadge[u.role] ?? { label: u.role, className: 'bg-gray-100 text-gray-700' }
+                    return (
+                      <tr key={u.id} className="hover:bg-gray-50 transition">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold text-sm">
+                              {u.full_name?.charAt(0)?.toUpperCase() || '?'}
+                            </div>
+                            <span className="font-medium text-gray-900 text-sm">{u.full_name || 'Sem nome'}</span>
                           </div>
-                          <span className="font-medium text-gray-900 text-sm">{u.full_name || 'Sem nome'}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{u.email}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{formatWhatsAppDisplay(u.whatsapp)}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {u.stores?.name || <span className="text-gray-400">-</span>}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'
-                        }`}>
-                          {u.role === 'admin' ? 'Admin' : 'Usuario'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-center text-sm font-medium text-gray-900">{u.total_points}</td>
-                      <td className="px-6 py-4 text-right text-sm text-gray-500">
-                        {new Date(u.created_at).toLocaleDateString('pt-BR')}
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{u.email}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{formatWhatsAppDisplay(u.whatsapp)}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {u.stores?.name || <span className="text-gray-400">-</span>}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>
+                            {badge.label}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-center text-sm font-medium text-gray-900">{u.total_points}</td>
+                        <td className="px-6 py-4 text-right text-sm text-gray-500">
+                          {new Date(u.created_at).toLocaleDateString('pt-BR')}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <button
+                            onClick={() => openEdit(u)}
+                            className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-medium transition flex items-center gap-1 mx-auto"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                            Editar
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })
                 )}
               </tbody>
             </table>
@@ -264,6 +354,117 @@ export default function UserManagementTable() {
           </div>
         </div>
       </div>
+
+      {/* ── Edit Modal ──────────────────────────────────────────────────────── */}
+      {editingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={closeEdit} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md p-6 z-10">
+            <div className="flex items-start justify-between mb-5">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Editar Usuário</h3>
+                <p className="text-sm text-gray-500 mt-0.5">{editingUser.email}</p>
+              </div>
+              <button onClick={closeEdit} className="text-gray-400 hover:text-gray-600 transition">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Full Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
+                <input
+                  type="text"
+                  value={editForm.full_name}
+                  onChange={(e) => setEditForm(f => ({ ...f, full_name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                  placeholder="Nome completo"
+                />
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm(f => ({ ...f, email: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                  placeholder="email@exemplo.com"
+                />
+                <p className="text-xs text-gray-400 mt-1">Atualiza apenas o perfil. Login via auth não é afetado.</p>
+              </div>
+
+              {/* WhatsApp */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp</label>
+                <input
+                  type="tel"
+                  value={editForm.whatsapp}
+                  onChange={(e) => setEditForm(f => ({ ...f, whatsapp: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                  placeholder="(11) 99999-9999"
+                />
+              </div>
+
+              {/* Store */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Loja</label>
+                <select
+                  value={editForm.store_id}
+                  onChange={(e) => setEditForm(f => ({ ...f, store_id: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white"
+                >
+                  <option value="">Sem loja</option>
+                  {stores.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Role */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Perfil / Função</label>
+                <select
+                  value={editForm.role}
+                  onChange={(e) => setEditForm(f => ({ ...f, role: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white"
+                >
+                  <option value="user">Usuário</option>
+                  <option value="moderator">Moderador</option>
+                  <option value="admin">Admin</option>
+                </select>
+                <p className="text-xs text-gray-400 mt-1">
+                  Moderador pode revisar cupons. Admin tem acesso total.
+                </p>
+              </div>
+
+              {saveError && (
+                <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{saveError}</p>
+              )}
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={closeEdit}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white rounded-lg text-sm font-medium transition"
+              >
+                {saving ? 'Salvando...' : 'Salvar Alterações'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
