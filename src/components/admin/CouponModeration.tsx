@@ -111,7 +111,7 @@ export default function CouponModeration() {
 
       const userMap = new Map<string, UserSummary>()
       for (const row of data) {
-        const profile = row.profiles as { full_name: string; email: string } | null
+        const profile = row.profiles as unknown as { full_name: string; email: string } | null
         if (!userMap.has(row.user_id)) {
           userMap.set(row.user_id, {
             user_id: row.user_id,
