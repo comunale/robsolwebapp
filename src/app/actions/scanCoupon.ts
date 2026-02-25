@@ -3,9 +3,10 @@
 import OpenAI from 'openai'
 import type { ExtractedData } from '@/types/coupon'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// NOTE: The OpenAI client is intentionally instantiated INSIDE the function.
+// The SDK constructor throws synchronously when apiKey is undefined, which at
+// module level would crash the entire server action module — making every call
+// return a 500 before the try/catch ever runs.
 
 /**
  * Analyses a receipt image already stored in Supabase Storage.
@@ -19,11 +20,25 @@ export async function scanCouponImage(
   console.log('[scanCoupon] Image URL:', imageUrl)
   console.log('[scanCoupon] Keywords:', campaignKeywords)
 
-  try {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY nao esta configurada')
-    }
+  // ── 1. Environment variable validation ──────────────────────────────────
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) {
+    console.error('[scanCoupon] AI_ERROR_DETAILS: OPENAI_API_KEY is undefined in this runtime.')
+    console.error('[scanCoupon] Check Vercel → Project → Settings → Environment Variables.')
+    return { success: false, error: 'Configuração da IA ausente' }
+  }
+  console.log('[scanCoupon] API key present — length:', apiKey.length)
 
+  // ── 2. Instantiate client inside the function (never at module level) ───
+  let openai: OpenAI
+  try {
+    openai = new OpenAI({ apiKey })
+  } catch (initErr) {
+    console.error('[scanCoupon] AI_ERROR_DETAILS (OpenAI init failed):', initErr)
+    return { success: false, error: 'Configuração da IA ausente' }
+  }
+
+  try {
     const keywordsText =
       campaignKeywords.length > 0
         ? `Produtos elegiveis da campanha (palavras-chave): ${campaignKeywords.join(', ')}`
@@ -96,15 +111,22 @@ Rules:
       throw new Error('Sem resposta da OpenAI')
     }
 
-    console.log('[scanCoupon] OpenAI raw response (first 300 chars):', content.substring(0, 300))
+    console.log('[scanCoupon] OpenAI raw response (first 400 chars):', content.substring(0, 400))
 
-    // Strip markdown fences if the model added them despite instructions
+    // ── 3. Response sanitisation — strip markdown fences, then parse ───────
     const cleaned = content
       .replace(/```json\s*/gi, '')
       .replace(/```\s*/g, '')
       .trim()
 
-    const extractedData: ExtractedData = JSON.parse(cleaned)
+    let extractedData: ExtractedData
+    try {
+      extractedData = JSON.parse(cleaned) as ExtractedData
+    } catch (parseErr) {
+      console.error('[scanCoupon] AI_ERROR_DETAILS (JSON parse failed):', parseErr)
+      console.error('[scanCoupon] Full raw response that failed to parse:', content)
+      return { success: false, error: 'IA retornou formato inválido' }
+    }
 
     console.log('[scanCoupon] ✔ Parsed successfully. has_matching_products:', extractedData.has_matching_products)
     console.log('[scanCoupon] matched_keywords:', extractedData.matched_keywords)
@@ -112,8 +134,9 @@ Rules:
 
     return { success: true, data: extractedData }
   } catch (error: unknown) {
+    // Full object dump — captures AuthenticationError, RateLimitError, APIError etc.
+    console.error('[scanCoupon] AI_ERROR_DETAILS:', error)
     const message = error instanceof Error ? error.message : 'Falha ao escanear imagem do cupom'
-    console.error('[scanCoupon] ✖ Error:', message)
     return { success: false, error: message }
   }
 }
