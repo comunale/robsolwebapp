@@ -9,7 +9,8 @@ import { useAdmin } from './AdminGuard'
 interface Stats {
   campaigns: number
   pendingCoupons: number
-  users: number
+  totalCoupons: number
+  totalUsers: number
   activeStores: number
   goalsCompleted: number
   luckyNumbers: number
@@ -18,24 +19,27 @@ interface Stats {
 export default function DashboardOverview() {
   const { profile } = useAdmin()
   const [stats, setStats] = useState<Stats>({
-    campaigns: 0, pendingCoupons: 0, users: 0,
-    activeStores: 0, goalsCompleted: 0, luckyNumbers: 0,
+    campaigns: 0, pendingCoupons: 0, totalCoupons: 0,
+    totalUsers: 0, activeStores: 0, goalsCompleted: 0, luckyNumbers: 0,
   })
   const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     const fetchStats = async () => {
-      const [campRes, coupRes, storeRes, goalRes, luckyRes] = await Promise.all([
+      const [campRes, pendingRes, totalCoupRes, usersRes, storeRes, goalRes, luckyRes] = await Promise.all([
         supabase.from('campaigns').select('id', { count: 'exact', head: true }),
         supabase.from('coupons').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('coupons').select('id', { count: 'exact', head: true }),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'user'),
         supabase.from('stores').select('id', { count: 'exact', head: true }).eq('is_active', true),
         supabase.from('goal_completions').select('id', { count: 'exact', head: true }),
         supabase.from('lucky_numbers').select('id', { count: 'exact', head: true }),
       ])
       setStats({
         campaigns: campRes.count ?? 0,
-        pendingCoupons: coupRes.count ?? 0,
-        users: 0,
+        pendingCoupons: pendingRes.count ?? 0,
+        totalCoupons: totalCoupRes.count ?? 0,
+        totalUsers: usersRes.count ?? 0,
         activeStores: storeRes.count ?? 0,
         goalsCompleted: goalRes.count ?? 0,
         luckyNumbers: luckyRes.count ?? 0,
@@ -45,10 +49,10 @@ export default function DashboardOverview() {
   }, [supabase])
 
   const cards = [
-    { label: 'Campanhas', value: stats.campaigns, color: 'text-blue-600', bg: 'bg-blue-100', href: '/admin/campaigns' },
+    { label: 'Clientes Cadastrados', value: stats.totalUsers, color: 'text-indigo-600', bg: 'bg-indigo-100', href: '/admin/users' },
+    { label: 'Cupons Enviados', value: stats.totalCoupons, color: 'text-blue-600', bg: 'bg-blue-100', href: '/admin/coupons' },
     { label: 'Cupons Pendentes', value: stats.pendingCoupons, color: 'text-yellow-600', bg: 'bg-yellow-100', href: '/admin/coupons' },
-    { label: 'Lojas Ativas', value: stats.activeStores, color: 'text-teal-600', bg: 'bg-teal-100', href: '/admin/stores' },
-    { label: 'Metas Concluidas', value: stats.goalsCompleted, color: 'text-green-600', bg: 'bg-green-100', href: '/admin/analytics' },
+    { label: 'Campanhas', value: stats.campaigns, color: 'text-teal-600', bg: 'bg-teal-100', href: '/admin/campaigns' },
     { label: 'Numeros da Sorte', value: stats.luckyNumbers, color: 'text-amber-600', bg: 'bg-amber-100', href: '/admin/draws' },
   ]
 

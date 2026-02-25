@@ -60,6 +60,28 @@ export default function DrawManager() {
     }
   }, [selectedCampaign, fetchLuckyNumbers])
 
+  const [syncing, setSyncing] = useState(false)
+
+  const syncLuckyNumbers = async () => {
+    if (!selectedCampaign) return
+    setSyncing(true)
+    try {
+      const res = await fetch('/api/lucky-numbers/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campaign_id: selectedCampaign }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      alert(data.message)
+      await fetchLuckyNumbers()
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Falha ao sincronizar')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   const executeDraw = async () => {
     if (!selectedCampaign) return
     setDrawing(true)
@@ -140,6 +162,14 @@ export default function DrawManager() {
                     className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
                   />
                 </div>
+                <button
+                  onClick={syncLuckyNumbers}
+                  disabled={syncing}
+                  title="Gera números para cupons aprovados que ainda não têm número da sorte"
+                  className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition text-sm"
+                >
+                  {syncing ? 'Sincronizando...' : 'Sincronizar Números'}
+                </button>
                 <button
                   onClick={executeDraw}
                   disabled={drawing || eligibleNumbers === 0}

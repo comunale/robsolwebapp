@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import Image from 'next/image'
 import AdminHeader from './AdminHeader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
+import { createClient } from '@/lib/supabase/client'
 import type { CouponWithRelations, CouponStatus } from '@/types/coupon'
 
 const statusColors: Record<string, string> = {
@@ -33,7 +34,11 @@ export default function CouponModeration() {
   const [coupons, setCoupons] = useState<CouponWithRelations[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<CouponStatus | 'all'>('pending')
+  const [filterCampaignId, setFilterCampaignId] = useState('')
+  const [filterUserName, setFilterUserName] = useState('')
+  const [campaignList, setCampaignList] = useState<{ id: string; title: string }[]>([])
   const [selectedCoupon, setSelectedCoupon] = useState<CouponWithRelations | null>(null)
+  const supabase = useMemo(() => createClient(), [])
   const [reviewPoints, setReviewPoints] = useState(10)
   const [reviewing, setReviewing] = useState(false)
   const [error, setError] = useState('')
@@ -61,11 +66,23 @@ export default function CouponModeration() {
     setIsDraggingState(false)
   }, [selectedCoupon?.id])
 
+  // Load campaign list for filter dropdown
+  useEffect(() => {
+    supabase
+      .from('campaigns')
+      .select('id, title')
+      .order('title')
+      .then(({ data }) => { if (data) setCampaignList(data) })
+  }, [supabase])
+
   const fetchCoupons = useCallback(async () => {
     setLoading(true)
     try {
-      const params = filter !== 'all' ? `?status=${filter}` : ''
-      const res = await fetch(`/api/coupons${params}`)
+      const p = new URLSearchParams()
+      if (filter !== 'all') p.set('status', filter)
+      if (filterCampaignId) p.set('campaign_id', filterCampaignId)
+      const query = p.toString() ? `?${p.toString()}` : ''
+      const res = await fetch(`/api/coupons${query}`)
       if (!res.ok) throw new Error('Falha ao carregar cupons')
       const data = await res.json()
       setCoupons(data.coupons || [])
@@ -74,7 +91,7 @@ export default function CouponModeration() {
     } finally {
       setLoading(false)
     }
-  }, [filter])
+  }, [filter, filterCampaignId])
 
   useEffect(() => {
     void fetchCoupons()
@@ -175,6 +192,32 @@ export default function CouponModeration() {
     setIsDraggingState(false)
   }
 
+  const handleImageDownload = async () => {
+    if (!selectedCoupon) return
+    try {
+      const response = await fetch(selectedCoupon.image_url)
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `cupom-${selectedCoupon.id.slice(0, 8)}.jpg`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      window.open(selectedCoupon.image_url, '_blank')
+    }
+  }
+
+  // Client-side filter by user name / email on top of the server-side status+campaign filter
+  const displayedCoupons = useMemo(() => {
+    const q = filterUserName.trim().toLowerCase()
+    if (!q) return coupons
+    return coupons.filter((c) =>
+      (c.profiles?.full_name ?? '').toLowerCase().includes(q) ||
+      (c.profiles?.email ?? '').toLowerCase().includes(q)
+    )
+  }, [coupons, filterUserName])
+
   const canConfirmReject =
     !!selectedRejectionReason &&
     (selectedRejectionReason !== 'Outro motivo' || customRejectionReason.trim().length > 0)
@@ -190,21 +233,45 @@ export default function CouponModeration() {
           </div>
         )}
 
-        {/* Filter Tabs */}
-        <div className="flex gap-2 mb-6">
-          {(['pending', 'approved', 'rejected', 'all'] as const).map((s) => (
-            <button
-              key={s}
-              onClick={() => setFilter(s)}
-              className={`px-4 py-2 rounded-lg font-medium text-sm transition ${
-                filter === s
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-              }`}
-            >
-              {statusLabels[s]}
-            </button>
-          ))}
+        {/* Filter bar */}
+        <div className="flex flex-wrap gap-3 mb-6">
+          {/* Status tabs */}
+          <div className="flex gap-2">
+            {(['pending', 'approved', 'rejected', 'all'] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setFilter(s)}
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition ${
+                  filter === s
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                {statusLabels[s]}
+              </button>
+            ))}
+          </div>
+
+          {/* Campaign filter */}
+          <select
+            value={filterCampaignId}
+            onChange={(e) => setFilterCampaignId(e.target.value)}
+            className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-indigo-400 outline-none"
+          >
+            <option value="">Todas as campanhas</option>
+            {campaignList.map((c) => (
+              <option key={c.id} value={c.id}>{c.title}</option>
+            ))}
+          </select>
+
+          {/* User name search (client-side) */}
+          <input
+            type="text"
+            placeholder="Buscar usuário..."
+            value={filterUserName}
+            onChange={(e) => setFilterUserName(e.target.value)}
+            className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-indigo-400 outline-none w-44"
+          />
         </div>
 
         {/* ── REVIEW MODAL ──────────────────────────────────────── */}
@@ -269,31 +336,25 @@ export default function CouponModeration() {
 
                   {/* Image controls bar */}
                   <div className="flex items-center justify-between mt-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-                    {/* Rotation */}
+                    {/* Rotation — Unicode arrows are reliable across all browsers */}
                     <div className="flex gap-1">
                       <button
                         onClick={() => setImageRotation((r) => r - 90)}
                         title="Girar para a esquerda"
-                        className="p-1.5 rounded hover:bg-gray-200 transition text-gray-600"
+                        className="p-1.5 rounded hover:bg-gray-200 transition text-gray-700 text-lg leading-none"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                            d="M3 10a9 9 0 1012.9-8.1M3 10V4m0 6H9" />
-                        </svg>
+                        ↺
                       </button>
                       <button
                         onClick={() => setImageRotation((r) => r + 90)}
                         title="Girar para a direita"
-                        className="p-1.5 rounded hover:bg-gray-200 transition text-gray-600"
+                        className="p-1.5 rounded hover:bg-gray-200 transition text-gray-700 text-lg leading-none"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                            d="M21 10a9 9 0 10-12.9-8.1M21 10V4m0 6h-6" />
-                        </svg>
+                        ↻
                       </button>
                     </div>
 
-                    {/* Zoom */}
+                    {/* Zoom — Heroicons v2 MagnifyingGlass paths */}
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => setImageZoom((z) => Math.max(0.5, parseFloat((z - 0.25).toFixed(2))))}
@@ -302,7 +363,7 @@ export default function CouponModeration() {
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                            d="M21 21l-4.35-4.35M11 6h6M17 11H5m6 6a8 8 0 100-16 8 8 0 000 16z" />
+                            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM13.5 10.5h-6" />
                         </svg>
                       </button>
                       <span className="text-xs font-semibold text-gray-600 w-10 text-center tabular-nums">
@@ -315,18 +376,30 @@ export default function CouponModeration() {
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                            d="M21 21l-4.35-4.35M11 8v6M8 11h6m3 0a8 8 0 100-16 8 8 0 000 16z" />
+                            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
                         </svg>
                       </button>
                     </div>
 
-                    {/* Reset */}
-                    <button
-                      onClick={() => { setImageZoom(1); setImageRotation(0); setImagePan({ x: 0, y: 0 }) }}
-                      className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-200 transition"
-                    >
-                      Reset
-                    </button>
+                    {/* Reset + Download */}
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => { setImageZoom(1); setImageRotation(0); setImagePan({ x: 0, y: 0 }) }}
+                        className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-200 transition"
+                      >
+                        Reset
+                      </button>
+                      <button
+                        onClick={handleImageDownload}
+                        title="Baixar imagem"
+                        className="p-1.5 rounded hover:bg-gray-200 transition text-gray-600"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -604,7 +677,7 @@ export default function CouponModeration() {
         {/* ── COUPONS GRID ── */}
         {loading ? (
           <LoadingSpinner />
-        ) : coupons.length === 0 ? (
+        ) : displayedCoupons.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
             <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -618,7 +691,7 @@ export default function CouponModeration() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {coupons.map((coupon) => (
+            {displayedCoupons.map((coupon) => (
               <div
                 key={coupon.id}
                 onClick={() => setSelectedCoupon(coupon)}
