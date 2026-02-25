@@ -23,7 +23,72 @@ function formatDateBR(dateStr: string): string {
   return `${day}/${month}/${year}`
 }
 
-type ScanPhase = 'idle' | 'scanning' | 'ai_success' | 'ai_failed' | 'submitting' | 'done'
+// ─────────────────────────────────────────────────────────────────────────
+// Client-side image compression (Canvas API — no external library)
+//
+// Reduces a typical 5–10 MB smartphone photo to ~300–500 KB before upload:
+//   • Max dimension: 1200 px (longest side), aspect ratio preserved
+//   • Output:        JPEG at 80 % quality
+//   • Falls back to the original file if the browser Canvas is unavailable
+// ─────────────────────────────────────────────────────────────────────────
+function compressImage(file: File): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = document.createElement('img')
+    const objectUrl = URL.createObjectURL(file)
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl)
+
+      const MAX = 1200
+      let { width, height } = img
+
+      // Scale down only — never upscale
+      if (width > MAX || height > MAX) {
+        if (width >= height) {
+          height = Math.round((height * MAX) / width)
+          width = MAX
+        } else {
+          width = Math.round((width * MAX) / height)
+          height = MAX
+        }
+      }
+
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        reject(new Error('Canvas not supported'))
+        return
+      }
+
+      ctx.drawImage(img, 0, 0, width, height)
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error('canvas.toBlob returned null'))
+            return
+          }
+          const name = file.name.replace(/\.[^.]+$/, '.jpg')
+          resolve(new File([blob], name, { type: 'image/jpeg' }))
+        },
+        'image/jpeg',
+        0.8
+      )
+    }
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error('Failed to load image for compression'))
+    }
+
+    img.src = objectUrl
+  })
+}
+
+type ScanPhase = 'idle' | 'uploading' | 'scanning' | 'ai_success' | 'ai_failed' | 'submitting' | 'done'
 
 export default function ScanPage() {
   const { user, loading: authLoading } = useAuth()
@@ -39,6 +104,8 @@ export default function ScanPage() {
   // Image state
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  // Stores the Supabase URL after the image-first upload in handleScan
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
 
   // Workflow state machine
   const [phase, setPhase] = useState<ScanPhase>('idle')
@@ -96,6 +163,7 @@ export default function ScanPage() {
     }
 
     setImageFile(file)
+    setUploadedImageUrl(null)   // new image → clear any previously uploaded URL
     setExtractedData(null)
     setError('')
     setSuccessMessage('')
@@ -108,48 +176,84 @@ export default function ScanPage() {
     reader.readAsDataURL(file)
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // IMAGE-FIRST SCAN FLOW
+  //
+  // 1. Upload the raw file to Supabase Storage → get a public URL.
+  //    This means no large base64 payload is ever sent through a Server Action.
+  // 2. Pass only the URL to the AI server action.
+  // 3. If AI succeeds → ai_success; if AI fails for any reason → ai_failed
+  //    (manual form), never back to idle with an error.
+  // ─────────────────────────────────────────────────────────────────────────
   const handleScan = async () => {
-    if (!imageFile || !selectedCampaign || !imagePreview) {
+    if (!imageFile || !selectedCampaign || !user) {
       setError('Selecione uma campanha e envie uma imagem primeiro')
       return
     }
 
-    setPhase('scanning')
     setError('')
 
     try {
-      // imagePreview is already a data URL ("data:<mime>;base64,<data>")
-      // produced by FileReader in handleImageChange — no need to re-encode.
-      const base64 = imagePreview.split(',')[1]
+      // ── Step 1: Compress + upload (skip if already done for this file) ──
+      let imageUrl = uploadedImageUrl
+      if (!imageUrl) {
+        setPhase('uploading')
 
-      const result = await scanCouponImage(
-        base64,
-        imageFile.type,
-        selectedCampaign.keywords || []
-      )
+        // Compress before upload — gracefully fall back to original on failure
+        let fileToUpload = imageFile
+        try {
+          fileToUpload = await compressImage(imageFile)
+          console.log(
+            `[scan] Compressed: ${(imageFile.size / 1024).toFixed(0)} KB → ${(fileToUpload.size / 1024).toFixed(0)} KB`
+          )
+        } catch (compressErr) {
+          console.warn('[scan] Compression failed — uploading original:', compressErr)
+        }
+
+        console.log('[scan] Uploading to Supabase Storage...')
+        imageUrl = await uploadCouponImage(fileToUpload, user.id, selectedCampaign.id)
+        setUploadedImageUrl(imageUrl)
+        console.log('[scan] Upload complete:', imageUrl)
+      }
+
+      // ── Step 2: AI analysis via public URL (no base64 payload) ─────────
+      setPhase('scanning')
+      console.log('[scan] Calling AI analysis...')
+      const result = await scanCouponImage(imageUrl, selectedCampaign.keywords || [])
+      console.log('[scan] AI result — success:', result.success, '| has_matching:', result.data?.has_matching_products)
 
       if (!result.success || !result.data) {
-        throw new Error(result.error || 'Falha ao escanear')
+        // AI could not process the image — fall through to manual entry.
+        // Do NOT throw; the user must never be blocked.
+        console.log('[scan] AI failed — opening manual entry form. Reason:', result.error)
+        setExtractedData(null)
+        setPhase('ai_failed')
+        return
       }
 
       setExtractedData(result.data)
-
-      if (result.data.has_matching_products) {
-        setPhase('ai_success')
-      } else {
-        setPhase('ai_failed')
-      }
+      // has_matching_products=false → ai_failed (manual form) with partial data preserved
+      setPhase(result.data.has_matching_products ? 'ai_success' : 'ai_failed')
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Falha ao escanear a imagem')
+      // Only hard upload errors reach here — AI failures are handled above.
+      console.error('[scan] Upload error:', err)
+      setError(err instanceof Error ? err.message : 'Falha ao fazer upload da imagem')
       setPhase('idle')
     }
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // SUBMIT — image is already in Supabase from the scan step, so we only
+  // need to POST the metadata to /api/coupons. No re-upload.
+  // ─────────────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
-    if (!imageFile || !selectedCampaign || !user) return
+    if (!uploadedImageUrl || !selectedCampaign || !user) return
 
-    // Validate manual fields when in manual phase
-    if (phase === 'ai_failed') {
+    // Capture phase before any async state change (avoid stale closure issues)
+    const currentPhase = phase
+
+    // Validate manual fields
+    if (currentPhase === 'ai_failed') {
       if (!manualModel.trim()) {
         setError('Informe o Modelo do Óculos')
         return
@@ -163,27 +267,26 @@ export default function ScanPage() {
     setPhase('submitting')
     setError('')
 
+    const dataToSubmit: ExtractedData = currentPhase === 'ai_failed'
+      ? {
+          ...(extractedData ?? { items: [], matched_keywords: [], has_matching_products: false }),
+          submission_type: 'manual',
+          manual_model: manualModel.trim(),
+          manual_quantity: manualQuantity,
+        }
+      : {
+          ...(extractedData!),
+          submission_type: 'ai',
+        }
+
     try {
-      const imageUrl = await uploadCouponImage(imageFile, user.id, selectedCampaign.id)
-
-      const dataToSubmit: ExtractedData = phase === 'ai_failed'
-        ? {
-            ...(extractedData ?? { items: [], matched_keywords: [], has_matching_products: false }),
-            submission_type: 'manual',
-            manual_model: manualModel.trim(),
-            manual_quantity: manualQuantity,
-          }
-        : {
-            ...(extractedData!),
-            submission_type: 'ai',
-          }
-
+      console.log('[scan] Submitting coupon — campaign:', selectedCampaign.id, '| type:', dataToSubmit.submission_type)
       const res = await fetch('/api/coupons', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           campaign_id: selectedCampaign.id,
-          image_url: imageUrl,
+          image_url: uploadedImageUrl,
           extracted_data: dataToSubmit,
         }),
       })
@@ -193,11 +296,13 @@ export default function ScanPage() {
         throw new Error(data.error || 'Falha ao enviar cupom')
       }
 
-      setSuccessMessage(`Cupom enviado com sucesso! Aguardando revisão do administrador.`)
+      console.log('[scan] Coupon submitted successfully')
+      setSuccessMessage('Cupom enviado com sucesso! Aguardando revisão do administrador.')
       setPhase('done')
     } catch (err: unknown) {
+      console.error('[scan] Submit error:', err)
       setError(err instanceof Error ? err.message : 'Falha ao enviar cupom')
-      // Go back to the right phase on error
+      // Restore the phase the user was in before submitting
       setPhase(extractedData?.has_matching_products ? 'ai_success' : 'ai_failed')
     }
   }
@@ -205,6 +310,7 @@ export default function ScanPage() {
   const handleReset = () => {
     setImageFile(null)
     setImagePreview(null)
+    setUploadedImageUrl(null)
     setExtractedData(null)
     setError('')
     setSuccessMessage('')
@@ -215,6 +321,7 @@ export default function ScanPage() {
   }
 
   const isSelectedJoined = selectedCampaign ? joinedIds.has(selectedCampaign.id) : false
+  const isBusy = phase === 'uploading' || phase === 'scanning' || phase === 'submitting'
   const canScan = dataReady && !!selectedCampaign && !!imageFile && isSelectedJoined && phase === 'idle'
 
   if (authLoading) return <LoadingSpinner />
@@ -283,10 +390,11 @@ export default function ScanPage() {
                         onClick={() => {
                           setSelectedCampaign(campaign)
                           setExtractedData(null)
+                          setUploadedImageUrl(null)  // stale URL belongs to old campaign path
                           setPhase('idle')
                           setError('')
                         }}
-                        disabled={phase === 'scanning' || phase === 'submitting'}
+                        disabled={isBusy}
                         className={`w-full text-left p-3 rounded-xl border-2 transition text-sm ${
                           isSelected
                             ? 'border-indigo-500 bg-indigo-50'
@@ -380,7 +488,7 @@ export default function ScanPage() {
                   accept="image/*"
                   capture="environment"
                   onChange={handleImageChange}
-                  disabled={phase === 'scanning' || phase === 'submitting'}
+                  disabled={isBusy}
                   className="hidden"
                 />
               </label>
@@ -408,6 +516,15 @@ export default function ScanPage() {
               </div>
             )}
 
+            {/* Uploading overlay */}
+            {phase === 'uploading' && (
+              <div className="mb-4 bg-white rounded-xl border border-gray-100 p-8 text-center">
+                <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                <h3 className="text-base font-semibold text-gray-900 mb-1">Enviando imagem…</h3>
+                <p className="text-sm text-gray-500">Carregando o cupom para análise</p>
+              </div>
+            )}
+
             {/* Scanning overlay */}
             {phase === 'scanning' && (
               <div className="mb-4 bg-white rounded-xl border border-gray-100 p-8 text-center">
@@ -418,7 +535,7 @@ export default function ScanPage() {
             )}
 
             {/* ── AI SUCCESS RESULT ──────────────────────── */}
-            {(phase === 'ai_success') && extractedData && (
+            {phase === 'ai_success' && extractedData && (
               <div className="mb-4 space-y-3">
                 <h2 className="text-sm font-semibold text-gray-700">3. Resultado da IA</h2>
 

@@ -7,11 +7,18 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
+/**
+ * Analyses a receipt image already stored in Supabase Storage.
+ * Accepts a public URL — no base64 payload, no body-size limit issues.
+ */
 export async function scanCouponImage(
-  base64Image: string,
-  mimeType: string,
+  imageUrl: string,
   campaignKeywords: string[]
 ): Promise<{ success: boolean; data?: ExtractedData; error?: string }> {
+  console.log('[scanCoupon] ▶ Starting AI analysis')
+  console.log('[scanCoupon] Image URL:', imageUrl)
+  console.log('[scanCoupon] Keywords:', campaignKeywords)
+
   try {
     if (!process.env.OPENAI_API_KEY) {
       throw new Error('OPENAI_API_KEY nao esta configurada')
@@ -21,6 +28,8 @@ export async function scanCouponImage(
       campaignKeywords.length > 0
         ? `Produtos elegiveis da campanha (palavras-chave): ${campaignKeywords.join(', ')}`
         : 'Nenhuma palavra-chave especifica definida para esta campanha.'
+
+    console.log('[scanCoupon] Calling OpenAI Vision API...')
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -73,7 +82,7 @@ Rules:
             {
               type: 'image_url',
               image_url: {
-                url: `data:${mimeType};base64,${base64Image}`,
+                url: imageUrl,
                 detail: 'high',
               },
             },
@@ -87,7 +96,9 @@ Rules:
       throw new Error('Sem resposta da OpenAI')
     }
 
-    // Clean the response — remove markdown code fences if present
+    console.log('[scanCoupon] OpenAI raw response (first 300 chars):', content.substring(0, 300))
+
+    // Strip markdown fences if the model added them despite instructions
     const cleaned = content
       .replace(/```json\s*/gi, '')
       .replace(/```\s*/g, '')
@@ -95,13 +106,14 @@ Rules:
 
     const extractedData: ExtractedData = JSON.parse(cleaned)
 
+    console.log('[scanCoupon] ✔ Parsed successfully. has_matching_products:', extractedData.has_matching_products)
+    console.log('[scanCoupon] matched_keywords:', extractedData.matched_keywords)
+    console.log('[scanCoupon] receipt_number:', extractedData.receipt_number)
+
     return { success: true, data: extractedData }
   } catch (error: unknown) {
-    console.error('OCR scan error:', error)
     const message = error instanceof Error ? error.message : 'Falha ao escanear imagem do cupom'
-    return {
-      success: false,
-      error: message,
-    }
+    console.error('[scanCoupon] ✖ Error:', message)
+    return { success: false, error: message }
   }
 }

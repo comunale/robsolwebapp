@@ -67,14 +67,22 @@ export async function POST(request: Request) {
     } = await supabase.auth.getSession()
 
     if (!session) {
+      console.warn('[coupons POST] Unauthorized — no session')
       return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
     }
 
     const body = await request.json()
     const { campaign_id, image_url, extracted_data } = body
 
+    console.log('[coupons POST] ▶ user:', session.user.id)
+    console.log('[coupons POST] campaign:', campaign_id)
+    console.log('[coupons POST] image_url:', image_url)
+    console.log('[coupons POST] submission_type:', extracted_data?.submission_type)
+    console.log('[coupons POST] receipt_number:', extracted_data?.receipt_number ?? 'none')
+
     // Anti-fraud: block duplicate receipt numbers within the same campaign
     if (extracted_data?.receipt_number) {
+      console.log('[coupons POST] Checking for duplicate receipt number...')
       const { data: duplicate } = await supabase
         .from('coupons')
         .select('id')
@@ -83,13 +91,16 @@ export async function POST(request: Request) {
         .maybeSingle()
 
       if (duplicate) {
+        console.warn('[coupons POST] Duplicate receipt detected, existing coupon id:', duplicate.id)
         return NextResponse.json(
           { error: 'Este cupom fiscal já foi enviado nesta campanha.' },
           { status: 409 }
         )
       }
+      console.log('[coupons POST] No duplicate found — proceeding')
     }
 
+    console.log('[coupons POST] Inserting coupon into DB...')
     const { data: coupon, error } = await supabase
       .from('coupons')
       .insert({
@@ -103,12 +114,16 @@ export async function POST(request: Request) {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('[coupons POST] DB insert error:', error.message, error.code)
+      throw error
+    }
 
+    console.log('[coupons POST] ✔ Coupon saved, id:', coupon.id, '| status: pending')
     return NextResponse.json({ coupon }, { status: 201 })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Falha ao criar cupom'
-    console.error('Error creating coupon:', error)
+    console.error('[coupons POST] ✖ Unhandled error:', error)
     return NextResponse.json(
       { error: message },
       { status: 500 }
