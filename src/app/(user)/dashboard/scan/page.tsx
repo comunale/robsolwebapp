@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, Suspense } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
@@ -91,7 +91,7 @@ function compressImage(file: File): Promise<File> {
 
 type ScanPhase = 'idle' | 'uploading' | 'scanning' | 'ai_success' | 'ai_failed' | 'submitting' | 'done'
 
-export default function ScanPage() {
+function ScanPageContent() {
   const { user, loading: authLoading } = useAuth()
   const supabase = useMemo(() => createClient(), [])
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -712,5 +712,13 @@ export default function ScanPage() {
       </main>
       <BarraNavegacao />
     </>
+  )
+}
+
+export default function ScanPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <ScanPageContent />
+    </Suspense>
   )
 }
