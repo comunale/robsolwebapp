@@ -1,13 +1,56 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { createClient } from '@/lib/supabase/client'
 import Notificacoes from './Notificacoes'
 
 export default function CabecalhoUsuario() {
-  const { profile, signOut } = useAuth()
+  const { user, profile, signOut } = useAuth()
   const [showNotifications, setShowNotifications] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const supabase = useMemo(() => createClient(), [])
+
+  // ── Fetch initial unread count on mount ──────────────────────────────────
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    const fetchCount = async () => {
+      try {
+        const res = await fetch('/api/notifications')
+        const data = await res.json()
+        if (!cancelled && data.notifications) {
+          setUnreadCount(
+            (data.notifications as { is_read: boolean }[]).filter((n) => !n.is_read).length
+          )
+        }
+      } catch { /* silent */ }
+    }
+    void fetchCount()
+    return () => { cancelled = true }
+  }, [user])
+
+  // ── Supabase Realtime: increment badge on new notification ───────────────
+  useEffect(() => {
+    if (!user) return
+    const channel = supabase
+      .channel(`notifications-bell-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          setUnreadCount((c) => c + 1)
+        }
+      )
+      .subscribe()
+
+    return () => { void supabase.removeChannel(channel) }
+  }, [user, supabase])
 
   return (
     <header className="md:hidden bg-white shadow-sm sticky top-0 z-40">
@@ -31,7 +74,7 @@ export default function CabecalhoUsuario() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+              <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold leading-none">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
