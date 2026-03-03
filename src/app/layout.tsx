@@ -13,8 +13,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Campanhas de Incentivo",
+  title: "Robsol VIP",
   description: "Gerencie campanhas, escaneie cupons e ganhe recompensas",
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: '/logo.png',
+  },
 };
 
 export default function RootLayout({

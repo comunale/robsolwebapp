@@ -54,11 +54,16 @@ export default function CabecalhoUsuario() {
 
   return (
     <header className="md:hidden bg-white shadow-sm sticky top-0 z-40">
-      <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+      <div className="max-w-lg mx-auto px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold">
-            {profile?.full_name?.charAt(0) || 'U'}
-          </div>
+          {/* Logo — upload public/logo-header.png (120×32px recommended) to replace */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-header.png"
+            alt="Robsol VIP"
+            className="h-7 w-auto object-contain"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+          />
           <div>
             <p className="text-sm font-semibold text-gray-900">Ola, {profile?.full_name?.split(' ')[0]}!</p>
             <p className="text-xs text-indigo-600 font-bold">{profile?.total_points || 0} pontos</p>

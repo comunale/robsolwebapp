@@ -112,10 +112,19 @@ export default function AdminSidebar() {
 
   return (
     <aside className="w-64 bg-white border-r border-gray-200 min-h-screen fixed left-0 top-0 z-30">
-      {/* Marca */}
-      <div className="h-16 flex items-center px-6 border-b border-gray-200">
-        <Link href="/admin" className="text-xl font-bold text-indigo-600">
-          Robsol<span className="text-gray-400 font-normal">Admin</span>
+      {/* Logo — upload public/logo-admin.png (180×48px recommended) to replace */}
+      <div className="h-16 flex items-center px-5 border-b border-gray-200">
+        <Link href="/admin" className="flex items-center gap-2.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-admin.png"
+            alt="Robsol VIP Admin"
+            className="h-8 w-auto object-contain"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+          />
+          <span className="text-xl font-bold text-indigo-600 logo-text-fallback">
+            Robsol<span className="text-gray-400 font-normal">Admin</span>
+          </span>
         </Link>
       </div>
 
