@@ -12,7 +12,7 @@ import { useAuth } from '@/lib/hooks/useAuth'
 // ─────────────────────────────────────────────────────────────────────────────
 const LANDING_PAGE_DATA = {
   hero: {
-    headline: 'Robsol: Onde suas vendas se tornam conquistas',
+    headline: 'Onde suas vendas se tornam conquistas',
     subheadline:
       'Participe das campanhas, escaneie seus cupons e acumule pontos para conquistar prêmios exclusivos.',
     cta: 'Começar Agora — é grátis',
@@ -20,7 +20,7 @@ const LANDING_PAGE_DATA = {
       label: 'Último Prêmio Entregue',
       winner: 'Fernanda S.',
       prize: 'iPhone 15 Pro',
-      points: '12.400 pts',
+      date: 'Fev 2025',
     },
   },
 
@@ -28,14 +28,14 @@ const LANDING_PAGE_DATA = {
     {
       number: '01',
       title: 'Cadastre-se',
-      description: 'Crie sua conta gratuita em menos de 1 minuto e acesse o painel VIP.',
+      description: 'Crie sua conta em menos de 1 minuto e acesse o painel VIP. Fique por dentro das promoções e prêmios exclusivos.',
       // Heroicons v2 — UserPlus
       icon: 'M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z',
     },
     {
       number: '02',
       title: 'Escolha sua Campanha',
-      description: 'Navegue pelas campanhas ativas das lojas parceiras e inscreva-se.',
+      description: 'Navegue pelas campanhas ativas e inscreva-se. Acompanhe o regulamento e as pontuações em tempo real.',
       // Heroicons v2 — RectangleStack
       icon: 'M6.429 9.75 2.25 12l4.179 2.25m0-4.5 5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0 4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0-5.571 3-5.571-3',
     },
@@ -71,59 +71,56 @@ const LANDING_PAGE_DATA = {
     },
   ],
 
+  // ── "Veja o que já foi Sorteado" ──────────────────────────────────────────
+  // Add winner name, delivery date, and swap image paths in /public/prizes/
   prizes: [
     {
-      title: 'iPhone 15 Pro',
-      subtitle: 'Tecnologia de ponta',
-      points: '25.000 pts',
-      // swap this path to your uploaded image in /public/prizes/
-      image: '/prizes/iphone.png',
-      color: 'from-slate-800 to-slate-600',
-      badge: 'Top Prêmio',
+      title: 'Kit Maquiagem Sabrina Sato',
+      subtitle: 'Linha Premium completa',
+      image: '/prizes/sabrina.png',
+      color: 'from-rose-800 to-pink-600',
+      badge: 'Sorteado',
+      winner: 'Fernanda S.',
+      deliveredAt: 'Fev 2025',
     },
     {
       title: 'Final de Semana Surpresa',
       subtitle: 'Viagem + hospedagem para 2',
-      points: '18.000 pts',
       image: '/prizes/weekend.png',
       color: 'from-indigo-700 to-purple-600',
-      badge: 'Popular',
+      badge: 'Sorteado',
+      winner: 'Carlos M.',
+      deliveredAt: 'Jan 2025',
     },
     {
       title: 'Gift Card R$ 500',
       subtitle: 'Lojas parceiras selecionadas',
-      points: '8.000 pts',
       image: '/prizes/giftcard.png',
       color: 'from-amber-600 to-yellow-500',
-      badge: 'Mais Rápido',
+      badge: 'Sorteado',
+      winner: 'Ana P.',
+      deliveredAt: 'Dez 2024',
     },
     {
       title: 'Smart TV 55"',
       subtitle: '4K QLED Ultra HD',
-      points: '20.000 pts',
       image: '/prizes/tv.png',
       color: 'from-teal-700 to-cyan-600',
-      badge: 'Novo',
+      badge: 'Sorteado',
+      winner: 'Ricardo L.',
+      deliveredAt: 'Nov 2024',
     },
   ],
 
   footer: {
     description: 'A plataforma de fidelidade que transforma cada compra em uma conquista.',
-    newsletter: { label: 'Fique por dentro das novidades', placeholder: 'Seu e-mail' },
-    links: {
-      Plataforma: [
-        { label: 'Como Funciona', href: '#como-funciona' },
-        { label: 'Prêmios', href: '#premios' },
-        { label: 'Ranking', href: '#ranking' },
-        { label: 'Entrar', href: '/login' },
-      ],
-      Suporte: [
-        { label: 'Central de Ajuda', href: '#' },
-        { label: 'Termos de Uso', href: '#' },
-        { label: 'Privacidade', href: '#' },
-        { label: 'Contato', href: '#' },
-      ],
-    },
+    // Static "Plataforma" links — edit here
+    platformLinks: [
+      { label: 'Como Funciona', href: '#como-funciona' },
+      { label: 'Prêmios Sorteados', href: '#premios' },
+      { label: 'Ranking', href: '#ranking' },
+      { label: 'Entrar', href: '/login' },
+    ],
   },
 }
 
@@ -133,17 +130,25 @@ const LANDING_PAGE_DATA = {
 const EASE_OUT_EXPO = [0.22, 1, 0.36, 1] as [number, number, number, number]
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 28 },
+  hidden: { opacity: 0, y: 24 },
   visible: (i = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.1, duration: 0.55, ease: EASE_OUT_EXPO },
+    transition: { delay: i * 0.1, duration: 0.5, ease: EASE_OUT_EXPO },
   }),
 }
 
-function FadeSection({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+function FadeSection({
+  children,
+  className = '',
+  delay = 0,
+}: {
+  children: React.ReactNode
+  className?: string
+  delay?: number
+}) {
   const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-80px' })
+  const inView = useInView(ref, { once: true, margin: '-60px' })
   return (
     <motion.div
       ref={ref}
@@ -159,28 +164,164 @@ function FadeSection({ children, className = '', delay = 0 }: { children: React.
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Top-5 ranking type
+// Types
 // ─────────────────────────────────────────────────────────────────────────────
 interface RankUser { full_name: string; total_points: number }
 
-const RANK_COLORS = [
-  'text-yellow-400',  // 1st — gold
-  'text-slate-300',   // 2nd — silver
-  'text-amber-600',   // 3rd — bronze
-  'text-indigo-300',
-  'text-indigo-300',
-]
-
+const RANK_COLORS = ['text-yellow-400', 'text-slate-300', 'text-amber-600', 'text-indigo-300', 'text-indigo-300']
 const RANK_BADGES = ['🥇', '🥈', '🥉', '4º', '5º']
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Main component
+// Meu Painel Mockup — mirrors the real PainelUsuario layout
+// ─────────────────────────────────────────────────────────────────────────────
+function PainelMockup() {
+  return (
+    <div className="relative mx-auto" style={{ maxWidth: '360px' }}>
+      {/* Outer glow */}
+      <div className="absolute -inset-4 rounded-3xl pointer-events-none" style={{ background: 'radial-gradient(ellipse at 50% 50%,rgba(99,102,241,0.25),transparent 70%)' }} />
+
+      {/* Phone shell */}
+      <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10" style={{ background: '#f3f4f6' }}>
+
+        {/* ── App Header (mirrors CabecalhoUsuario) ── */}
+        <div className="bg-white shadow-sm px-4 py-2.5 flex items-center justify-between border-b border-gray-100">
+          <div className="flex items-center gap-2.5">
+            {/* Logo placeholder */}
+            <div className="w-20 h-5 rounded bg-indigo-100 flex items-center justify-center">
+              <span className="text-indigo-600 font-black text-xs">Robsol VIP</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            {/* Notification bell */}
+            <div className="relative p-1.5 text-gray-500">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full flex items-center justify-center text-white font-bold" style={{ fontSize: '7px' }}>3</span>
+            </div>
+          </div>
+        </div>
+
+        {/* User greeting bar */}
+        <div className="bg-white px-4 py-2 flex items-center justify-between border-b border-gray-100">
+          <div>
+            <p className="text-xs font-semibold text-gray-900">Olá, Lucas R.!</p>
+            <p className="text-xs text-indigo-600 font-bold">8.420 pontos</p>
+          </div>
+          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        </div>
+
+        {/* ── App body ── */}
+        <div className="p-3 space-y-3">
+
+          {/* Campaign card */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-gray-800">Campanha Verão 2025</p>
+              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold">Participando</span>
+            </div>
+            {/* Goal progress bar */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs text-gray-400">
+                <span>Meta: 10 cupons</span>
+                <span>7 / 10</span>
+              </div>
+              <div className="w-full h-1.5 bg-gray-100 rounded-full">
+                <div className="h-full rounded-full bg-indigo-500" style={{ width: '70%' }} />
+              </div>
+            </div>
+          </div>
+
+          {/* ── Coupon stats (mirrors PainelUsuario grid) ── */}
+          <div>
+            <p className="text-xs font-semibold text-gray-600 mb-2 px-0.5">Meus Cupons</p>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-2.5 text-center">
+                <svg className="w-4 h-4 text-gray-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p className="text-base font-bold text-gray-800">34</p>
+                <p className="text-xs text-gray-400">Enviados</p>
+              </div>
+              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-2.5 text-center">
+                <svg className="w-4 h-4 text-green-500 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-base font-bold text-green-700">28</p>
+                <p className="text-xs text-gray-400">Válidos</p>
+              </div>
+              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-2.5 text-center">
+                <svg className="w-4 h-4 text-red-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-base font-bold text-red-600">4</p>
+                <p className="text-xs text-gray-400">Recusados</p>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Quick Actions (mirrors PainelUsuario 2x2 grid) ── */}
+          <div>
+            <p className="text-xs font-semibold text-gray-600 mb-2 px-0.5">Ações Rápidas</p>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { label: 'Escanear Cupons', color: 'bg-indigo-100 text-indigo-600', icon: 'M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z' },
+                { label: 'Meus Cupons', color: 'bg-green-100 text-green-600', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+                { label: 'Ranking', color: 'bg-purple-100 text-purple-600', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+                { label: 'Nºs da Sorte', color: 'bg-amber-100 text-amber-600', icon: 'M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7' },
+              ].map((a) => (
+                <div key={a.label} className="bg-white rounded-xl p-2.5 border border-gray-100 shadow-sm flex items-center gap-2">
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${a.color}`}>
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d={a.icon} />
+                    </svg>
+                  </div>
+                  <span className="text-xs font-medium text-gray-700 leading-tight">{a.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom nav bar (mirrors BarraNavegacao) */}
+        <div className="bg-white border-t border-gray-100 px-4 py-2 flex justify-around items-center">
+          {[
+            { label: 'Início', active: true, icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+            { label: 'Escanear', active: false, icon: 'M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z' },
+            { label: 'Sorteios', active: false, icon: 'M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7' },
+          ].map((tab) => (
+            <div key={tab.label} className={`flex flex-col items-center gap-0.5 ${tab.active ? 'text-indigo-600' : 'text-gray-400'}`}>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d={tab.icon} />
+              </svg>
+              <span style={{ fontSize: '9px' }} className="font-medium">{tab.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Floating rank badge */}
+      <div
+        className="absolute -top-4 -right-4 rounded-xl px-3 py-1.5 text-xs font-bold shadow-xl border border-yellow-400/30"
+        style={{ background: 'rgba(30,27,75,0.95)', color: '#d4af37' }}
+      >
+        🏆 #12 Ranking
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main page component
 // ─────────────────────────────────────────────────────────────────────────────
 export default function Home() {
   const { user, profile, loading } = useAuth()
   const router = useRouter()
   const [ranking, setRanking] = useState<RankUser[]>([])
   const [menuOpen, setMenuOpen] = useState(false)
+  const [siteSettings, setSiteSettings] = useState<Record<string, string>>({})
 
   // Redirect logged-in users
   useEffect(() => {
@@ -189,12 +330,15 @@ export default function Home() {
     }
   }, [user, profile, loading, router])
 
-  // Fetch public ranking
+  // Fetch public ranking + site settings in parallel
   useEffect(() => {
-    fetch('/api/landing/ranking')
-      .then((r) => r.json())
-      .then((d) => setRanking(d.ranking ?? []))
-      .catch(() => {})
+    Promise.all([
+      fetch('/api/landing/ranking').then((r) => r.json()).catch(() => ({ ranking: [] })),
+      fetch('/api/landing/settings').then((r) => r.json()).catch(() => ({ settings: {} })),
+    ]).then(([rankData, settingsData]) => {
+      setRanking(rankData.ranking ?? [])
+      setSiteSettings(settingsData.settings ?? {})
+    })
   }, [])
 
   if (loading) {
@@ -209,26 +353,40 @@ export default function Home() {
 
   const { hero, steps, features, prizes, footer } = LANDING_PAGE_DATA
 
-  return (
-    <div className="min-h-screen text-white overflow-x-hidden" style={{ background: 'linear-gradient(160deg,#0f0c29 0%,#1e1b4b 35%,#312e81 65%,#4c1d95 100%)' }}>
+  // Dynamic support links from DB, with static fallbacks
+  const supportLinks = [
+    { label: 'Central de Ajuda', href: siteSettings.support_help || '#' },
+    { label: 'Termos de Uso', href: siteSettings.support_terms || '#' },
+    { label: 'Privacidade', href: siteSettings.support_privacy || '#' },
+    {
+      label: 'WhatsApp',
+      href: siteSettings.support_whatsapp
+        ? `https://wa.me/${siteSettings.support_whatsapp}`
+        : '#',
+    },
+  ]
 
-      {/* ── AMBIENT ORBS ───────────────────────────────────────────────────── */}
+  return (
+    <div
+      className="min-h-screen text-white overflow-x-hidden"
+      style={{ background: 'linear-gradient(160deg,#0f0c29 0%,#1e1b4b 35%,#312e81 65%,#4c1d95 100%)' }}
+    >
+      {/* ── AMBIENT ORBS ─────────────────────────────────────────────────── */}
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full opacity-20" style={{ background: 'radial-gradient(circle,#6366f1,transparent 70%)', filter: 'blur(60px)' }} />
-        <div className="absolute top-1/3 -right-40 w-[500px] h-[500px] rounded-full opacity-15" style={{ background: 'radial-gradient(circle,#8b5cf6,transparent 70%)', filter: 'blur(60px)' }} />
-        <div className="absolute bottom-20 left-1/4 w-[400px] h-[400px] rounded-full opacity-10" style={{ background: 'radial-gradient(circle,#d4af37,transparent 70%)', filter: 'blur(80px)' }} />
+        <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full opacity-20"
+          style={{ background: 'radial-gradient(circle,#6366f1,transparent 70%)', filter: 'blur(60px)' }} />
+        <div className="absolute top-1/3 -right-40 w-[500px] h-[500px] rounded-full opacity-15"
+          style={{ background: 'radial-gradient(circle,#8b5cf6,transparent 70%)', filter: 'blur(60px)' }} />
+        <div className="absolute bottom-20 left-1/4 w-[400px] h-[400px] rounded-full opacity-10"
+          style={{ background: 'radial-gradient(circle,#d4af37,transparent 70%)', filter: 'blur(80px)' }} />
       </div>
 
-      {/* ── STICKY NAV ─────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 border-b border-white/10" style={{ backdropFilter: 'blur(20px)', background: 'rgba(15,12,41,0.7)' }}>
+      {/* ── STICKY NAV ───────────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-50 border-b border-white/10"
+        style={{ backdropFilter: 'blur(20px)', background: 'rgba(15,12,41,0.7)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="/logo.png"
-              alt="Robsol VIP"
-              width={120}
-              height={32}
+            <Image src="/logo.png" alt="Robsol VIP" width={120} height={32}
               className="h-8 w-auto object-contain"
               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
               priority
@@ -238,7 +396,6 @@ export default function Home() {
             </span>
           </Link>
 
-          {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-white/70">
             <a href="#como-funciona" className="hover:text-white transition">Como Funciona</a>
             <a href="#recursos" className="hover:text-white transition">Recursos</a>
@@ -246,23 +403,19 @@ export default function Home() {
             <a href="#premios" className="hover:text-white transition">Prêmios</a>
           </nav>
 
-          {/* CTA buttons */}
           <div className="flex items-center gap-2">
-            <Link href="/login" className="hidden sm:inline-flex items-center text-sm font-medium text-white/70 hover:text-white transition px-3 py-2">
+            <Link href="/login"
+              className="hidden sm:inline-flex items-center text-sm font-medium text-white/70 hover:text-white transition px-3 py-2">
               Entrar
             </Link>
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-white transition"
-              style={{ background: 'linear-gradient(135deg,#d4af37,#f5c842)', color: '#1e1b4b' }}
-            >
+            <Link href="/login"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition hover:opacity-90"
+              style={{ background: 'linear-gradient(135deg,#d4af37,#f5c842)', color: '#1e1b4b' }}>
               Cadastre-se
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
               </svg>
             </Link>
-
-            {/* Mobile hamburger */}
             <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden p-2 text-white/70 hover:text-white">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                 {menuOpen
@@ -273,43 +426,40 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Mobile menu */}
         {menuOpen && (
-          <nav className="md:hidden border-t border-white/10 px-4 py-4 flex flex-col gap-3 text-sm font-medium" style={{ background: 'rgba(15,12,41,0.95)' }}>
+          <nav className="md:hidden border-t border-white/10 px-4 py-3 flex flex-col gap-2.5 text-sm font-medium"
+            style={{ background: 'rgba(15,12,41,0.95)' }}>
             {[['#como-funciona', 'Como Funciona'], ['#recursos', 'Recursos'], ['#ranking', 'Ranking'], ['#premios', 'Prêmios']].map(([href, label]) => (
-              <a key={href} href={href} onClick={() => setMenuOpen(false)} className="text-white/70 hover:text-white transition py-1">{label}</a>
+              <a key={href} href={href} onClick={() => setMenuOpen(false)}
+                className="text-white/70 hover:text-white transition py-1">{label}</a>
             ))}
             <Link href="/login" onClick={() => setMenuOpen(false)} className="text-white/70 hover:text-white transition py-1">Entrar</Link>
           </nav>
         )}
       </header>
 
-      {/* ── HERO ───────────────────────────────────────────────────────────── */}
-      <section className="relative min-h-[92vh] flex flex-col items-center justify-center px-4 text-center pt-16 pb-24">
-
+      {/* ── HERO ─────────────────────────────────────────────────────────── */}
+      <section className="relative min-h-[80vh] flex flex-col items-center justify-center px-4 text-center pt-10 pb-16">
         {/* Floating last-prize badge */}
         <motion.div
           initial={{ opacity: 0, x: 60 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.8, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="absolute top-12 right-4 sm:right-12 z-10"
+          transition={{ delay: 0.8, duration: 0.6, ease: EASE_OUT_EXPO }}
+          className="absolute top-8 right-4 sm:right-12 z-10"
         >
-          <div
-            className="rounded-2xl px-4 py-3 text-left shadow-2xl border border-yellow-400/40"
-            style={{ background: 'rgba(30,27,75,0.85)', backdropFilter: 'blur(16px)' }}
-          >
+          <div className="rounded-2xl px-4 py-3 text-left shadow-2xl border border-yellow-400/40"
+            style={{ background: 'rgba(30,27,75,0.85)', backdropFilter: 'blur(16px)' }}>
             <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: '#d4af37' }}>
               {hero.lastPrize.label}
             </p>
             <p className="text-white font-bold text-sm">{hero.lastPrize.prize}</p>
-            <p className="text-white/60 text-xs">{hero.lastPrize.winner} · {hero.lastPrize.points}</p>
+            <p className="text-white/60 text-xs">{hero.lastPrize.winner} · {hero.lastPrize.date}</p>
           </div>
         </motion.div>
 
-        {/* Badge pill */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <span
-            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-8 border"
+            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6 border"
             style={{ color: '#d4af37', borderColor: 'rgba(212,175,55,0.4)', background: 'rgba(212,175,55,0.1)' }}
           >
             <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#d4af37' }} />
@@ -317,12 +467,11 @@ export default function Home() {
           </span>
         </motion.div>
 
-        {/* Headline */}
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight max-w-4xl mx-auto mb-6"
+          transition={{ delay: 0.15, duration: 0.7, ease: EASE_OUT_EXPO }}
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight max-w-4xl mx-auto mb-5"
         >
           {hero.headline.split('conquistas')[0]}
           <span style={{ background: 'linear-gradient(90deg,#d4af37,#f5c842)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
@@ -330,97 +479,84 @@ export default function Home() {
           </span>
         </motion.h1>
 
-        {/* Subheadline */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6 }}
-          className="text-white/60 text-lg sm:text-xl max-w-xl mx-auto mb-10"
+          className="text-white/60 text-lg sm:text-xl max-w-xl mx-auto mb-8"
         >
           {hero.subheadline}
         </motion.p>
 
-        {/* CTA */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.45, duration: 0.5 }}
           className="flex flex-col sm:flex-row items-center gap-3"
         >
-          <Link
-            href="/login"
+          <Link href="/login"
             className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-black shadow-xl transition-transform hover:scale-105 active:scale-95"
-            style={{ background: 'linear-gradient(135deg,#d4af37,#f5c842)', color: '#1e1b4b' }}
-          >
+            style={{ background: 'linear-gradient(135deg,#d4af37,#f5c842)', color: '#1e1b4b' }}>
             {hero.cta}
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
             </svg>
           </Link>
-          <a
-            href="#como-funciona"
-            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl text-sm font-semibold text-white/70 hover:text-white border border-white/20 hover:border-white/40 transition"
-          >
+          <a href="#como-funciona"
+            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl text-sm font-semibold text-white/70 hover:text-white border border-white/20 hover:border-white/40 transition">
             Como funciona
           </a>
         </motion.div>
 
         {/* Scroll caret */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-        >
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }}
+          className="absolute bottom-6 left-1/2 -translate-x-1/2">
           <div className="w-6 h-10 rounded-full border-2 border-white/20 flex items-start justify-center p-1.5">
-            <motion.div
-              animate={{ y: [0, 10, 0] }}
-              transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
-              className="w-1 h-2 rounded-full bg-white/40"
-            />
+            <motion.div animate={{ y: [0, 10, 0] }} transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
+              className="w-1 h-2 rounded-full bg-white/40" />
           </div>
         </motion.div>
       </section>
 
-      {/* ── COMO FUNCIONA ──────────────────────────────────────────────────── */}
-      <section id="como-funciona" className="py-24 px-4">
+      {/* ── COMO FUNCIONA ────────────────────────────────────────────────── */}
+      <section id="como-funciona" className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          <FadeSection className="text-center mb-16">
-            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#d4af37' }}>Simples assim</p>
-            <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">Como Funciona</h2>
-            <p className="text-white/50 max-w-md mx-auto">Em três passos você já está acumulando pontos e disputando prêmios incríveis.</p>
+          <FadeSection className="text-center mb-10">
+            <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#d4af37' }}>Simples assim</p>
+            <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">Como Funciona</h2>
+            <p className="text-white/50 max-w-md mx-auto text-sm">Em três passos você já está acumulando pontos e disputando prêmios incríveis.</p>
           </FadeSection>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {steps.map((step, i) => (
               <FadeSection key={step.number} delay={i} className="relative">
-                {/* connector line (desktop) */}
+                {/* Connector line desktop */}
                 {i < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-10 left-full w-full h-px z-0" style={{ background: 'linear-gradient(90deg,rgba(212,175,55,0.4),transparent)' }} />
+                  <div className="hidden md:block absolute top-8 left-full w-full h-px z-0"
+                    style={{ background: 'linear-gradient(90deg,rgba(212,175,55,0.35),transparent)' }} />
                 )}
                 <div
-                  className="relative z-10 rounded-2xl p-7 h-full border border-white/10 hover:border-yellow-400/30 transition-colors"
+                  className="relative z-10 rounded-2xl p-5 h-full border border-white/10 hover:border-yellow-400/30 transition-colors"
                   style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(10px)' }}
                 >
-                  {/* Glow number */}
-                  <span
-                    className="inline-block text-5xl font-black mb-4 leading-none"
-                    style={{ background: 'linear-gradient(135deg,#d4af37,#f5c842)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-                  >
-                    {step.number}
-                  </span>
-
-                  {/* Icon */}
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
-                    style={{ background: 'rgba(212,175,55,0.12)', boxShadow: '0 0 20px rgba(212,175,55,0.2)' }}
-                  >
-                    <svg className="w-6 h-6" style={{ color: '#d4af37' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d={step.icon} />
-                    </svg>
+                  {/* Top row: number left, icon right */}
+                  <div className="flex items-center justify-between mb-4">
+                    <span
+                      className="text-4xl font-black leading-none"
+                      style={{ background: 'linear-gradient(135deg,#d4af37,#f5c842)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+                    >
+                      {step.number}
+                    </span>
+                    <div
+                      className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: 'rgba(212,175,55,0.12)', boxShadow: '0 0 18px rgba(212,175,55,0.18)' }}
+                    >
+                      <svg className="w-5 h-5" style={{ color: '#d4af37' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d={step.icon} />
+                      </svg>
+                    </div>
                   </div>
-
-                  <h3 className="text-lg font-bold text-white mb-2">{step.title}</h3>
+                  <h3 className="text-base font-bold text-white mb-1.5">{step.title}</h3>
                   <p className="text-white/50 text-sm leading-relaxed">{step.description}</p>
                 </div>
               </FadeSection>
@@ -429,103 +565,36 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── RECURSOS EXCLUSIVOS ────────────────────────────────────────────── */}
-      <section id="recursos" className="py-24 px-4">
+      {/* ── RECURSOS EXCLUSIVOS ──────────────────────────────────────────── */}
+      <section id="recursos" className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
 
-            {/* Left — Meu Painel preview card */}
+            {/* Left — Meu Painel mockup (mirrors real app) */}
             <FadeSection className="order-2 lg:order-1">
-              <div
-                className="rounded-3xl p-6 border border-white/10 shadow-2xl relative overflow-hidden"
-                style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)' }}
-              >
-                {/* Inner glow */}
-                <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 30% 20%,rgba(212,175,55,0.08),transparent 60%)' }} />
-
-                {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <p className="text-xs text-white/40 uppercase tracking-widest mb-0.5">Meu Painel</p>
-                    <p className="text-white font-bold text-lg">Bem-vindo(a), Lucas R.</p>
-                  </div>
-                  <div
-                    className="w-11 h-11 rounded-full flex items-center justify-center text-lg font-black"
-                    style={{ background: 'linear-gradient(135deg,#d4af37,#f5c842)', color: '#1e1b4b' }}
-                  >
-                    L
-                  </div>
-                </div>
-
-                {/* Points */}
-                <div
-                  className="rounded-2xl p-5 mb-4"
-                  style={{ background: 'linear-gradient(135deg,rgba(212,175,55,0.15),rgba(212,175,55,0.05))', border: '1px solid rgba(212,175,55,0.2)' }}
-                >
-                  <p className="text-xs text-white/50 mb-1">Pontuação Total</p>
-                  <p className="text-4xl font-black" style={{ background: 'linear-gradient(90deg,#d4af37,#f5c842)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                    8.420 <span className="text-lg font-bold text-white/40">pts</span>
-                  </p>
-                </div>
-
-                {/* Stats row */}
-                <div className="grid grid-cols-3 gap-3 mb-4">
-                  {[
-                    { label: 'Cupons', value: '34', sub: 'enviados' },
-                    { label: 'Aprovados', value: '28', sub: 'válidos' },
-                    { label: 'Ranking', value: '#12', sub: 'global' },
-                  ].map((s) => (
-                    <div key={s.label} className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                      <p className="text-white font-bold text-xl">{s.value}</p>
-                      <p className="text-white/40 text-xs mt-0.5">{s.sub}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Progress bar */}
-                <div>
-                  <div className="flex justify-between text-xs text-white/40 mb-1.5">
-                    <span>Próxima meta</span>
-                    <span>8.420 / 10.000</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-white/10">
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: '84%', background: 'linear-gradient(90deg,#d4af37,#f5c842)', boxShadow: '0 0 8px rgba(212,175,55,0.5)' }}
-                    />
-                  </div>
-                </div>
-
-                {/* Floating badge */}
-                <div
-                  className="absolute -bottom-3 -right-3 rounded-2xl px-4 py-2 text-xs font-bold shadow-xl border border-yellow-400/30"
-                  style={{ background: 'rgba(30,27,75,0.95)', color: '#d4af37' }}
-                >
-                  🏆 Top 15 Ranking
-                </div>
-              </div>
+              <PainelMockup />
             </FadeSection>
 
             {/* Right — feature list */}
-            <div className="order-1 lg:order-2 space-y-4">
+            <div className="order-1 lg:order-2 space-y-3">
               <FadeSection>
-                <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#d4af37' }}>Recursos Exclusivos</p>
-                <h2 className="text-3xl sm:text-4xl font-black text-white mb-4 leading-tight">
+                <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#d4af37' }}>Recursos Exclusivos</p>
+                <h2 className="text-3xl sm:text-4xl font-black text-white mb-3 leading-tight">
                   Tudo que você precisa<br />para dominar o ranking
                 </h2>
-                <p className="text-white/50 mb-8">
+                <p className="text-white/50 mb-6 text-sm">
                   Uma plataforma completa de fidelidade projetada para vendedores de alta performance.
                 </p>
               </FadeSection>
 
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {features.map((f, i) => (
                   <FadeSection key={f.title} delay={i * 0.5}>
                     <div
-                      className="flex items-start gap-4 rounded-2xl p-4 border border-white/10 hover:border-white/20 transition-colors"
+                      className="flex items-start gap-3.5 rounded-xl p-3.5 border border-white/10 hover:border-white/20 transition-colors"
                       style={{ background: 'rgba(255,255,255,0.04)' }}
                     >
-                      <span className="text-2xl flex-shrink-0 mt-0.5">{f.icon}</span>
+                      <span className="text-xl flex-shrink-0 mt-0.5">{f.icon}</span>
                       <div>
                         <p className="text-white font-semibold text-sm mb-0.5">{f.title}</p>
                         <p className="text-white/50 text-xs leading-relaxed">{f.description}</p>
@@ -536,11 +605,9 @@ export default function Home() {
               </div>
 
               <FadeSection delay={4}>
-                <Link
-                  href="/login"
-                  className="inline-flex items-center gap-2 mt-4 px-6 py-3 rounded-xl text-sm font-bold transition-transform hover:scale-105"
-                  style={{ background: 'linear-gradient(135deg,#d4af37,#f5c842)', color: '#1e1b4b' }}
-                >
+                <Link href="/login"
+                  className="inline-flex items-center gap-2 mt-3 px-6 py-3 rounded-xl text-sm font-bold transition-transform hover:scale-105"
+                  style={{ background: 'linear-gradient(135deg,#d4af37,#f5c842)', color: '#1e1b4b' }}>
                   Acessar meu painel
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
@@ -552,21 +619,18 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── RANKING ────────────────────────────────────────────────────────── */}
-      <section id="ranking" className="py-24 px-4">
+      {/* ── RANKING ──────────────────────────────────────────────────────── */}
+      <section id="ranking" className="py-16 px-4">
         <div className="max-w-3xl mx-auto">
-          <FadeSection className="text-center mb-12">
-            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#d4af37' }}>Desempenho</p>
-            <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">Ranking de Performance</h2>
-            <p className="text-white/50">Os campeões da semana. Você pode ser o próximo.</p>
+          <FadeSection className="text-center mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#d4af37' }}>Desempenho</p>
+            <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">Ranking de Performance</h2>
+            <p className="text-white/50 text-sm">Os campeões da semana. Você pode ser o próximo.</p>
           </FadeSection>
 
           <FadeSection>
-            <div
-              className="rounded-3xl overflow-hidden border border-white/10"
-              style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(16px)' }}
-            >
-              {/* Table header */}
+            <div className="rounded-3xl overflow-hidden border border-white/10"
+              style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(16px)' }}>
               <div className="grid grid-cols-12 px-6 py-3 text-xs font-bold uppercase tracking-widest text-white/30 border-b border-white/10">
                 <span className="col-span-1">#</span>
                 <span className="col-span-7">Participante</span>
@@ -574,7 +638,6 @@ export default function Home() {
               </div>
 
               {ranking.length === 0 ? (
-                // Skeleton while loading
                 Array.from({ length: 5 }).map((_, i) => (
                   <div key={i} className="grid grid-cols-12 px-6 py-4 border-b border-white/5 animate-pulse">
                     <div className="col-span-1"><div className="w-6 h-6 rounded-full bg-white/10" /></div>
@@ -583,18 +646,16 @@ export default function Home() {
                   </div>
                 ))
               ) : (
-                ranking.map((user, i) => (
+                ranking.map((ru, i) => (
                   <motion.div
                     key={i}
                     initial={{ opacity: 0, x: -20 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.08, duration: 0.4 }}
-                    className={`grid grid-cols-12 items-center px-6 py-4 border-b border-white/5 last:border-0 ${i === 0 ? 'bg-yellow-400/5' : ''}`}
+                    className={`grid grid-cols-12 items-center px-6 py-3.5 border-b border-white/5 last:border-0 ${i === 0 ? 'bg-yellow-400/5' : ''}`}
                   >
-                    <span className={`col-span-1 text-xl font-black ${RANK_COLORS[i]}`}>
-                      {RANK_BADGES[i]}
-                    </span>
+                    <span className={`col-span-1 text-lg font-black ${RANK_COLORS[i]}`}>{RANK_BADGES[i]}</span>
                     <div className="col-span-7 flex items-center gap-3">
                       <div
                         className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0"
@@ -603,24 +664,18 @@ export default function Home() {
                           : { background: 'rgba(255,255,255,0.1)', color: '#fff' }
                         }
                       >
-                        {user.full_name?.[0]?.toUpperCase() ?? '?'}
+                        {ru.full_name?.[0]?.toUpperCase() ?? '?'}
                       </div>
                       <span className="text-white font-medium text-sm truncate">
-                        {/* Show only first name + last initial for privacy */}
                         {(() => {
-                          const parts = (user.full_name ?? '').split(' ')
-                          return parts.length > 1
-                            ? `${parts[0]} ${parts[parts.length - 1][0]}.`
-                            : parts[0]
+                          const parts = (ru.full_name ?? '').split(' ')
+                          return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0]}.` : parts[0]
                         })()}
                       </span>
                     </div>
                     <div className="col-span-4 text-right">
-                      <span
-                        className="text-sm font-black"
-                        style={i === 0 ? { color: '#d4af37' } : { color: 'rgba(255,255,255,0.7)' }}
-                      >
-                        {(user.total_points ?? 0).toLocaleString('pt-BR')}
+                      <span className="text-sm font-black" style={i === 0 ? { color: '#d4af37' } : { color: 'rgba(255,255,255,0.7)' }}>
+                        {(ru.total_points ?? 0).toLocaleString('pt-BR')}
                       </span>
                       <span className="text-white/30 text-xs ml-1">pts</span>
                     </div>
@@ -628,8 +683,7 @@ export default function Home() {
                 ))
               )}
 
-              {/* Footer CTA */}
-              <div className="px-6 py-4 text-center border-t border-white/10">
+              <div className="px-6 py-3.5 text-center border-t border-white/10">
                 <Link href="/login" className="text-sm font-semibold hover:underline" style={{ color: '#d4af37' }}>
                   Entrar e ver minha posição →
                 </Link>
@@ -639,24 +693,24 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── PRÊMIOS ────────────────────────────────────────────────────────── */}
-      <section id="premios" className="py-24 px-4">
+      {/* ── PRÊMIOS JÁ SORTEADOS ─────────────────────────────────────────── */}
+      <section id="premios" className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          <FadeSection className="text-center mb-14">
-            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#d4af37' }}>Recompensas</p>
-            <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">Prêmios em Destaque</h2>
-            <p className="text-white/50 max-w-md mx-auto">Cada ponto acumulado é um passo para conquistar prêmios incríveis.</p>
+          <FadeSection className="text-center mb-10">
+            <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#d4af37' }}>Prova Social</p>
+            <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">Veja o que já foi Sorteado</h2>
+            <p className="text-white/50 max-w-md mx-auto text-sm">Prêmios reais, ganhadores reais. O programa funciona — e você pode ser o próximo.</p>
           </FadeSection>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {prizes.map((prize, i) => (
               <FadeSection key={prize.title} delay={i * 0.5}>
                 <div
                   className="rounded-2xl overflow-hidden border border-white/10 hover:border-yellow-400/30 transition-all hover:-translate-y-1 group cursor-default"
                   style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(10px)' }}
                 >
-                  {/* Image / gradient placeholder */}
-                  <div className={`h-36 bg-gradient-to-br ${prize.color} relative flex items-center justify-center`}>
+                  {/* Image / gradient */}
+                  <div className={`h-32 bg-gradient-to-br ${prize.color} relative flex items-center justify-center overflow-hidden`}>
                     <Image
                       src={prize.image}
                       alt={prize.title}
@@ -664,25 +718,33 @@ export default function Home() {
                       className="object-cover opacity-60 group-hover:opacity-80 transition-opacity"
                       onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
                     />
-                    {/* Badge */}
+                    {/* Entregue badge */}
                     <span
-                      className="absolute top-3 left-3 text-xs font-bold px-2.5 py-1 rounded-full z-10"
-                      style={{ background: 'rgba(212,175,55,0.9)', color: '#1e1b4b' }}
+                      className="absolute top-2.5 left-2.5 text-xs font-bold px-2 py-0.5 rounded-full z-10 flex items-center gap-1"
+                      style={{ background: 'rgba(22,163,74,0.9)', color: '#fff' }}
                     >
+                      <span className="w-1.5 h-1.5 rounded-full bg-white/80 inline-block" />
                       {prize.badge}
                     </span>
                   </div>
 
-                  <div className="p-4">
-                    <p className="text-white font-bold mb-0.5">{prize.title}</p>
+                  <div className="p-3.5">
+                    <p className="text-white font-bold text-sm mb-0.5">{prize.title}</p>
                     <p className="text-white/40 text-xs mb-3">{prize.subtitle}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: 'rgba(212,175,55,0.12)', color: '#d4af37' }}>
-                        {prize.points}
-                      </span>
-                      <Link href="/login" className="text-xs text-white/40 hover:text-white transition font-medium">
-                        Quero este →
-                      </Link>
+
+                    {/* Social proof row */}
+                    <div
+                      className="flex items-center gap-2 rounded-lg px-2.5 py-2"
+                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+                    >
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0"
+                        style={{ background: 'linear-gradient(135deg,#d4af37,#f5c842)', color: '#1e1b4b' }}>
+                        {prize.winner[0]}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-white/80 text-xs font-semibold truncate">{prize.winner}</p>
+                        <p className="text-white/30 text-xs">Entregue em {prize.deliveredAt}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -692,27 +754,26 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── FINAL CTA BANNER ───────────────────────────────────────────────── */}
-      <section className="py-24 px-4">
+      {/* ── FINAL CTA BANNER ─────────────────────────────────────────────── */}
+      <section className="py-16 px-4">
         <div className="max-w-3xl mx-auto">
           <FadeSection>
             <div
-              className="rounded-3xl p-10 text-center relative overflow-hidden border border-yellow-400/20"
+              className="rounded-3xl p-8 text-center relative overflow-hidden border border-yellow-400/20"
               style={{ background: 'linear-gradient(135deg,rgba(212,175,55,0.12),rgba(99,102,241,0.12))', backdropFilter: 'blur(20px)' }}
             >
-              <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 50% 0%,rgba(212,175,55,0.1),transparent 60%)' }} />
-              <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: '#d4af37' }}>Comece hoje</p>
-              <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">
+              <div className="absolute inset-0 pointer-events-none"
+                style={{ background: 'radial-gradient(circle at 50% 0%,rgba(212,175,55,0.1),transparent 60%)' }} />
+              <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#d4af37' }}>Comece hoje</p>
+              <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">
                 Sua primeira conquista<br />começa agora
               </h2>
-              <p className="text-white/50 mb-8 max-w-sm mx-auto">
-                Junte-se a milhares de vendedores que já estão acumulando pontos e conquistando prêmios.
+              <p className="text-white/50 mb-6 max-w-sm mx-auto text-sm">
+                Junte-se a vendedores que já estão acumulando pontos e conquistando prêmios.
               </p>
-              <Link
-                href="/login"
+              <Link href="/login"
                 className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl text-base font-black shadow-xl transition-transform hover:scale-105"
-                style={{ background: 'linear-gradient(135deg,#d4af37,#f5c842)', color: '#1e1b4b' }}
-              >
+                style={{ background: 'linear-gradient(135deg,#d4af37,#f5c842)', color: '#1e1b4b' }}>
                 Cadastre-se Gratuitamente
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
@@ -723,19 +784,15 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── FOOTER ─────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-white/10 pt-16 pb-10 px-4" style={{ background: 'rgba(0,0,0,0.3)' }}>
+      {/* ── FOOTER ───────────────────────────────────────────────────────── */}
+      <footer className="border-t border-white/10 pt-12 pb-8 px-4" style={{ background: 'rgba(0,0,0,0.3)' }}>
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
 
             {/* Brand column */}
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <Image
-                  src="/logo.png"
-                  alt="Robsol VIP"
-                  width={100}
-                  height={28}
+            <div className="md:col-span-1">
+              <div className="flex items-center gap-2 mb-3">
+                <Image src="/logo.png" alt="Robsol VIP" width={100} height={28}
                   className="h-7 w-auto object-contain"
                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
                 />
@@ -743,51 +800,48 @@ export default function Home() {
                   Robsol <span style={{ color: '#d4af37' }}>VIP</span>
                 </span>
               </div>
-              <p className="text-white/40 text-sm leading-relaxed max-w-xs mb-6">
+              <p className="text-white/40 text-sm leading-relaxed">
                 {footer.description}
               </p>
-
-              {/* Newsletter */}
-              <p className="text-xs font-semibold text-white/60 mb-2">{footer.newsletter.label}</p>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder={footer.newsletter.placeholder}
-                  className="flex-1 px-3 py-2 text-sm rounded-xl text-white placeholder-white/30 outline-none border border-white/15 focus:border-yellow-400/40 transition"
-                  style={{ background: 'rgba(255,255,255,0.06)' }}
-                />
-                <button
-                  className="px-4 py-2 rounded-xl text-sm font-bold transition hover:opacity-90"
-                  style={{ background: 'linear-gradient(135deg,#d4af37,#f5c842)', color: '#1e1b4b' }}
-                >
-                  OK
-                </button>
-              </div>
             </div>
 
-            {/* Link columns */}
-            {Object.entries(footer.links).map(([section, links]) => (
-              <div key={section}>
-                <p className="text-xs font-bold uppercase tracking-widest text-white/30 mb-4">{section}</p>
-                <ul className="space-y-2.5">
-                  {links.map((link) => (
-                    <li key={link.label}>
-                      <a href={link.href} className="text-sm text-white/50 hover:text-white transition">
-                        {link.label}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+            {/* Plataforma links */}
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-white/30 mb-4">Plataforma</p>
+              <ul className="space-y-2.5">
+                {footer.platformLinks.map((link) => (
+                  <li key={link.label}>
+                    <a href={link.href} className="text-sm text-white/50 hover:text-white transition">{link.label}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Suporte links — fetched dynamically from site_settings */}
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-white/30 mb-4">Suporte</p>
+              <ul className="space-y-2.5">
+                {supportLinks.map((link) => (
+                  <li key={link.label}>
+                    <a
+                      href={link.href}
+                      target={link.href.startsWith('http') ? '_blank' : undefined}
+                      rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                      className="text-sm text-white/50 hover:text-white transition"
+                    >
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
-          {/* Bottom bar */}
-          <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/30">
+          <div className="border-t border-white/10 pt-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/30">
             <span>© {new Date().getFullYear()} Robsol VIP. Todos os direitos reservados.</span>
             <div className="flex items-center gap-4">
-              <a href="#" className="hover:text-white/60 transition">Privacidade</a>
-              <a href="#" className="hover:text-white/60 transition">Termos</a>
+              <a href={siteSettings.support_privacy || '#'} className="hover:text-white/60 transition">Privacidade</a>
+              <a href={siteSettings.support_terms || '#'} className="hover:text-white/60 transition">Termos</a>
             </div>
           </div>
         </div>
