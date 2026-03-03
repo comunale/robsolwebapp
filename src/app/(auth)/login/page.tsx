@@ -25,7 +25,7 @@ function LoginForm() {
     }
   }, [profile, router, redirectTo])
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: { preventDefault(): void }) => {
     e.preventDefault()
     setError('')
     setLoading(true)
@@ -40,8 +40,8 @@ function LoginForm() {
 
   return (
     <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden">
-      {/* Gold top accent bar */}
-      <div className="h-1 w-full bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500" />
+      {/* Brand accent bar — colour driven by --brand-accent CSS var */}
+      <div className="h-1 w-full brand-accent-bar" />
 
       <div className="p-8">
         {/* Logo area */}
@@ -84,7 +84,7 @@ function LoginForm() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition text-sm"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent outline-none transition text-sm"
               placeholder="seu@email.com"
               autoComplete="email"
             />
@@ -101,7 +101,7 @@ function LoginForm() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 pr-11 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition text-sm"
+                className="w-full px-4 py-3 pr-11 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent outline-none transition text-sm"
                 placeholder="Sua senha"
                 autoComplete="current-password"
               />
@@ -134,7 +134,8 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:from-indigo-400 disabled:to-purple-400 text-white font-semibold py-3 px-4 rounded-xl transition duration-200 shadow-md hover:shadow-lg text-sm"
+            className="w-full font-semibold py-3 px-4 rounded-xl transition duration-200 shadow-md hover:shadow-lg text-sm disabled:opacity-50"
+            style={{ background: 'linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))', color: '#fff' }}
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">

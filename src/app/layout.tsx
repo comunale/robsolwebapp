@@ -1,16 +1,19 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from "next"
+import { Geist, Geist_Mono } from "next/font/google"
+import "./globals.css"
+import { createClient } from "@/lib/supabase/server"
+import { buildCssVarsString, BRAND_DEFAULTS, type BrandSettings } from "@/lib/brand-config"
+import { BrandProvider } from "@/components/shared/BrandProvider"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
-});
+})
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
-});
+})
 
 export const metadata: Metadata = {
   title: "Robsol VIP",
@@ -22,20 +25,43 @@ export const metadata: Metadata = {
     ],
     apple: '/logo.png',
   },
-};
+}
 
-export default function RootLayout({
+/** Fetch brand settings server-side — falls back to defaults on any error. */
+async function getBrandSettings(): Promise<BrandSettings> {
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase.from('site_settings').select('key, value')
+    const settings = { ...BRAND_DEFAULTS } as BrandSettings
+    for (const row of data ?? []) {
+      if (row.key in BRAND_DEFAULTS) {
+        (settings as Record<string, string>)[row.key] = row.value
+      }
+    }
+    return settings
+  } catch {
+    // DB not set up yet or migration pending — safe default theme
+    return { ...BRAND_DEFAULTS } as BrandSettings
+  }
+}
+
+export default async function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
+  const brand = await getBrandSettings()
+  const cssVars = buildCssVarsString(brand)
+
   return (
     <html lang="pt-BR">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+      <head>
+        {/* Brand CSS variables injected before paint — prevents FOUC */}
+        <style dangerouslySetInnerHTML={{ __html: `:root { ${cssVars} }` }} />
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <BrandProvider settings={brand}>
+          {children}
+        </BrandProvider>
       </body>
     </html>
-  );
+  )
 }

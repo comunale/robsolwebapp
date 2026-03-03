@@ -1,118 +1,424 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import Image from 'next/image'
 import AdminHeader from './AdminHeader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
+import { BRAND_DEFAULTS } from '@/lib/brand-config'
 
-interface Setting {
-  key: string
-  label: string
-  value: string
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+interface Setting { key: string; label: string; value: string }
+
+type Tab = 'suporte' | 'logos' | 'cores'
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Logo config
+// ─────────────────────────────────────────────────────────────────────────────
+const LOGO_META: Record<string, { size: string; fallback: string; aspect: string }> = {
+  logo_admin_url:   { size: '180 × 48 px',  fallback: '/logo-admin.png',  aspect: 'aspect-[15/4]' },
+  logo_login_url:   { size: '200 × 200 px', fallback: '/logo.png',        aspect: 'aspect-square' },
+  logo_header_url:  { size: '120 × 32 px',  fallback: '/logo-header.png', aspect: 'aspect-[15/4]' },
+  logo_favicon_url: { size: '32 × 32 px',   fallback: '/favicon.ico',     aspect: 'aspect-square' },
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Color config
+// ─────────────────────────────────────────────────────────────────────────────
+const COLOR_META: Record<string, { label: string; desc: string; cssVar: string }> = {
+  color_primary:   { label: 'Primária',          desc: 'Botões, links e destaques principais', cssVar: '--brand-primary' },
+  color_secondary: { label: 'Secundária',         desc: 'Efeitos de hover e gradientes suaves', cssVar: '--brand-secondary' },
+  color_accent:    { label: 'Destaque VIP',       desc: 'Dourado — CTAs, badges e rankings',   cssVar: '--brand-accent' },
+  color_titles:    { label: 'Títulos',            desc: 'Cor principal dos títulos e headlines',cssVar: '--brand-titles' },
+  color_bg_from:   { label: 'Gradiente — Início', desc: 'Cor mais escura do fundo',            cssVar: '--brand-bg-from' },
+  color_bg_to:     { label: 'Gradiente — Fim',    desc: 'Cor mais clara/vibrante do fundo',    cssVar: '--brand-bg-to' },
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+function isValidHex(v: string) { return /^#[0-9A-Fa-f]{6}$/.test(v) }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-components
+// ─────────────────────────────────────────────────────────────────────────────
+
+function SaveButton({ saving, saved, onClick }: { saving: boolean; saved: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={saving}
+      className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition min-w-[80px] ${
+        saved
+          ? 'bg-green-100 text-green-700'
+          : 'bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white'
+      }`}
+    >
+      {saving ? '...' : saved ? '✓ Salvo' : 'Salvar'}
+    </button>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main component
+// ─────────────────────────────────────────────────────────────────────────────
 export default function SiteSettings() {
-  const [settings, setSettings] = useState<Setting[]>([])
+  const [settings, setSettings] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState<Tab>('cores') // prioritise colors as requested
   const [saving, setSaving] = useState<Record<string, boolean>>({})
-  const [saved, setSaved] = useState<Record<string, boolean>>({})
+  const [saved, setSaved]   = useState<Record<string, boolean>>({})
+  const [uploading, setUploading] = useState<Record<string, boolean>>({})
+  const fileRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   useEffect(() => {
     fetch('/api/admin/site-settings')
       .then((r) => r.json())
-      .then((d) => setSettings(d.settings ?? []))
+      .then((d: { settings: Setting[] }) => {
+        const map: Record<string, string> = {}
+        for (const s of d.settings ?? []) map[s.key] = s.value
+        setSettings(map)
+      })
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [])
 
-  const handleChange = (key: string, value: string) => {
-    setSettings((prev) => prev.map((s) => s.key === key ? { ...s, value } : s))
-    setSaved((prev) => ({ ...prev, [key]: false }))
+  // ── Live CSS preview: update CSS vars as user changes colour pickers ──────
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    const root = document.documentElement
+    for (const [key, meta] of Object.entries(COLOR_META)) {
+      const val = settings[key]
+      if (val && isValidHex(val)) {
+        root.style.setProperty(meta.cssVar, val)
+      }
+    }
+  }, [settings])
+
+  const setValue = (key: string, value: string) => {
+    setSettings((p) => ({ ...p, [key]: value }))
+    setSaved((p) => ({ ...p, [key]: false }))
   }
 
-  const handleSave = async (key: string, value: string) => {
-    setSaving((prev) => ({ ...prev, [key]: true }))
+  const handleSave = async (key: string) => {
+    setSaving((p) => ({ ...p, [key]: true }))
     try {
       const res = await fetch('/api/admin/site-settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, value }),
+        body: JSON.stringify({ key, value: settings[key] ?? '' }),
       })
       if (!res.ok) throw new Error('Falha ao salvar')
-      setSaved((prev) => ({ ...prev, [key]: true }))
-      setTimeout(() => setSaved((prev) => ({ ...prev, [key]: false })), 2500)
+      setSaved((p) => ({ ...p, [key]: true }))
+      setTimeout(() => setSaved((p) => ({ ...p, [key]: false })), 2500)
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Erro ao salvar')
     } finally {
-      setSaving((prev) => ({ ...prev, [key]: false }))
+      setSaving((p) => ({ ...p, [key]: false }))
+    }
+  }
+
+  const handleLogoUpload = async (key: string, file: File) => {
+    setUploading((p) => ({ ...p, [key]: true }))
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('key', key)
+      const res = await fetch('/api/admin/brand/upload', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Falha no upload')
+      setValue(key, data.url)
+      setSaved((p) => ({ ...p, [key]: true }))
+      setTimeout(() => setSaved((p) => ({ ...p, [key]: false })), 2500)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erro no upload')
+    } finally {
+      setUploading((p) => ({ ...p, [key]: false }))
     }
   }
 
   if (loading) return <LoadingSpinner />
 
-  // Group by prefix
-  const groups: Record<string, Setting[]> = {}
-  for (const s of settings) {
-    const prefix = s.key.split('_')[0]
-    groups[prefix] = [...(groups[prefix] ?? []), s]
-  }
-
-  const groupLabels: Record<string, string> = {
-    support: 'Links de Suporte (Rodapé do Site)',
-  }
+  const tabs: { id: Tab; label: string; icon: string }[] = [
+    { id: 'cores',   label: 'Paleta de Cores',      icon: '🎨' },
+    { id: 'logos',   label: 'Identidade Visual',    icon: '🖼️' },
+    { id: 'suporte', label: 'Links de Suporte',     icon: '🔗' },
+  ]
 
   return (
     <>
       <AdminHeader
         title="Configurações do Site"
-        subtitle="Gerencie os links e informações exibidos no rodapé da landing page"
+        subtitle="Gerencie a identidade visual, logos e links do Robsol VIP"
       />
-      <div className="p-6 max-w-3xl">
-        {Object.entries(groups).map(([prefix, rows]) => (
-          <div key={prefix} className="mb-8">
-            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">
-              {groupLabels[prefix] ?? prefix}
-            </h2>
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm divide-y divide-gray-100">
-              {rows.map((setting) => (
-                <div key={setting.key} className="px-5 py-4 flex items-center gap-4">
-                  <div className="flex-1 min-w-0">
-                    <label className="block text-sm font-medium text-gray-800 mb-1">
-                      {setting.label}
-                    </label>
-                    <input
-                      type="text"
-                      value={setting.value}
-                      onChange={(e) => handleChange(setting.key, e.target.value)}
-                      placeholder={setting.key === 'support_whatsapp' ? '5511999999999' : 'https://...'}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-gray-700 placeholder-gray-300"
-                    />
-                    <p className="text-xs text-gray-400 mt-1 font-mono">{setting.key}</p>
+
+      <div className="p-6 max-w-4xl">
+        {/* Tab bar */}
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 w-fit">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${
+                tab === t.id
+                  ? 'bg-white text-indigo-700 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <span>{t.icon}</span>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── TAB: CORES ─────────────────────────────────────────────────────── */}
+        {tab === 'cores' && (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500 mb-4">
+              As alterações são refletidas em tempo real na pré-visualização abaixo e no site em até 1 minuto.
+            </p>
+
+            {/* Live preview strip */}
+            <div
+              className="rounded-2xl p-5 mb-6 border border-white/10 relative overflow-hidden"
+              style={{
+                background: `linear-gradient(135deg, ${settings.color_bg_from || BRAND_DEFAULTS.color_bg_from}, ${settings.color_bg_to || BRAND_DEFAULTS.color_bg_to})`,
+              }}
+            >
+              <p className="text-xs font-bold uppercase tracking-widest mb-3 opacity-60" style={{ color: settings.color_titles || BRAND_DEFAULTS.color_titles }}>
+                Pré-visualização do Tema
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  className="px-5 py-2.5 rounded-xl text-sm font-bold"
+                  style={{ background: `linear-gradient(135deg, ${settings.color_accent || BRAND_DEFAULTS.color_accent}, ${settings.color_secondary || BRAND_DEFAULTS.color_secondary})`, color: settings.color_bg_from || BRAND_DEFAULTS.color_bg_from }}
+                >
+                  CTA Destaque
+                </button>
+                <button
+                  className="px-5 py-2.5 rounded-xl text-sm font-bold border border-white/20"
+                  style={{ background: settings.color_primary || BRAND_DEFAULTS.color_primary, color: '#fff' }}
+                >
+                  Botão Primário
+                </button>
+                <span
+                  className="text-2xl font-black"
+                  style={{ color: settings.color_titles || BRAND_DEFAULTS.color_titles }}
+                >
+                  Título VIP
+                </span>
+                <span
+                  className="text-sm font-bold px-3 py-1 rounded-full border border-current"
+                  style={{ color: settings.color_accent || BRAND_DEFAULTS.color_accent }}
+                >
+                  Badge Dourado
+                </span>
+              </div>
+            </div>
+
+            {/* Color pickers */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {Object.entries(COLOR_META).map(([key, meta]) => {
+                const currentVal = settings[key] || (BRAND_DEFAULTS as Record<string, string>)[key] || '#000000'
+                return (
+                  <div key={key} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                    <div className="flex items-start gap-3 mb-3">
+                      {/* Color swatch preview */}
+                      <div
+                        className="w-10 h-10 rounded-lg flex-shrink-0 shadow-inner border border-gray-200"
+                        style={{ background: currentVal }}
+                      />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-800">{meta.label}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{meta.desc}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {/* Native color picker */}
+                      <input
+                        type="color"
+                        value={isValidHex(currentVal) ? currentVal : '#000000'}
+                        onChange={(e) => setValue(key, e.target.value)}
+                        className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5"
+                        title="Selecionar cor"
+                      />
+                      {/* Hex text input */}
+                      <input
+                        type="text"
+                        value={settings[key] ?? (BRAND_DEFAULTS as Record<string, string>)[key] ?? ''}
+                        onChange={(e) => setValue(key, e.target.value)}
+                        placeholder="#000000"
+                        maxLength={7}
+                        className={`flex-1 px-3 py-2 text-sm font-mono border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none ${
+                          isValidHex(settings[key] ?? '') ? 'border-gray-200' : 'border-red-300 bg-red-50'
+                        }`}
+                      />
+                      <SaveButton
+                        saving={!!saving[key]}
+                        saved={!!saved[key]}
+                        onClick={() => handleSave(key)}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-400 font-mono mt-1.5">{meta.cssVar}</p>
                   </div>
-                  <button
-                    onClick={() => handleSave(setting.key, setting.value)}
-                    disabled={saving[setting.key]}
-                    className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition ${
-                      saved[setting.key]
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white'
-                    }`}
-                  >
-                    {saving[setting.key] ? 'Salvando...' : saved[setting.key] ? '✓ Salvo' : 'Salvar'}
-                  </button>
+                )
+              })}
+            </div>
+
+            {/* Reset hint */}
+            <p className="text-xs text-gray-400 bg-gray-50 rounded-lg px-4 py-3">
+              Para restaurar as cores padrão, limpe o campo e salve com o valor hex original
+              (Primária: <code className="font-mono">#6366f1</code> · Destaque: <code className="font-mono">#d4af37</code>).
+            </p>
+          </div>
+        )}
+
+        {/* ── TAB: LOGOS ─────────────────────────────────────────────────────── */}
+        {tab === 'logos' && (
+          <div className="space-y-5">
+            <p className="text-sm text-gray-500 mb-2">
+              Faça upload das imagens. Se o campo estiver vazio, o sistema usa os arquivos em <code className="font-mono text-xs bg-gray-100 px-1 rounded">/public</code>.
+            </p>
+
+            {Object.keys(LOGO_META).map((key) => {
+              const meta = LOGO_META[key]
+              const currentUrl = settings[key] || ''
+              const previewSrc = currentUrl || meta.fallback
+
+              return (
+                <div key={key} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+                  {/* Row: info + preview + upload */}
+                  <div className="flex flex-col sm:flex-row items-start gap-4">
+                    {/* Preview box */}
+                    <div
+                      className={`relative flex-shrink-0 w-32 ${meta.aspect} rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 overflow-hidden flex items-center justify-center`}
+                    >
+                      <Image
+                        src={previewSrc}
+                        alt={key}
+                        fill
+                        className="object-contain p-2"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = '0' }}
+                        unoptimized={previewSrc.startsWith('http')}
+                      />
+                    </div>
+
+                    {/* Info + controls */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-800 mb-0.5">
+                        {settings[`${key.replace('_url', '')}_label`] ??
+                          key.replace('logo_', '').replace('_url', '').replace(/_/g, ' ').toUpperCase()}
+                      </p>
+                      <p className="text-xs text-gray-400 mb-1">Tamanho recomendado: <strong>{meta.size}</strong></p>
+                      <p className="text-xs font-mono text-gray-400 mb-3">{key}</p>
+
+                      {/* URL input (manual) */}
+                      <div className="flex gap-2 mb-2">
+                        <input
+                          type="url"
+                          value={settings[key] ?? ''}
+                          onChange={(e) => setValue(key, e.target.value)}
+                          placeholder="https://... ou deixe vazio para usar /public"
+                          className="flex-1 px-3 py-2 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                        />
+                        <SaveButton
+                          saving={!!saving[key]}
+                          saved={!!saved[key]}
+                          onClick={() => handleSave(key)}
+                        />
+                      </div>
+
+                      {/* Upload button */}
+                      <button
+                        onClick={() => fileRefs.current[key]?.click()}
+                        disabled={!!uploading[key]}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-indigo-200 text-indigo-700 hover:bg-indigo-50 transition disabled:opacity-50"
+                      >
+                        {uploading[key] ? (
+                          <>
+                            <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                            Enviando...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                            </svg>
+                            Upload de Arquivo
+                          </>
+                        )}
+                      </button>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        ref={(el) => { fileRefs.current[key] = el }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          e.target.value = ''
+                          if (file) handleLogoUpload(key, file)
+                        }}
+                      />
+                      <p className="text-xs text-gray-400 mt-1.5">PNG, SVG, WebP · máx 2 MB</p>
+                    </div>
+                  </div>
                 </div>
-              ))}
+              )
+            })}
+
+            <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-700">
+              <p className="font-semibold mb-1">Como os logos são aplicados</p>
+              <ul className="list-disc list-inside space-y-1 text-blue-600 text-xs">
+                <li><strong>Admin (180×48)</strong> — Sidebar do painel administrativo</li>
+                <li><strong>Login (200×200)</strong> — Tela de login e Landing Page</li>
+                <li><strong>Header Mobile (120×32)</strong> — Cabeçalho do app do usuário</li>
+                <li><strong>Favicon (32×32)</strong> — Ícone na aba do navegador</li>
+              </ul>
             </div>
           </div>
-        ))}
+        )}
 
-        <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-700">
-          <p className="font-semibold mb-1">Como funciona</p>
-          <ul className="list-disc list-inside space-y-1 text-blue-600">
-            <li>As alterações são refletidas no rodapé do site em até 2 minutos (cache CDN).</li>
-            <li>Para o WhatsApp, insira apenas os dígitos com código do país (ex: <code className="font-mono bg-blue-100 px-1 rounded">5511999999999</code>).</li>
-            <li>Para URLs, use o caminho completo começando com <code className="font-mono bg-blue-100 px-1 rounded">https://</code> ou <code className="font-mono bg-blue-100 px-1 rounded">#</code> para desativar o link.</li>
-          </ul>
-        </div>
+        {/* ── TAB: SUPORTE ───────────────────────────────────────────────────── */}
+        {tab === 'suporte' && (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-500 mb-4">
+              Esses links aparecem na coluna &quot;Suporte&quot; do rodapé da Landing Page.
+            </p>
+
+            {[
+              { key: 'support_whatsapp', label: 'Número WhatsApp (só dígitos)', placeholder: '5511999999999', hint: 'Usado como wa.me/número' },
+              { key: 'support_terms',    label: 'URL dos Termos de Uso',        placeholder: 'https://...', hint: '' },
+              { key: 'support_privacy',  label: 'URL da Política de Privacidade', placeholder: 'https://...', hint: '' },
+              { key: 'support_help',     label: 'URL da Central de Ajuda',      placeholder: 'https://...', hint: '' },
+              { key: 'support_contact',  label: 'URL de Contato',               placeholder: '#', hint: '' },
+            ].map(({ key, label, placeholder, hint }) => (
+              <div key={key} className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 flex items-center gap-4">
+                <div className="flex-1 min-w-0">
+                  <label className="block text-sm font-medium text-gray-800 mb-1">{label}</label>
+                  <input
+                    type="text"
+                    value={settings[key] ?? ''}
+                    onChange={(e) => setValue(key, e.target.value)}
+                    placeholder={placeholder}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                  />
+                  {hint && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
+                  <p className="text-xs text-gray-300 mt-0.5 font-mono">{key}</p>
+                </div>
+                <SaveButton
+                  saving={!!saving[key]}
+                  saved={!!saved[key]}
+                  onClick={() => handleSave(key)}
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </>
   )

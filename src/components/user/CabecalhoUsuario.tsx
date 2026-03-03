@@ -3,10 +3,12 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
+import { useBrand } from '@/components/shared/BrandProvider'
 import Notificacoes from './Notificacoes'
 
 export default function CabecalhoUsuario() {
   const { user, profile, signOut } = useAuth()
+  const brand = useBrand()
   const [showNotifications, setShowNotifications] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const supabase = useMemo(() => createClient(), [])
@@ -59,7 +61,7 @@ export default function CabecalhoUsuario() {
           {/* Logo — upload public/logo-header.png (120×32px recommended) to replace */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo-header.png"
+            src={brand.logo_header_url || '/logo-header.png'}
             alt="Robsol VIP"
             className="h-7 w-auto object-contain"
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}

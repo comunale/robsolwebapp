@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { motion, useInView } from 'framer-motion'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { useBrand } from '@/components/shared/BrandProvider'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LANDING PAGE DATA — edit all copy, features, and prizes here
@@ -305,7 +306,7 @@ function PainelMockup() {
       {/* Floating rank badge */}
       <div
         className="absolute -top-4 -right-4 rounded-xl px-3 py-1.5 text-xs font-bold shadow-xl border border-yellow-400/30"
-        style={{ background: 'rgba(30,27,75,0.95)', color: '#d4af37' }}
+        style={{ background: 'rgba(30,27,75,0.95)', color: 'var(--brand-accent)' }}
       >
         🏆 #12 Ranking
       </div>
@@ -318,6 +319,7 @@ function PainelMockup() {
 // ─────────────────────────────────────────────────────────────────────────────
 export default function Home() {
   const { user, profile, loading } = useAuth()
+  const brand = useBrand()
   const router = useRouter()
   const [ranking, setRanking] = useState<RankUser[]>([])
   const [menuOpen, setMenuOpen] = useState(false)
@@ -343,7 +345,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#1e1b4b,#4c1d95)' }}>
+      <div className="min-h-screen flex items-center justify-center brand-page-bg">
         <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin" />
       </div>
     )
@@ -368,31 +370,30 @@ export default function Home() {
 
   return (
     <div
-      className="min-h-screen text-white overflow-x-hidden"
-      style={{ background: 'linear-gradient(160deg,#0f0c29 0%,#1e1b4b 35%,#312e81 65%,#4c1d95 100%)' }}
+      className="min-h-screen text-white overflow-x-hidden brand-page-bg"
     >
       {/* ── AMBIENT ORBS ─────────────────────────────────────────────────── */}
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full opacity-20"
-          style={{ background: 'radial-gradient(circle,#6366f1,transparent 70%)', filter: 'blur(60px)' }} />
+          style={{ background: 'radial-gradient(circle,var(--brand-primary),transparent 70%)', filter: 'blur(60px)' }} />
         <div className="absolute top-1/3 -right-40 w-[500px] h-[500px] rounded-full opacity-15"
-          style={{ background: 'radial-gradient(circle,#8b5cf6,transparent 70%)', filter: 'blur(60px)' }} />
+          style={{ background: 'radial-gradient(circle,var(--brand-secondary),transparent 70%)', filter: 'blur(60px)' }} />
         <div className="absolute bottom-20 left-1/4 w-[400px] h-[400px] rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle,#d4af37,transparent 70%)', filter: 'blur(80px)' }} />
+          style={{ background: 'radial-gradient(circle,var(--brand-accent),transparent 70%)', filter: 'blur(80px)' }} />
       </div>
 
       {/* ── STICKY NAV ───────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 border-b border-white/10"
-        style={{ backdropFilter: 'blur(20px)', background: 'rgba(15,12,41,0.7)' }}>
+        style={{ backdropFilter: 'blur(20px)', background: 'color-mix(in srgb, var(--brand-bg-from) 70%, transparent)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.png" alt="Robsol VIP" width={120} height={32}
+            <Image src={brand.logo_login_url || '/logo.png'} alt="Robsol VIP" width={120} height={32}
               className="h-8 w-auto object-contain"
               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
               priority
             />
             <span className="font-black text-lg text-white tracking-tight hidden sm:inline">
-              Robsol <span style={{ color: '#d4af37' }}>VIP</span>
+              Robsol <span style={{ color: 'var(--brand-accent)' }}>VIP</span>
             </span>
           </Link>
 
@@ -410,7 +411,7 @@ export default function Home() {
             </Link>
             <Link href="/login"
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition hover:opacity-90"
-              style={{ background: 'linear-gradient(135deg,#d4af37,#f5c842)', color: '#1e1b4b' }}>
+              style={{ background: 'linear-gradient(135deg,var(--brand-accent),var(--brand-accent-light))', color: 'var(--brand-bg-from)' }}>
               Cadastre-se
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
@@ -428,7 +429,7 @@ export default function Home() {
 
         {menuOpen && (
           <nav className="md:hidden border-t border-white/10 px-4 py-3 flex flex-col gap-2.5 text-sm font-medium"
-            style={{ background: 'rgba(15,12,41,0.95)' }}>
+            style={{ background: 'color-mix(in srgb, var(--brand-bg-from) 95%, transparent)' }}>
             {[['#como-funciona', 'Como Funciona'], ['#recursos', 'Recursos'], ['#ranking', 'Ranking'], ['#premios', 'Prêmios']].map(([href, label]) => (
               <a key={href} href={href} onClick={() => setMenuOpen(false)}
                 className="text-white/70 hover:text-white transition py-1">{label}</a>
@@ -449,7 +450,7 @@ export default function Home() {
         >
           <div className="rounded-2xl px-4 py-3 text-left shadow-2xl border border-yellow-400/40"
             style={{ background: 'rgba(30,27,75,0.85)', backdropFilter: 'blur(16px)' }}>
-            <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: '#d4af37' }}>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: 'var(--brand-accent)' }}>
               {hero.lastPrize.label}
             </p>
             <p className="text-white font-bold text-sm">{hero.lastPrize.prize}</p>
@@ -460,9 +461,9 @@ export default function Home() {
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <span
             className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6 border"
-            style={{ color: '#d4af37', borderColor: 'rgba(212,175,55,0.4)', background: 'rgba(212,175,55,0.1)' }}
+            style={{ color: 'var(--brand-accent)', borderColor: 'color-mix(in srgb, var(--brand-accent) 40%, transparent)', background: 'color-mix(in srgb, var(--brand-accent) 10%, transparent)' }}
           >
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#d4af37' }} />
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--brand-accent)' }} />
             Plataforma VIP de Fidelidade
           </span>
         </motion.div>
@@ -474,7 +475,7 @@ export default function Home() {
           className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight max-w-4xl mx-auto mb-5"
         >
           {hero.headline.split('conquistas')[0]}
-          <span style={{ background: 'linear-gradient(90deg,#d4af37,#f5c842)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          <span style={{ background: 'linear-gradient(90deg,var(--brand-accent),var(--brand-accent-light))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             conquistas
           </span>
         </motion.h1>
@@ -496,7 +497,7 @@ export default function Home() {
         >
           <Link href="/login"
             className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-black shadow-xl transition-transform hover:scale-105 active:scale-95"
-            style={{ background: 'linear-gradient(135deg,#d4af37,#f5c842)', color: '#1e1b4b' }}>
+            style={{ background: 'linear-gradient(135deg,var(--brand-accent),var(--brand-accent-light))', color: 'var(--brand-bg-from)' }}>
             {hero.cta}
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
@@ -522,7 +523,7 @@ export default function Home() {
       <section id="como-funciona" className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
           <FadeSection className="text-center mb-10">
-            <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#d4af37' }}>Simples assim</p>
+            <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--brand-accent)' }}>Simples assim</p>
             <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">Como Funciona</h2>
             <p className="text-white/50 max-w-md mx-auto text-sm">Em três passos você já está acumulando pontos e disputando prêmios incríveis.</p>
           </FadeSection>
@@ -533,7 +534,7 @@ export default function Home() {
                 {/* Connector line desktop */}
                 {i < steps.length - 1 && (
                   <div className="hidden md:block absolute top-8 left-full w-full h-px z-0"
-                    style={{ background: 'linear-gradient(90deg,rgba(212,175,55,0.35),transparent)' }} />
+                    style={{ background: 'linear-gradient(90deg,color-mix(in srgb, var(--brand-accent) 35%, transparent),transparent)' }} />
                 )}
                 <div
                   className="relative z-10 rounded-2xl p-5 h-full border border-white/10 hover:border-yellow-400/30 transition-colors"
@@ -543,15 +544,15 @@ export default function Home() {
                   <div className="flex items-center justify-between mb-4">
                     <span
                       className="text-4xl font-black leading-none"
-                      style={{ background: 'linear-gradient(135deg,#d4af37,#f5c842)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+                      style={{ background: 'linear-gradient(135deg,var(--brand-accent),var(--brand-accent-light))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
                     >
                       {step.number}
                     </span>
                     <div
                       className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ background: 'rgba(212,175,55,0.12)', boxShadow: '0 0 18px rgba(212,175,55,0.18)' }}
+                      style={{ background: 'color-mix(in srgb, var(--brand-accent) 12%, transparent)', boxShadow: '0 0 18px color-mix(in srgb, var(--brand-accent) 18%, transparent)' }}
                     >
-                      <svg className="w-5 h-5" style={{ color: '#d4af37' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                      <svg className="w-5 h-5" style={{ color: 'var(--brand-accent)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d={step.icon} />
                       </svg>
                     </div>
@@ -578,7 +579,7 @@ export default function Home() {
             {/* Right — feature list */}
             <div className="order-1 lg:order-2 space-y-3">
               <FadeSection>
-                <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#d4af37' }}>Recursos Exclusivos</p>
+                <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--brand-accent)' }}>Recursos Exclusivos</p>
                 <h2 className="text-3xl sm:text-4xl font-black text-white mb-3 leading-tight">
                   Tudo que você precisa<br />para dominar o ranking
                 </h2>
@@ -607,7 +608,7 @@ export default function Home() {
               <FadeSection delay={4}>
                 <Link href="/login"
                   className="inline-flex items-center gap-2 mt-3 px-6 py-3 rounded-xl text-sm font-bold transition-transform hover:scale-105"
-                  style={{ background: 'linear-gradient(135deg,#d4af37,#f5c842)', color: '#1e1b4b' }}>
+                  style={{ background: 'linear-gradient(135deg,var(--brand-accent),var(--brand-accent-light))', color: 'var(--brand-bg-from)' }}>
                   Acessar meu painel
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
@@ -623,7 +624,7 @@ export default function Home() {
       <section id="ranking" className="py-16 px-4">
         <div className="max-w-3xl mx-auto">
           <FadeSection className="text-center mb-8">
-            <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#d4af37' }}>Desempenho</p>
+            <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--brand-accent)' }}>Desempenho</p>
             <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">Ranking de Performance</h2>
             <p className="text-white/50 text-sm">Os campeões da semana. Você pode ser o próximo.</p>
           </FadeSection>
@@ -660,7 +661,7 @@ export default function Home() {
                       <div
                         className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0"
                         style={i === 0
-                          ? { background: 'linear-gradient(135deg,#d4af37,#f5c842)', color: '#1e1b4b' }
+                          ? { background: 'linear-gradient(135deg,var(--brand-accent),var(--brand-accent-light))', color: 'var(--brand-bg-from)' }
                           : { background: 'rgba(255,255,255,0.1)', color: '#fff' }
                         }
                       >
@@ -674,7 +675,7 @@ export default function Home() {
                       </span>
                     </div>
                     <div className="col-span-4 text-right">
-                      <span className="text-sm font-black" style={i === 0 ? { color: '#d4af37' } : { color: 'rgba(255,255,255,0.7)' }}>
+                      <span className="text-sm font-black" style={i === 0 ? { color: 'var(--brand-accent)' } : { color: 'rgba(255,255,255,0.7)' }}>
                         {(ru.total_points ?? 0).toLocaleString('pt-BR')}
                       </span>
                       <span className="text-white/30 text-xs ml-1">pts</span>
@@ -684,7 +685,7 @@ export default function Home() {
               )}
 
               <div className="px-6 py-3.5 text-center border-t border-white/10">
-                <Link href="/login" className="text-sm font-semibold hover:underline" style={{ color: '#d4af37' }}>
+                <Link href="/login" className="text-sm font-semibold hover:underline" style={{ color: 'var(--brand-accent)' }}>
                   Entrar e ver minha posição →
                 </Link>
               </div>
@@ -697,7 +698,7 @@ export default function Home() {
       <section id="premios" className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
           <FadeSection className="text-center mb-10">
-            <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#d4af37' }}>Prova Social</p>
+            <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--brand-accent)' }}>Prova Social</p>
             <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">Veja o que já foi Sorteado</h2>
             <p className="text-white/50 max-w-md mx-auto text-sm">Prêmios reais, ganhadores reais. O programa funciona — e você pode ser o próximo.</p>
           </FadeSection>
@@ -738,7 +739,7 @@ export default function Home() {
                       style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
                     >
                       <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0"
-                        style={{ background: 'linear-gradient(135deg,#d4af37,#f5c842)', color: '#1e1b4b' }}>
+                        style={{ background: 'linear-gradient(135deg,var(--brand-accent),var(--brand-accent-light))', color: 'var(--brand-bg-from)' }}>
                         {prize.winner[0]}
                       </div>
                       <div className="min-w-0">
@@ -759,12 +760,12 @@ export default function Home() {
         <div className="max-w-3xl mx-auto">
           <FadeSection>
             <div
-              className="rounded-3xl p-8 text-center relative overflow-hidden border border-yellow-400/20"
-              style={{ background: 'linear-gradient(135deg,rgba(212,175,55,0.12),rgba(99,102,241,0.12))', backdropFilter: 'blur(20px)' }}
+              className="rounded-3xl p-8 text-center relative overflow-hidden border border-white/15"
+              style={{ background: 'linear-gradient(135deg,color-mix(in srgb, var(--brand-accent) 12%, transparent),rgba(99,102,241,0.12))', backdropFilter: 'blur(20px)' }}
             >
               <div className="absolute inset-0 pointer-events-none"
-                style={{ background: 'radial-gradient(circle at 50% 0%,rgba(212,175,55,0.1),transparent 60%)' }} />
-              <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#d4af37' }}>Comece hoje</p>
+                style={{ background: 'radial-gradient(circle at 50% 0%,color-mix(in srgb, var(--brand-accent) 10%, transparent),transparent 60%)' }} />
+              <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--brand-accent)' }}>Comece hoje</p>
               <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">
                 Sua primeira conquista<br />começa agora
               </h2>
@@ -773,7 +774,7 @@ export default function Home() {
               </p>
               <Link href="/login"
                 className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl text-base font-black shadow-xl transition-transform hover:scale-105"
-                style={{ background: 'linear-gradient(135deg,#d4af37,#f5c842)', color: '#1e1b4b' }}>
+                style={{ background: 'linear-gradient(135deg,var(--brand-accent),var(--brand-accent-light))', color: 'var(--brand-bg-from)' }}>
                 Cadastre-se Gratuitamente
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
@@ -792,12 +793,12 @@ export default function Home() {
             {/* Brand column */}
             <div className="md:col-span-1">
               <div className="flex items-center gap-2 mb-3">
-                <Image src="/logo.png" alt="Robsol VIP" width={100} height={28}
+                <Image src={brand.logo_login_url || '/logo.png'} alt="Robsol VIP" width={100} height={28}
                   className="h-7 w-auto object-contain"
                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
                 />
                 <span className="font-black text-base text-white">
-                  Robsol <span style={{ color: '#d4af37' }}>VIP</span>
+                  Robsol <span style={{ color: 'var(--brand-accent)' }}>VIP</span>
                 </span>
               </div>
               <p className="text-white/40 text-sm leading-relaxed">

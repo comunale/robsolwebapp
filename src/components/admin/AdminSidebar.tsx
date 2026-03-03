@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useBrand } from '@/components/shared/BrandProvider'
 
 const navItems = [
   {
@@ -119,6 +120,7 @@ const navItems = [
 
 export default function AdminSidebar() {
   const pathname = usePathname()
+  const brand = useBrand()
 
   const isActive = (href: string) => {
     if (href === '/admin') return pathname === '/admin'
@@ -132,7 +134,7 @@ export default function AdminSidebar() {
         <Link href="/admin" className="flex items-center" title="Robsol VIP Admin">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo-admin.png"
+            src={brand.logo_admin_url || '/logo-admin.png'}
             alt="Robsol VIP"
             id="sidebar-logo-img"
             className="h-9 w-auto max-w-[160px] object-contain"
