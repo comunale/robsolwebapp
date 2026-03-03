@@ -112,18 +112,30 @@ export default function AdminSidebar() {
 
   return (
     <aside className="w-64 bg-white border-r border-gray-200 min-h-screen fixed left-0 top-0 z-30">
-      {/* Logo — upload public/logo-admin.png (180×48px recommended) to replace */}
-      <div className="h-16 flex items-center px-5 border-b border-gray-200">
-        <Link href="/admin" className="flex items-center gap-2.5">
+      {/* Logo — upload public/logo-admin.png (180×48px recommended) */}
+      <div className="h-16 flex items-center justify-center px-5 border-b border-gray-200">
+        <Link href="/admin" className="flex items-center" title="Robsol VIP Admin">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo-admin.png"
-            alt="Robsol VIP Admin"
-            className="h-8 w-auto object-contain"
-            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+            alt="Robsol VIP"
+            id="sidebar-logo-img"
+            className="h-9 w-auto max-w-[160px] object-contain"
+            onError={(e) => {
+              const img = e.currentTarget as HTMLImageElement
+              img.style.display = 'none'
+              const fb = document.getElementById('sidebar-logo-fallback')
+              if (fb) fb.style.display = 'flex'
+            }}
           />
-          <span className="text-xl font-bold text-indigo-600 logo-text-fallback">
-            Robsol<span className="text-gray-400 font-normal">Admin</span>
+          {/* Fallback badge shown until logo-admin.png is uploaded */}
+          <span
+            id="sidebar-logo-fallback"
+            className="hidden items-center gap-2"
+            aria-hidden="true"
+          >
+            <span className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-black text-base">R</span>
+            <span className="text-base font-bold text-indigo-600">VIP</span>
           </span>
         </Link>
       </div>

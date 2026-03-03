@@ -1,9 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import AdminHeader from './AdminHeader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import type { Store } from '@/types/store'
+
+interface ImportResult {
+  imported: number
+  errors: string[]
+}
 
 export default function StoreManagement() {
   const [stores, setStores] = useState<Store[]>([])
@@ -12,6 +17,11 @@ export default function StoreManagement() {
   const [editingStore, setEditingStore] = useState<Store | null>(null)
   const [formData, setFormData] = useState({ name: '', cnpj: '', location: '' })
   const [saving, setSaving] = useState(false)
+
+  // Import state
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState<ImportResult | null>(null)
 
   useEffect(() => {
     fetchStores()
@@ -29,7 +39,7 @@ export default function StoreManagement() {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setSaving(true)
     try {
@@ -85,20 +95,184 @@ export default function StoreManagement() {
     setFormData({ name: '', cnpj: '', location: '' })
   }
 
+  // ── Template download ──────────────────────────────────────────────────────
+  const handleDownloadTemplate = () => {
+    const csv = 'nome,cnpj,localizacao\nLoja Exemplo,00.000.000/0001-00,Sao Paulo SP\n'
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'template_lojas.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  // ── File import handler ───────────────────────────────────────────────────
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+
+    setImporting(true)
+    setImportResult(null)
+
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase()
+      let rows: { name: string; cnpj: string; location?: string }[] = []
+      const errors: string[] = []
+
+      if (ext === 'csv') {
+        const text = await file.text()
+        const Papa = (await import('papaparse')).default
+        const parsed = Papa.parse<Record<string, string>>(text, {
+          header: true,
+          skipEmptyLines: true,
+        })
+        parsed.data.forEach((row, i) => {
+          const name = (row['nome'] ?? row['name'] ?? '').trim()
+          const cnpj = (row['cnpj'] ?? '').trim()
+          const location = (row['localizacao'] ?? row['location'] ?? '').trim()
+          if (!name || !cnpj) {
+            errors.push(`Linha ${i + 2}: nome ou CNPJ ausente`)
+          } else {
+            rows.push({ name, cnpj, location: location || undefined })
+          }
+        })
+      } else if (ext === 'xlsx' || ext === 'xls') {
+        const XLSX = await import('xlsx')
+        const buffer = await file.arrayBuffer()
+        const wb = XLSX.read(buffer, { type: 'array' })
+        const ws = wb.Sheets[wb.SheetNames[0]]
+        const data = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' })
+        data.forEach((row, i) => {
+          const name = String(row['nome'] ?? row['name'] ?? '').trim()
+          const cnpj = String(row['cnpj'] ?? '').trim()
+          const location = String(row['localizacao'] ?? row['location'] ?? '').trim()
+          if (!name || !cnpj) {
+            errors.push(`Linha ${i + 2}: nome ou CNPJ ausente`)
+          } else {
+            rows.push({ name, cnpj, location: location || undefined })
+          }
+        })
+      } else {
+        errors.push('Formato nao suportado. Use CSV ou XLSX.')
+      }
+
+      if (rows.length > 0) {
+        const res = await fetch('/api/stores/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stores: rows }),
+        })
+        const data = await res.json()
+        if (!res.ok) {
+          errors.push(data.error ?? 'Falha ao importar')
+          setImportResult({ imported: 0, errors })
+        } else {
+          setImportResult({ imported: data.imported ?? rows.length, errors })
+          await fetchStores()
+        }
+      } else {
+        setImportResult({ imported: 0, errors })
+      }
+    } catch (err: unknown) {
+      setImportResult({
+        imported: 0,
+        errors: [err instanceof Error ? err.message : 'Falha ao processar arquivo'],
+      })
+    } finally {
+      setImporting(false)
+    }
+  }
+
   if (loading) return <LoadingSpinner />
 
   return (
     <>
       <AdminHeader title="Gestao de Lojas" subtitle={`${stores.length} loja(s) cadastrada(s)`}>
-        <button
-          onClick={() => { resetForm(); setShowForm(true) }}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
-        >
-          + Adicionar Loja
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Download template */}
+          <button
+            onClick={handleDownloadTemplate}
+            className="flex items-center gap-1.5 border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition"
+            title="Baixar modelo CSV"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            Modelo CSV
+          </button>
+
+          {/* Import button */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
+            className="flex items-center gap-1.5 border border-indigo-300 hover:bg-indigo-50 text-indigo-700 px-3 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50"
+          >
+            {importing ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Importando...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                </svg>
+                Importar Lojas
+              </>
+            )}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,.xlsx,.xls"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+
+          <button
+            onClick={() => { resetForm(); setShowForm(true) }}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+          >
+            + Adicionar Loja
+          </button>
+        </div>
       </AdminHeader>
 
       <div className="p-6">
+        {/* Import result banner */}
+        {importResult && (
+          <div className={`mb-4 p-4 rounded-lg border text-sm ${
+            importResult.errors.length === 0
+              ? 'bg-green-50 border-green-200 text-green-800'
+              : importResult.imported > 0
+                ? 'bg-yellow-50 border-yellow-200 text-yellow-800'
+                : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                {importResult.imported > 0 && (
+                  <p className="font-medium">{importResult.imported} loja(s) importada(s) com sucesso.</p>
+                )}
+                {importResult.errors.length > 0 && (
+                  <ul className="mt-1 list-disc list-inside space-y-0.5">
+                    {importResult.errors.map((e, i) => <li key={i}>{e}</li>)}
+                  </ul>
+                )}
+              </div>
+              <button onClick={() => setImportResult(null)} className="text-current opacity-60 hover:opacity-100 flex-shrink-0">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Modal do formulario */}
         {showForm && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
