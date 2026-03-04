@@ -30,17 +30,36 @@ export function brandVal<K extends keyof typeof BRAND_DEFAULTS>(
 }
 
 /**
+ * Blends a hex colour toward white by `amount` (0 = original, 1 = white).
+ * Used to compute --brand-accent-light without relying on CSS color-mix(),
+ * which Firefox can mishandle inside linear-gradient() stops.
+ */
+export function lightenHex(hex: string, amount: number): string {
+  const raw = hex.replace('#', '')
+  if (!/^[0-9a-fA-F]{6}$/.test(raw)) return hex
+  const r = parseInt(raw.slice(0, 2), 16)
+  const g = parseInt(raw.slice(2, 4), 16)
+  const b = parseInt(raw.slice(4, 6), 16)
+  const lr = Math.round(r + (255 - r) * amount).toString(16).padStart(2, '0')
+  const lg = Math.round(g + (255 - g) * amount).toString(16).padStart(2, '0')
+  const lb = Math.round(b + (255 - b) * amount).toString(16).padStart(2, '0')
+  return `#${lr}${lg}${lb}`
+}
+
+/**
  * Builds a CSS custom-properties string to be injected into :root {}
- * Safe to call on server or client.
+ * All values are resolved to concrete hex — no color-mix() — so they
+ * render correctly in Firefox, Safari, and all modern browsers.
  */
 export function buildCssVarsString(s: Partial<BrandSettings>): string {
   const accent = brandVal(s, 'color_accent')
+  // 35% toward white ≈ "color-mix(in srgb, accent 65%, white)"
+  const accentLight = lightenHex(accent, 0.35)
   return [
     `--brand-primary: ${brandVal(s, 'color_primary')}`,
     `--brand-secondary: ${brandVal(s, 'color_secondary')}`,
     `--brand-accent: ${accent}`,
-    // Lighter accent for hover/gradient pairs (color-mix is broadly supported since 2023)
-    `--brand-accent-light: color-mix(in srgb, ${accent} 65%, white)`,
+    `--brand-accent-light: ${accentLight}`,
     `--brand-titles: ${brandVal(s, 'color_titles')}`,
     `--brand-bg-from: ${brandVal(s, 'color_bg_from')}`,
     `--brand-bg-to: ${brandVal(s, 'color_bg_to')}`,

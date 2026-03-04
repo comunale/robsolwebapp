@@ -1,11 +1,11 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 
 // GET /api/landing/ranking — public, no auth required
-// Returns top-5 users by total_points for the landing page
+// Uses service-role client to bypass profiles RLS and read public ranking data.
 export async function GET() {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     const { data, error } = await supabase
       .from('profiles')

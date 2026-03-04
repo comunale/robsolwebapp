@@ -392,9 +392,11 @@ export default function Home() {
               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
               priority
             />
-            <span className="font-black text-lg text-white tracking-tight hidden sm:inline">
-              Robsol <span style={{ color: 'var(--brand-accent)' }}>VIP</span>
-            </span>
+            {!(brand.logo_landing_url || brand.logo_login_url) && (
+              <span className="font-black text-lg text-white tracking-tight hidden sm:inline">
+                Robsol <span style={{ color: 'var(--brand-accent)' }}>VIP</span>
+              </span>
+            )}
           </Link>
 
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-white/70">
@@ -797,9 +799,11 @@ export default function Home() {
                   className="h-7 w-auto object-contain"
                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
                 />
-                <span className="font-black text-base text-white">
-                  Robsol <span style={{ color: 'var(--brand-accent)' }}>VIP</span>
-                </span>
+                {!(brand.logo_landing_url || brand.logo_login_url) && (
+                  <span className="font-black text-base text-white">
+                    Robsol <span style={{ color: 'var(--brand-accent)' }}>VIP</span>
+                  </span>
+                )}
               </div>
               <p className="text-white/40 text-sm leading-relaxed">
                 {footer.description}
