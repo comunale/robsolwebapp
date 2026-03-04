@@ -387,7 +387,7 @@ export default function Home() {
         style={{ backdropFilter: 'blur(20px)', background: 'color-mix(in srgb, var(--brand-bg-from) 70%, transparent)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <Image src={brand.logo_login_url || '/logo.png'} alt="Robsol VIP" width={120} height={32}
+            <Image src={brand.logo_landing_url || brand.logo_login_url || '/logo.png'} alt="Robsol VIP" width={120} height={32}
               className="h-8 w-auto object-contain"
               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
               priority
@@ -793,7 +793,7 @@ export default function Home() {
             {/* Brand column */}
             <div className="md:col-span-1">
               <div className="flex items-center gap-2 mb-3">
-                <Image src={brand.logo_login_url || '/logo.png'} alt="Robsol VIP" width={100} height={28}
+                <Image src={brand.logo_landing_url || brand.logo_login_url || '/logo.png'} alt="Robsol VIP" width={100} height={28}
                   className="h-7 w-auto object-contain"
                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
                 />

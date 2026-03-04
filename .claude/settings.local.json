@@ -16,7 +16,8 @@
       "Bash(find \"c:\\\\github\\\\robsolwebapp\\\\src\\\\app\\\\\\(admin\\)\\\\admin\" -type f -name \"*.tsx\" -o -name \"*.ts\")",
       "mcp__claude_ai_Vercel__list_teams",
       "Bash(npx -y @supabase/mcp-server-supabase@latest --help)",
-      "mcp__claude_ai_Vercel__list_projects"
+      "mcp__claude_ai_Vercel__list_projects",
+      "Bash(npx tsc --noEmit)"
     ]
   }
 }

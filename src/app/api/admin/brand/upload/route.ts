@@ -1,16 +1,23 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 
 const BUCKET = 'brand-assets'
-const ALLOWED_LOGO_KEYS = ['logo_admin_url', 'logo_login_url', 'logo_header_url', 'logo_favicon_url']
+const ALLOWED_LOGO_KEYS = [
+  'logo_admin_url',
+  'logo_login_url',
+  'logo_header_url',
+  'logo_favicon_url',
+  'logo_landing_url',
+]
 
 async function requireAdmin() {
   const supabase = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return { supabase, error: NextResponse.json({ error: 'Não autorizado' }, { status: 401 }) }
+  if (!session) return { error: NextResponse.json({ error: 'Não autorizado' }, { status: 401 }) }
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
-  if (profile?.role !== 'admin') return { supabase, error: NextResponse.json({ error: 'Acesso negado' }, { status: 403 }) }
-  return { supabase, error: null }
+  if (profile?.role !== 'admin') return { error: NextResponse.json({ error: 'Acesso negado' }, { status: 403 }) }
+  return { error: null }
 }
 
 /**
@@ -20,8 +27,11 @@ async function requireAdmin() {
  *   - key:  string (one of ALLOWED_LOGO_KEYS)
  */
 export async function POST(request: Request) {
-  const { supabase, error } = await requireAdmin()
-  if (error) return error
+  const { error: authError } = await requireAdmin()
+  if (authError) return authError
+
+  // Use service-role client for all storage + DB writes (bypasses RLS)
+  const admin = createAdminClient()
 
   const formData = await request.formData()
   const file = formData.get('file') as File | null
@@ -43,36 +53,34 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Arquivo muito grande (máx 2 MB)' }, { status: 400 })
   }
 
-  // Ensure bucket exists — create as public if not found
-  const { data: buckets } = await supabase.storage.listBuckets()
+  // Ensure bucket exists — service role can create buckets
+  const { data: buckets } = await admin.storage.listBuckets()
   if (!buckets?.find((b) => b.name === BUCKET)) {
-    await supabase.storage.createBucket(BUCKET, { public: true })
+    await admin.storage.createBucket(BUCKET, { public: true })
   }
 
   const ext = file.name.split('.').pop()?.toLowerCase() ?? 'png'
   const path = `logos/${key.replace('_url', '')}-${Date.now()}.${ext}`
-
   const buffer = Buffer.from(await file.arrayBuffer())
 
-  const { data: uploadData, error: uploadError } = await supabase.storage
+  const { data: uploadData, error: uploadError } = await admin.storage
     .from(BUCKET)
-    .upload(path, buffer, {
-      contentType: file.type,
-      upsert: true,
-    })
+    .upload(path, buffer, { contentType: file.type, upsert: true })
 
   if (uploadError) {
     return NextResponse.json({ error: uploadError.message }, { status: 500 })
   }
 
-  const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(uploadData.path)
+  const { data: urlData } = admin.storage.from(BUCKET).getPublicUrl(uploadData.path)
   const publicUrl = urlData.publicUrl
 
-  // Save URL to site_settings
-  const { error: dbError } = await supabase
+  // Upsert so missing rows are created automatically
+  const { error: dbError } = await admin
     .from('site_settings')
-    .update({ value: publicUrl, updated_at: new Date().toISOString() })
-    .eq('key', key)
+    .upsert(
+      { key, value: publicUrl, updated_at: new Date().toISOString() },
+      { onConflict: 'key' },
+    )
 
   if (dbError) {
     return NextResponse.json({ error: dbError.message }, { status: 500 })

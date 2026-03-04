@@ -12,10 +12,11 @@ export const BRAND_DEFAULTS = {
   color_bg_from:   '#0f0c29',   // very dark indigo
   color_bg_to:     '#4c1d95',   // deep violet
   // Logo URLs — empty means fall back to /public files
-  logo_admin_url:  '',
-  logo_login_url:  '',
-  logo_header_url: '',
+  logo_admin_url:   '',
+  logo_login_url:   '',
+  logo_header_url:  '',
   logo_favicon_url: '',
+  logo_landing_url: '',
 } as const
 
 export type BrandSettings = { [K in keyof typeof BRAND_DEFAULTS]: string }

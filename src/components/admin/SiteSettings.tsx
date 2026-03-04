@@ -17,6 +17,7 @@ type Tab = 'suporte' | 'logos' | 'cores'
 // Logo config
 // ─────────────────────────────────────────────────────────────────────────────
 const LOGO_META: Record<string, { size: string; fallback: string; aspect: string }> = {
+  logo_landing_url: { size: '400 × 100 px', fallback: '/logo.png',        aspect: 'aspect-[4/1]'  },
   logo_admin_url:   { size: '180 × 48 px',  fallback: '/logo-admin.png',  aspect: 'aspect-[15/4]' },
   logo_login_url:   { size: '200 × 200 px', fallback: '/logo.png',        aspect: 'aspect-square' },
   logo_header_url:  { size: '120 × 32 px',  fallback: '/logo-header.png', aspect: 'aspect-[15/4]' },
@@ -374,8 +375,9 @@ export default function SiteSettings() {
             <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-700">
               <p className="font-semibold mb-1">Como os logos são aplicados</p>
               <ul className="list-disc list-inside space-y-1 text-blue-600 text-xs">
+                <li><strong>Landing Page (400×100)</strong> — Hero e rodapé da página pública</li>
                 <li><strong>Admin (180×48)</strong> — Sidebar do painel administrativo</li>
-                <li><strong>Login (200×200)</strong> — Tela de login e Landing Page</li>
+                <li><strong>Login (200×200)</strong> — Tela de autenticação</li>
                 <li><strong>Header Mobile (120×32)</strong> — Cabeçalho do app do usuário</li>
                 <li><strong>Favicon (32×32)</strong> — Ícone na aba do navegador</li>
               </ul>
