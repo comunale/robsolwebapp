@@ -9,121 +9,56 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { useBrand } from '@/components/shared/BrandProvider'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LANDING PAGE DATA — edit all copy, features, and prizes here
+// [gold]text[/gold] highlight renderer — uses brand accent gradient
 // ─────────────────────────────────────────────────────────────────────────────
-const LANDING_PAGE_DATA = {
-  hero: {
-    headline: 'Onde suas vendas se tornam conquistas',
-    subheadline:
-      'Participe das campanhas, escaneie seus cupons e acumule pontos para conquistar prêmios exclusivos.',
-    cta: 'Começar Agora — é grátis',
-    lastPrize: {
-      label: 'Último Prêmio Entregue',
-      winner: 'Fernanda S.',
-      prize: 'iPhone 15 Pro',
-      date: 'Fev 2025',
-    },
-  },
-
-  steps: [
-    {
-      number: '01',
-      title: 'Cadastre-se',
-      description: 'Crie sua conta em menos de 1 minuto e acesse o painel VIP. Fique por dentro das promoções e prêmios exclusivos.',
-      // Heroicons v2 — UserPlus
-      icon: 'M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z',
-    },
-    {
-      number: '02',
-      title: 'Escolha sua Campanha',
-      description: 'Navegue pelas campanhas ativas e inscreva-se. Acompanhe o regulamento e as pontuações em tempo real.',
-      // Heroicons v2 — RectangleStack
-      icon: 'M6.429 9.75 2.25 12l4.179 2.25m0-4.5 5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0 4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0-5.571 3-5.571-3',
-    },
-    {
-      number: '03',
-      title: 'Escaneie e Ganhe',
-      description: 'Tire foto do cupom fiscal — nossa IA valida e credita seus pontos na hora.',
-      // Heroicons v2 — QrCode
-      icon: 'M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5ZM6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z',
-    },
-  ],
-
-  features: [
-    {
-      icon: '⚡',
-      title: 'Validação Instantânea por IA',
-      description: 'Nossa inteligência artificial analisa e aprova seus cupons em segundos.',
-    },
-    {
-      icon: '🏆',
-      title: 'Ranking em Tempo Real',
-      description: 'Acompanhe sua posição no ranking global e dispute os prêmios do topo.',
-    },
-    {
-      icon: '🎯',
-      title: 'Metas e Conquistas',
-      description: 'Complete metas por campanha e desbloqueie bônus e números da sorte.',
-    },
-    {
-      icon: '🔔',
-      title: 'Notificações ao Vivo',
-      description: 'Receba alertas instantâneos quando seus cupons forem aprovados ou recompensas liberadas.',
-    },
-  ],
-
-  // ── "Veja o que já foi Sorteado" ──────────────────────────────────────────
-  // Add winner name, delivery date, and swap image paths in /public/prizes/
-  prizes: [
-    {
-      title: 'Kit Maquiagem Sabrina Sato',
-      subtitle: 'Linha Premium completa',
-      image: '/prizes/sabrina.png',
-      color: 'from-rose-800 to-pink-600',
-      badge: 'Sorteado',
-      winner: 'Fernanda S.',
-      deliveredAt: 'Fev 2025',
-    },
-    {
-      title: 'Final de Semana Surpresa',
-      subtitle: 'Viagem + hospedagem para 2',
-      image: '/prizes/weekend.png',
-      color: 'from-indigo-700 to-purple-600',
-      badge: 'Sorteado',
-      winner: 'Carlos M.',
-      deliveredAt: 'Jan 2025',
-    },
-    {
-      title: 'Gift Card R$ 500',
-      subtitle: 'Lojas parceiras selecionadas',
-      image: '/prizes/giftcard.png',
-      color: 'from-amber-600 to-yellow-500',
-      badge: 'Sorteado',
-      winner: 'Ana P.',
-      deliveredAt: 'Dez 2024',
-    },
-    {
-      title: 'Smart TV 55"',
-      subtitle: '4K QLED Ultra HD',
-      image: '/prizes/tv.png',
-      color: 'from-teal-700 to-cyan-600',
-      badge: 'Sorteado',
-      winner: 'Ricardo L.',
-      deliveredAt: 'Nov 2024',
-    },
-  ],
-
-  footer: {
-    description: 'A plataforma de fidelidade que transforma cada compra em uma conquista.',
-    // Static "Plataforma" links — edit here
-    platformLinks: [
-      { label: 'Como Funciona', href: '#como-funciona' },
-      { label: 'Prêmios Sorteados', href: '#premios' },
-      { label: 'Ranking', href: '#ranking' },
-      { label: 'Entrar', href: '/login' },
-    ],
-  },
+function GoldText({ text }: { text: string }) {
+  const parts = text.split(/\[gold\](.*?)\[\/gold\]/g)
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? (
+          <span
+            key={i}
+            style={{
+              background: 'linear-gradient(90deg,var(--brand-accent),var(--brand-accent-light))',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            {part}
+          </span>
+        ) : (
+          part
+        )
+      )}
+    </>
+  )
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Static data that isn't CMS-managed (icons, prize images, platform links)
+// ─────────────────────────────────────────────────────────────────────────────
+const STEP_ICONS = [
+  'M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z',
+  'M6.429 9.75 2.25 12l4.179 2.25m0-4.5 5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0 4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0-5.571 3-5.571-3',
+  'M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5ZM6.75 6.75h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75Z',
+]
+
+const FEATURE_ICONS = ['⚡', '🏆', '🎯', '🔔']
+
+const PAST_PRIZES = [
+  { title: 'Kit Maquiagem Sabrina Sato', subtitle: 'Linha Premium completa',    image: '/prizes/sabrina.png',  color: 'from-rose-800 to-pink-600',    winner: 'Fernanda S.', deliveredAt: 'Fev 2025' },
+  { title: 'Final de Semana Surpresa',   subtitle: 'Viagem + hospedagem para 2', image: '/prizes/weekend.png',  color: 'from-indigo-700 to-purple-600', winner: 'Carlos M.',   deliveredAt: 'Jan 2025' },
+  { title: 'Gift Card R$ 500',           subtitle: 'Lojas parceiras selecionadas',image: '/prizes/giftcard.png',color: 'from-amber-600 to-yellow-500',  winner: 'Ana P.',      deliveredAt: 'Dez 2024' },
+  { title: 'Smart TV 55"',               subtitle: '4K QLED Ultra HD',           image: '/prizes/tv.png',       color: 'from-teal-700 to-cyan-600',     winner: 'Ricardo L.',  deliveredAt: 'Nov 2024' },
+]
+
+const PLATFORM_LINKS = [
+  { label: 'Como Funciona',    href: '#como-funciona' },
+  { label: 'Prêmios Sorteados', href: '#premios' },
+  { label: 'Ranking',          href: '#ranking' },
+  { label: 'Entrar',           href: '/login' },
+]
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Animation helpers
@@ -353,7 +288,26 @@ export default function Home() {
 
   if (user) return null
 
-  const { hero, steps, features, prizes, footer } = LANDING_PAGE_DATA
+  // CMS-driven copy from useBrand() (server-rendered via BrandProvider in layout)
+  const hero = {
+    headline:    brand.home_hero_title,
+    subheadline: brand.home_hero_subtitle,
+    cta:         brand.home_hero_cta,
+    lastPrize:   { label: 'Último Prêmio Entregue', winner: 'Fernanda S.', prize: 'iPhone 15 Pro', date: 'Fev 2025' },
+  }
+  const steps = [
+    { number: '01', title: brand.home_step_01_title, description: brand.home_step_01_desc, icon: STEP_ICONS[0] },
+    { number: '02', title: brand.home_step_02_title, description: brand.home_step_02_desc, icon: STEP_ICONS[1] },
+    { number: '03', title: brand.home_step_03_title, description: brand.home_step_03_desc, icon: STEP_ICONS[2] },
+  ]
+  const features = [
+    { icon: FEATURE_ICONS[0], title: brand.home_feat_01_title, description: brand.home_feat_01_desc },
+    { icon: FEATURE_ICONS[1], title: brand.home_feat_02_title, description: brand.home_feat_02_desc },
+    { icon: FEATURE_ICONS[2], title: brand.home_feat_03_title, description: brand.home_feat_03_desc },
+    { icon: FEATURE_ICONS[3], title: brand.home_feat_04_title, description: brand.home_feat_04_desc },
+  ]
+  const footer = { description: brand.home_footer_desc, platformLinks: PLATFORM_LINKS }
+  const prizes = PAST_PRIZES
 
   // Dynamic support links from DB, with static fallbacks
   const supportLinks = [
@@ -476,10 +430,7 @@ export default function Home() {
           transition={{ delay: 0.15, duration: 0.7, ease: EASE_OUT_EXPO }}
           className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight max-w-4xl mx-auto mb-5"
         >
-          {hero.headline.split('conquistas')[0]}
-          <span style={{ background: 'linear-gradient(90deg,var(--brand-accent),var(--brand-accent-light))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            conquistas
-          </span>
+          <GoldText text={hero.headline} />
         </motion.h1>
 
         <motion.p
@@ -727,7 +678,7 @@ export default function Home() {
                       style={{ background: 'rgba(22,163,74,0.9)', color: '#fff' }}
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-white/80 inline-block" />
-                      {prize.badge}
+                      Sorteado
                     </span>
                   </div>
 

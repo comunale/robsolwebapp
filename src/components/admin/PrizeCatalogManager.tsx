@@ -13,7 +13,13 @@ interface Prize {
   image_url: string | null
   description: string | null
   is_active: boolean
+  campaign_id: string | null
   created_at: string
+}
+
+interface Campaign {
+  id: string
+  title: string
 }
 
 interface SelectionProfile {
@@ -79,15 +85,17 @@ function exportCsv(selections: Selection[]) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Prize Form (add / edit)
 // ─────────────────────────────────────────────────────────────────────────────
-const EMPTY_FORM = { title: '', points_cost: '', image_url: '', description: '', is_active: true }
+const EMPTY_FORM = { title: '', points_cost: '', image_url: '', description: '', is_active: true, campaign_id: '' }
 
 function PrizeForm({
   initial,
+  campaigns,
   onSave,
   onCancel,
   saving,
 }: {
   initial?: Partial<Prize>
+  campaigns: Campaign[]
   onSave: (data: typeof EMPTY_FORM) => void
   onCancel: () => void
   saving: boolean
@@ -98,6 +106,7 @@ function PrizeForm({
     image_url: initial?.image_url ?? '',
     description: initial?.description ?? '',
     is_active: initial?.is_active ?? true,
+    campaign_id: initial?.campaign_id ?? '',
   })
 
   const set = (k: string, v: string | boolean) => setForm((p) => ({ ...p, [k]: v }))
@@ -147,6 +156,21 @@ function PrizeForm({
           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
         />
       </div>
+      <div>
+        <label className="block text-xs font-semibold text-gray-700 mb-1">
+          Campanha vinculada <span className="font-normal text-gray-400">(opcional — deixe vazio para prêmio global)</span>
+        </label>
+        <select
+          value={form.campaign_id}
+          onChange={(e) => set('campaign_id', e.target.value)}
+          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+        >
+          <option value="">🌐 Global — visível para todos</option>
+          {campaigns.map((c) => (
+            <option key={c.id} value={c.id}>{c.title}</option>
+          ))}
+        </select>
+      </div>
       <div className="flex items-center gap-2">
         <input
           type="checkbox"
@@ -182,6 +206,7 @@ function PrizeForm({
 export default function PrizeCatalogManager() {
   const [tab, setTab] = useState<Tab>('catalogo')
   const [prizes, setPrizes] = useState<Prize[]>([])
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [selections, setSelections] = useState<Selection[]>([])
   const [loadingPrizes, setLoadingPrizes] = useState(true)
   const [loadingSelections, setLoadingSelections] = useState(false)
@@ -194,9 +219,13 @@ export default function PrizeCatalogManager() {
   const fetchPrizes = useCallback(async () => {
     setLoadingPrizes(true)
     try {
-      const res = await fetch('/api/admin/prizes')
-      const d = await res.json()
-      setPrizes(d.prizes ?? [])
+      const [prizeRes, campaignRes] = await Promise.all([
+        fetch('/api/admin/prizes'),
+        fetch('/api/campaigns'),
+      ])
+      const [prizeData, campaignData] = await Promise.all([prizeRes.json(), campaignRes.json()])
+      setPrizes(prizeData.prizes ?? [])
+      setCampaigns(campaignData.campaigns ?? [])
     } finally {
       setLoadingPrizes(false)
     }
@@ -339,6 +368,7 @@ export default function PrizeCatalogManager() {
 
             {(showForm && !editingPrize) && (
               <PrizeForm
+                campaigns={campaigns}
                 onSave={handleSavePrize}
                 onCancel={() => setShowForm(false)}
                 saving={saving}
@@ -360,6 +390,7 @@ export default function PrizeCatalogManager() {
                     {editingPrize?.id === prize.id ? (
                       <PrizeForm
                         initial={prize}
+                        campaigns={campaigns}
                         onSave={handleSavePrize}
                         onCancel={() => setEditingPrize(null)}
                         saving={saving}

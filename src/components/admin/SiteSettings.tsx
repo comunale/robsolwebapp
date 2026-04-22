@@ -11,7 +11,7 @@ import { BRAND_DEFAULTS } from '@/lib/brand-config'
 // ─────────────────────────────────────────────────────────────────────────────
 interface Setting { key: string; label: string; value: string }
 
-type Tab = 'suporte' | 'logos' | 'cores'
+type Tab = 'suporte' | 'logos' | 'cores' | 'conteudo'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Logo config
@@ -58,6 +58,69 @@ function SaveButton({ saving, saved, onClick }: { saving: boolean; saved: boolea
     >
       {saving ? '...' : saved ? '✓ Salvo' : 'Salvar'}
     </button>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CMS sub-components
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ContentSection({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(true)
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-gray-50 transition"
+      >
+        <div className="flex items-center gap-2">
+          <span>{icon}</span>
+          <span className="text-sm font-semibold text-gray-800">{title}</span>
+        </div>
+        <svg
+          className={`w-4 h-4 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
+          fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && <div className="px-5 pb-5 pt-1 space-y-4 border-t border-gray-100">{children}</div>}
+    </div>
+  )
+}
+
+function CmsField({
+  dbKey, label, placeholder, value, onChange, saving, saved, onSave, multiline,
+}: {
+  dbKey: string; label: string; placeholder: string; value: string
+  onChange: (v: string) => void; saving: boolean; saved: boolean
+  onSave: () => void; multiline: boolean
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-gray-700 mb-1">{label}</label>
+      <div className="flex gap-2 items-start">
+        {multiline ? (
+          <textarea
+            rows={2}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-y"
+          />
+        ) : (
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+          />
+        )}
+        <SaveButton saving={saving} saved={saved} onClick={onSave} />
+      </div>
+      <p className="text-xs text-gray-300 font-mono mt-0.5">{dbKey}</p>
+    </div>
   )
 }
 
@@ -142,9 +205,10 @@ export default function SiteSettings() {
   if (loading) return <LoadingSpinner />
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: 'cores',   label: 'Paleta de Cores',      icon: '🎨' },
-    { id: 'logos',   label: 'Identidade Visual',    icon: '🖼️' },
-    { id: 'suporte', label: 'Links de Suporte',     icon: '🔗' },
+    { id: 'cores',    label: 'Paleta de Cores',    icon: '🎨' },
+    { id: 'logos',    label: 'Identidade Visual',  icon: '🖼️' },
+    { id: 'conteudo', label: 'Conteúdo da Home',   icon: '✏️' },
+    { id: 'suporte',  label: 'Links de Suporte',   icon: '🔗' },
   ]
 
   return (
@@ -382,6 +446,84 @@ export default function SiteSettings() {
                 <li><strong>Favicon (32×32)</strong> — Ícone na aba do navegador</li>
               </ul>
             </div>
+          </div>
+        )}
+
+        {/* ── TAB: CONTEÚDO DA HOME ──────────────────────────────────────────── */}
+        {tab === 'conteudo' && (
+          <div className="space-y-6">
+            <p className="text-sm text-gray-500">
+              Edite os textos da Landing Page. Se vazio, o sistema usa o texto padrão.{' '}
+              No título do hero, use <code className="font-mono text-xs bg-gray-100 px-1 rounded">[gold]palavra[/gold]</code> para destacar em dourado.
+            </p>
+
+            {/* ── Section: Hero ── */}
+            <ContentSection title="Hero — Banner Principal" icon="🚀">
+              {[
+                { key: 'home_hero_title',    label: 'Título Principal',   placeholder: (BRAND_DEFAULTS as Record<string,string>).home_hero_title,    multiline: false },
+                { key: 'home_hero_subtitle', label: 'Subtítulo',          placeholder: (BRAND_DEFAULTS as Record<string,string>).home_hero_subtitle,  multiline: true  },
+                { key: 'home_hero_cta',      label: 'Texto do Botão CTA', placeholder: (BRAND_DEFAULTS as Record<string,string>).home_hero_cta,       multiline: false },
+                { key: 'campaign_end_date',  label: 'Data de Encerramento (YYYY-MM-DD)', placeholder: '2025-12-31', multiline: false },
+              ].map(({ key, label, placeholder, multiline }) => (
+                <CmsField key={key} dbKey={key} label={label} placeholder={placeholder}
+                  value={settings[key] ?? ''} onChange={(v) => setValue(key, v)}
+                  saving={!!saving[key]} saved={!!saved[key]} onSave={() => handleSave(key)}
+                  multiline={multiline} />
+              ))}
+            </ContentSection>
+
+            {/* ── Section: Steps ── */}
+            <ContentSection title="Como Funciona — 3 Passos" icon="📋">
+              {([
+                { n: '01', tk: 'home_step_01_title', dk: 'home_step_01_desc' },
+                { n: '02', tk: 'home_step_02_title', dk: 'home_step_02_desc' },
+                { n: '03', tk: 'home_step_03_title', dk: 'home_step_03_desc' },
+              ] as const).map(({ n, tk, dk }) => (
+                <div key={n} className="space-y-2 pb-4 border-b border-gray-100 last:border-0">
+                  <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest">Passo {n}</p>
+                  <CmsField dbKey={tk} label="Título" placeholder={(BRAND_DEFAULTS as Record<string,string>)[tk]}
+                    value={settings[tk] ?? ''} onChange={(v) => setValue(tk, v)}
+                    saving={!!saving[tk]} saved={!!saved[tk]} onSave={() => handleSave(tk)}
+                    multiline={false} />
+                  <CmsField dbKey={dk} label="Descrição" placeholder={(BRAND_DEFAULTS as Record<string,string>)[dk]}
+                    value={settings[dk] ?? ''} onChange={(v) => setValue(dk, v)}
+                    saving={!!saving[dk]} saved={!!saved[dk]} onSave={() => handleSave(dk)}
+                    multiline={true} />
+                </div>
+              ))}
+            </ContentSection>
+
+            {/* ── Section: Features ── */}
+            <ContentSection title="Funcionalidades — 4 Destaques" icon="⚡">
+              {([
+                { n: '01', tk: 'home_feat_01_title', dk: 'home_feat_01_desc' },
+                { n: '02', tk: 'home_feat_02_title', dk: 'home_feat_02_desc' },
+                { n: '03', tk: 'home_feat_03_title', dk: 'home_feat_03_desc' },
+                { n: '04', tk: 'home_feat_04_title', dk: 'home_feat_04_desc' },
+              ] as const).map(({ n, tk, dk }) => (
+                <div key={n} className="space-y-2 pb-4 border-b border-gray-100 last:border-0">
+                  <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest">Funcionalidade {n}</p>
+                  <CmsField dbKey={tk} label="Título" placeholder={(BRAND_DEFAULTS as Record<string,string>)[tk]}
+                    value={settings[tk] ?? ''} onChange={(v) => setValue(tk, v)}
+                    saving={!!saving[tk]} saved={!!saved[tk]} onSave={() => handleSave(tk)}
+                    multiline={false} />
+                  <CmsField dbKey={dk} label="Descrição" placeholder={(BRAND_DEFAULTS as Record<string,string>)[dk]}
+                    value={settings[dk] ?? ''} onChange={(v) => setValue(dk, v)}
+                    saving={!!saving[dk]} saved={!!saved[dk]} onSave={() => handleSave(dk)}
+                    multiline={true} />
+                </div>
+              ))}
+            </ContentSection>
+
+            {/* ── Section: Footer ── */}
+            <ContentSection title="Rodapé" icon="🏷️">
+              <CmsField dbKey="home_footer_desc" label="Tagline da Marca"
+                placeholder={(BRAND_DEFAULTS as Record<string,string>).home_footer_desc}
+                value={settings.home_footer_desc ?? ''} onChange={(v) => setValue('home_footer_desc', v)}
+                saving={!!saving.home_footer_desc} saved={!!saved.home_footer_desc}
+                onSave={() => handleSave('home_footer_desc')}
+                multiline={false} />
+            </ContentSection>
           </div>
         )}
 

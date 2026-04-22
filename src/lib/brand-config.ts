@@ -17,6 +17,27 @@ export const BRAND_DEFAULTS = {
   logo_header_url:  '',
   logo_favicon_url: '',
   logo_landing_url: '',
+  // ── Landing Page CMS copy (fallbacks = current hardcoded defaults) ──────────
+  home_hero_title:    'Onde suas vendas se tornam [gold]conquistas[/gold]',
+  home_hero_subtitle: 'Participe das campanhas, escaneie seus cupons e acumule pontos para conquistar prêmios exclusivos.',
+  home_hero_cta:      'Começar Agora — é grátis',
+  home_step_01_title: 'Cadastre-se',
+  home_step_01_desc:  'Crie sua conta em menos de 1 minuto e acesse o painel VIP. Fique por dentro das promoções e prêmios exclusivos.',
+  home_step_02_title: 'Escolha sua Campanha',
+  home_step_02_desc:  'Navegue pelas campanhas ativas e inscreva-se. Acompanhe o regulamento e as pontuações em tempo real.',
+  home_step_03_title: 'Escaneie e Ganhe',
+  home_step_03_desc:  'Tire foto do cupom fiscal — nossa IA valida e credita seus pontos na hora.',
+  home_feat_01_title: 'Validação Instantânea por IA',
+  home_feat_01_desc:  'Nossa inteligência artificial analisa e aprova seus cupons em segundos.',
+  home_feat_02_title: 'Ranking em Tempo Real',
+  home_feat_02_desc:  'Acompanhe sua posição no ranking global e dispute os prêmios do topo.',
+  home_feat_03_title: 'Metas e Conquistas',
+  home_feat_03_desc:  'Complete metas por campanha e desbloqueie bônus e números da sorte.',
+  home_feat_04_title: 'Notificações ao Vivo',
+  home_feat_04_desc:  'Receba alertas instantâneos quando seus cupons forem aprovados ou recompensas liberadas.',
+  home_footer_desc:   'A plataforma de fidelidade que transforma cada compra em uma conquista.',
+  // ── Campaign settings ───────────────────────────────────────────────────────
+  campaign_end_date:  '',
 } as const
 
 export type BrandSettings = { [K in keyof typeof BRAND_DEFAULTS]: string }
