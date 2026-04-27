@@ -72,6 +72,11 @@ export const BRAND_DEFAULTS = {
   prize_04_subtitle:  '4K QLED Ultra HD',
   prize_04_winner:    'Ricardo L.',
   prize_04_date:      'Nov 2024',
+  // Prize gallery images — empty = show gradient fallback
+  prize_01_image_url: '',
+  prize_02_image_url: '',
+  prize_03_image_url: '',
+  prize_04_image_url: '',
   // ── Campaign settings ───────────────────────────────────────────────────────
   campaign_end_date:  '',
 } as const

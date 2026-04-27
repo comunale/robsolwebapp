@@ -48,14 +48,13 @@ const STEP_ICONS = [
 
 const FEATURE_ICONS = ['⚡', '🏆', '🎯', '🔔']
 
-// Decorative per-slot styles for past prizes gallery (not CMS-managed)
+// Decorative per-slot gradient fallbacks for past prizes gallery
 const PRIZE_COLORS = [
   'from-rose-800 to-pink-600',
   'from-indigo-700 to-purple-600',
   'from-amber-600 to-yellow-500',
   'from-teal-700 to-cyan-600',
 ]
-const PRIZE_IMAGES = ['/prizes/sabrina.png', '/prizes/weekend.png', '/prizes/giftcard.png', '/prizes/tv.png']
 
 const PLATFORM_LINKS = [
   { label: 'Como Funciona',    href: '#como-funciona' },
@@ -323,10 +322,10 @@ export default function Home() {
   const landingLogoW = Math.min(parseInt(brand.logo_landing_width || '120', 10) || 120, 300)
 
   const prizes = [
-    { title: brand.prize_01_title, subtitle: brand.prize_01_subtitle, winner: brand.prize_01_winner, deliveredAt: brand.prize_01_date, color: PRIZE_COLORS[0], image: PRIZE_IMAGES[0] },
-    { title: brand.prize_02_title, subtitle: brand.prize_02_subtitle, winner: brand.prize_02_winner, deliveredAt: brand.prize_02_date, color: PRIZE_COLORS[1], image: PRIZE_IMAGES[1] },
-    { title: brand.prize_03_title, subtitle: brand.prize_03_subtitle, winner: brand.prize_03_winner, deliveredAt: brand.prize_03_date, color: PRIZE_COLORS[2], image: PRIZE_IMAGES[2] },
-    { title: brand.prize_04_title, subtitle: brand.prize_04_subtitle, winner: brand.prize_04_winner, deliveredAt: brand.prize_04_date, color: PRIZE_COLORS[3], image: PRIZE_IMAGES[3] },
+    { title: brand.prize_01_title, subtitle: brand.prize_01_subtitle, winner: brand.prize_01_winner, deliveredAt: brand.prize_01_date, color: PRIZE_COLORS[0], image: brand.prize_01_image_url },
+    { title: brand.prize_02_title, subtitle: brand.prize_02_subtitle, winner: brand.prize_02_winner, deliveredAt: brand.prize_02_date, color: PRIZE_COLORS[1], image: brand.prize_02_image_url },
+    { title: brand.prize_03_title, subtitle: brand.prize_03_subtitle, winner: brand.prize_03_winner, deliveredAt: brand.prize_03_date, color: PRIZE_COLORS[2], image: brand.prize_03_image_url },
+    { title: brand.prize_04_title, subtitle: brand.prize_04_subtitle, winner: brand.prize_04_winner, deliveredAt: brand.prize_04_date, color: PRIZE_COLORS[3], image: brand.prize_04_image_url },
   ]
 
   // Dynamic support links from DB, with static fallbacks
@@ -683,15 +682,17 @@ export default function Home() {
                   className="rounded-2xl overflow-hidden border border-white/10 hover:border-yellow-400/30 transition-all hover:-translate-y-1 group cursor-default"
                   style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(10px)' }}
                 >
-                  {/* Image / gradient */}
+                  {/* Image / gradient — image overlays the gradient if uploaded */}
                   <div className={`h-32 bg-gradient-to-br ${prize.color} relative flex items-center justify-center overflow-hidden`}>
-                    <Image
-                      src={prize.image}
-                      alt={prize.title}
-                      fill
-                      className="object-cover opacity-60 group-hover:opacity-80 transition-opacity"
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-                    />
+                    {prize.image && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={prize.image}
+                        alt={prize.title}
+                        className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-opacity"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                      />
+                    )}
                     {/* Entregue badge */}
                     <span
                       className="absolute top-2.5 left-2.5 text-xs font-bold px-2 py-0.5 rounded-full z-10 flex items-center gap-1"

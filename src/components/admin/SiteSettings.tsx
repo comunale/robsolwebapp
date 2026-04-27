@@ -639,18 +639,81 @@ export default function SiteSettings() {
 
               {/* Past prizes gallery */}
               {([
-                { n: '01', keys: ['prize_01_title', 'prize_01_subtitle', 'prize_01_winner', 'prize_01_date'] },
-                { n: '02', keys: ['prize_02_title', 'prize_02_subtitle', 'prize_02_winner', 'prize_02_date'] },
-                { n: '03', keys: ['prize_03_title', 'prize_03_subtitle', 'prize_03_winner', 'prize_03_date'] },
-                { n: '04', keys: ['prize_04_title', 'prize_04_subtitle', 'prize_04_winner', 'prize_04_date'] },
-              ] as const).map(({ n, keys }) => (
+                { n: '01', imgKey: 'prize_01_image_url', keys: ['prize_01_title', 'prize_01_subtitle', 'prize_01_winner', 'prize_01_date'] },
+                { n: '02', imgKey: 'prize_02_image_url', keys: ['prize_02_title', 'prize_02_subtitle', 'prize_02_winner', 'prize_02_date'] },
+                { n: '03', imgKey: 'prize_03_image_url', keys: ['prize_03_title', 'prize_03_subtitle', 'prize_03_winner', 'prize_03_date'] },
+                { n: '04', imgKey: 'prize_04_image_url', keys: ['prize_04_title', 'prize_04_subtitle', 'prize_04_winner', 'prize_04_date'] },
+              ] as const).map(({ n, imgKey, keys }) => (
                 <div key={n} className="space-y-2 pb-4 border-b border-gray-100 last:border-0">
                   <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest">Prêmio Sorteado {n}</p>
+
+                  {/* Image upload */}
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold text-gray-700">Imagem</p>
+                    <div className="flex items-start gap-3">
+                      <div className="w-20 h-14 rounded-xl border-2 border-dashed border-gray-200 flex-shrink-0 overflow-hidden flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50">
+                        {settings[imgKey] ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={settings[imgKey]} alt="" className="w-full h-full object-cover"
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = '0' }} />
+                        ) : (
+                          <span className="text-xl">🏆</span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <div className="flex gap-2">
+                          <input
+                            type="url"
+                            value={settings[imgKey] ?? ''}
+                            onChange={(e) => setValue(imgKey, e.target.value)}
+                            placeholder="https://... ou faça upload"
+                            className="flex-1 px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                          />
+                          <SaveButton saving={!!saving[imgKey]} saved={!!saved[imgKey]} onClick={() => handleSave(imgKey)} />
+                        </div>
+                        <button
+                          onClick={() => fileRefs.current[imgKey]?.click()}
+                          disabled={!!uploading[imgKey]}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-indigo-200 text-indigo-700 hover:bg-indigo-50 transition disabled:opacity-50"
+                        >
+                          {uploading[imgKey] ? (
+                            <>
+                              <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                              </svg>
+                              Enviando...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                              </svg>
+                              Upload
+                            </>
+                          )}
+                        </button>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          ref={(el) => { fileRefs.current[imgKey] = el }}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            e.target.value = ''
+                            if (file) handleLogoUpload(imgKey, file)
+                          }}
+                        />
+                        <p className="text-xs text-gray-300 font-mono">{imgKey}</p>
+                      </div>
+                    </div>
+                  </div>
+
                   {([
-                    { key: keys[0], label: 'Título',         multiline: false },
-                    { key: keys[1], label: 'Subtítulo',      multiline: false },
-                    { key: keys[2], label: 'Ganhador',       multiline: false },
-                    { key: keys[3], label: 'Data de entrega',multiline: false },
+                    { key: keys[0], label: 'Título',          multiline: false },
+                    { key: keys[1], label: 'Subtítulo',       multiline: false },
+                    { key: keys[2], label: 'Ganhador',        multiline: false },
+                    { key: keys[3], label: 'Data de entrega', multiline: false },
                   ] as const).map(({ key, label, multiline }) => (
                     <CmsField key={key} dbKey={key} label={label}
                       placeholder={(BRAND_DEFAULTS as Record<string,string>)[key]}

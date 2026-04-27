@@ -9,6 +9,10 @@ const ALLOWED_LOGO_KEYS = [
   'logo_header_url',
   'logo_favicon_url',
   'logo_landing_url',
+  'prize_01_image_url',
+  'prize_02_image_url',
+  'prize_03_image_url',
+  'prize_04_image_url',
 ]
 
 async function requireAdmin() {
@@ -60,7 +64,9 @@ export async function POST(request: Request) {
   }
 
   const ext = file.name.split('.').pop()?.toLowerCase() ?? 'png'
-  const path = `logos/${key.replace('_url', '')}-${Date.now()}.${ext}`
+  const folder = key.startsWith('prize_') ? 'prizes' : 'logos'
+  const slug   = key.replace('_url', '').replace(/_/g, '-')
+  const path   = `${folder}/${slug}-${Date.now()}.${ext}`
   const buffer = Buffer.from(await file.arrayBuffer())
 
   const { data: uploadData, error: uploadError } = await admin.storage
