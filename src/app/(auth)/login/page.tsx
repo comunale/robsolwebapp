@@ -3,8 +3,8 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { useBrand } from '@/components/shared/BrandProvider'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
@@ -15,6 +15,8 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { signIn, profile } = useAuth()
+  const brand = useBrand()
+  const loginLogoW = Math.min(parseInt(brand.logo_login_width || '80', 10) || 80, 200)
 
   const redirectTo = searchParams.get('redirectTo') || null
 
@@ -46,24 +48,24 @@ function LoginForm() {
       <div className="p-8">
         {/* Logo area */}
         <div className="flex flex-col items-center mb-8">
-          {/* Logo image — place your file at public/logo.png to activate */}
-          <div className="mb-4 relative w-20 h-20">
-            <Image
-              src="/logo.png"
+          <div className="mb-4 flex justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={brand.logo_login_url || '/logo.png'}
               alt="Robsol VIP"
-              fill
+              style={{ width: `${loginLogoW}px`, height: 'auto', maxWidth: '200px' }}
               className="object-contain"
               onError={(e) => {
-                // Fallback to styled initial if logo not yet uploaded
-                const target = e.currentTarget as HTMLImageElement
-                target.style.display = 'none'
-                const fallback = target.nextElementSibling as HTMLElement | null
+                const img = e.currentTarget as HTMLImageElement
+                img.style.display = 'none'
+                const fallback = img.nextElementSibling as HTMLElement | null
                 if (fallback) fallback.style.display = 'flex'
               }}
             />
-            {/* Fallback placeholder shown until logo.png is uploaded */}
+            {/* Fallback shown if logo fails to load */}
             <div
-              className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl items-center justify-center shadow-lg hidden"
+              className="hidden bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl items-center justify-center shadow-lg flex-shrink-0"
+              style={{ width: `${loginLogoW}px`, height: `${loginLogoW}px`, maxWidth: '200px', maxHeight: '200px' }}
               aria-hidden="true"
             >
               <span className="text-white font-black text-3xl">R</span>

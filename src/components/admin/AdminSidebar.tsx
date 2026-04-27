@@ -141,7 +141,7 @@ export default function AdminSidebar() {
 
   return (
     <aside className="w-64 bg-white border-r border-gray-200 min-h-screen fixed left-0 top-0 z-30">
-      {/* Logo — upload public/logo-admin.png (180×48px recommended) */}
+      {/* Logo — upload via Admin › Configurações › Identidade Visual */}
       <div className="h-16 flex items-center justify-center px-5 border-b border-gray-200">
         <Link href="/admin" className="flex items-center" title="Robsol VIP Admin">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -149,7 +149,12 @@ export default function AdminSidebar() {
             src={brand.logo_admin_url || '/logo-admin.png'}
             alt="Robsol VIP"
             id="sidebar-logo-img"
-            className="h-9 w-auto max-w-[160px] object-contain"
+            style={{
+              width: `${Math.min(parseInt(brand.logo_admin_width || '140', 10) || 140, 200)}px`,
+              height: 'auto',
+              maxWidth: '200px',
+            }}
+            className="object-contain"
             onError={(e) => {
               const img = e.currentTarget as HTMLImageElement
               img.style.display = 'none'

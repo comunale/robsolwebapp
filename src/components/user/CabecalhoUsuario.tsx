@@ -58,12 +58,17 @@ export default function CabecalhoUsuario() {
     <header className="md:hidden bg-white shadow-sm sticky top-0 z-40">
       <div className="max-w-lg mx-auto px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {/* Logo — upload public/logo-header.png (120×32px recommended) to replace */}
+          {/* Logo — configure via Admin › Configurações › Identidade Visual */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={brand.logo_header_url || '/logo-header.png'}
             alt="Robsol VIP"
-            className="h-7 w-auto object-contain"
+            style={{
+              width: `${Math.min(parseInt(brand.logo_header_width || '100', 10) || 100, 160)}px`,
+              height: 'auto',
+              maxWidth: '160px',
+            }}
+            className="object-contain"
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
           />
           <div>

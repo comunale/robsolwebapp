@@ -16,11 +16,14 @@ type Tab = 'suporte' | 'logos' | 'cores' | 'conteudo'
 // ─────────────────────────────────────────────────────────────────────────────
 // Logo config
 // ─────────────────────────────────────────────────────────────────────────────
-const LOGO_META: Record<string, { size: string; fallback: string; aspect: string }> = {
-  logo_landing_url: { size: '400 × 100 px', fallback: '/logo.png',        aspect: 'aspect-[4/1]'  },
-  logo_admin_url:   { size: '180 × 48 px',  fallback: '/logo-admin.png',  aspect: 'aspect-[15/4]' },
-  logo_login_url:   { size: '200 × 200 px', fallback: '/logo.png',        aspect: 'aspect-square' },
-  logo_header_url:  { size: '120 × 32 px',  fallback: '/logo-header.png', aspect: 'aspect-[15/4]' },
+const LOGO_META: Record<string, {
+  size: string; fallback: string; aspect: string
+  widthKey?: string; defaultWidth?: number; maxWidth?: number
+}> = {
+  logo_landing_url: { size: '400 × 100 px', fallback: '/logo.png',        aspect: 'aspect-[4/1]',  widthKey: 'logo_landing_width', defaultWidth: 120, maxWidth: 300 },
+  logo_admin_url:   { size: '180 × 48 px',  fallback: '/logo-admin.png',  aspect: 'aspect-[15/4]', widthKey: 'logo_admin_width',   defaultWidth: 140, maxWidth: 200 },
+  logo_login_url:   { size: '200 × 200 px', fallback: '/logo.png',        aspect: 'aspect-square', widthKey: 'logo_login_width',   defaultWidth: 80,  maxWidth: 200 },
+  logo_header_url:  { size: '120 × 32 px',  fallback: '/logo-header.png', aspect: 'aspect-[15/4]', widthKey: 'logo_header_width',  defaultWidth: 100, maxWidth: 160 },
   logo_favicon_url: { size: '32 × 32 px',   fallback: '/favicon.ico',     aspect: 'aspect-square' },
 }
 
@@ -482,6 +485,41 @@ export default function SiteSettings() {
                         }}
                       />
                       <p className="text-xs text-gray-400 mt-1.5">PNG, SVG, WebP · máx 2 MB</p>
+
+                      {/* Width control — only for rendered logos, not favicon */}
+                      {meta.widthKey ? (
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                          <label className="block text-xs font-semibold text-gray-700 mb-2">
+                            Largura Exibida (px) — máx {meta.maxWidth}px
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="range"
+                              min={20}
+                              max={meta.maxWidth}
+                              value={parseInt(settings[meta.widthKey] || String(meta.defaultWidth), 10) || meta.defaultWidth}
+                              onChange={(e) => setValue(meta.widthKey!, e.target.value)}
+                              className="flex-1 h-1.5 accent-indigo-600 cursor-pointer"
+                            />
+                            <input
+                              type="number"
+                              min={20}
+                              max={meta.maxWidth}
+                              value={settings[meta.widthKey] ?? String(meta.defaultWidth)}
+                              onChange={(e) => setValue(meta.widthKey!, e.target.value)}
+                              placeholder={String(meta.defaultWidth)}
+                              className="w-16 px-2 py-1.5 text-sm font-mono border border-gray-200 rounded-lg text-center focus:ring-2 focus:ring-indigo-500 outline-none"
+                            />
+                            <span className="text-xs text-gray-400 flex-shrink-0">px</span>
+                            <SaveButton
+                              saving={!!saving[meta.widthKey]}
+                              saved={!!saved[meta.widthKey]}
+                              onClick={() => handleSave(meta.widthKey!)}
+                            />
+                          </div>
+                          <p className="text-xs text-gray-300 font-mono mt-0.5">{meta.widthKey}</p>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 </div>

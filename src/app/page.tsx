@@ -320,6 +320,7 @@ export default function Home() {
     { icon: FEATURE_ICONS[3], title: brand.home_feat_04_title, description: brand.home_feat_04_desc },
   ]
   const footer = { description: brand.home_footer_desc, platformLinks: PLATFORM_LINKS }
+  const landingLogoW = Math.min(parseInt(brand.logo_landing_width || '120', 10) || 120, 300)
 
   const prizes = [
     { title: brand.prize_01_title, subtitle: brand.prize_01_subtitle, winner: brand.prize_01_winner, deliveredAt: brand.prize_01_date, color: PRIZE_COLORS[0], image: PRIZE_IMAGES[0] },
@@ -360,10 +361,13 @@ export default function Home() {
         style={{ backdropFilter: 'blur(20px)', background: 'color-mix(in srgb, var(--brand-bg-from) 70%, transparent)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <Image src={brand.logo_landing_url || brand.logo_login_url || '/logo.png'} alt="Robsol VIP" width={120} height={32}
-              className="h-8 w-auto object-contain"
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={brand.logo_landing_url || brand.logo_login_url || '/logo.png'}
+              alt="Robsol VIP"
+              style={{ width: `${landingLogoW}px`, height: 'auto', maxWidth: '300px' }}
+              className="object-contain"
               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-              priority
             />
             {!(brand.logo_landing_url || brand.logo_login_url) && (
               <span className="font-black text-lg text-white tracking-tight hidden sm:inline">
@@ -762,8 +766,12 @@ export default function Home() {
             {/* Brand column */}
             <div className="md:col-span-1">
               <div className="flex items-center gap-2 mb-3">
-                <Image src={brand.logo_landing_url || brand.logo_login_url || '/logo.png'} alt="Robsol VIP" width={100} height={28}
-                  className="h-7 w-auto object-contain"
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={brand.logo_landing_url || brand.logo_login_url || '/logo.png'}
+                  alt="Robsol VIP"
+                  style={{ width: `${landingLogoW}px`, height: 'auto', maxWidth: '300px' }}
+                  className="object-contain"
                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
                 />
                 {!(brand.logo_landing_url || brand.logo_login_url) && (

@@ -17,6 +17,11 @@ export const BRAND_DEFAULTS = {
   logo_header_url:  '',
   logo_favicon_url: '',
   logo_landing_url: '',
+  // Logo display widths (px) — empty falls back to default
+  logo_landing_width: '120',
+  logo_admin_width:   '140',
+  logo_login_width:   '80',
+  logo_header_width:  '100',
   // ── Landing Page CMS copy (fallbacks = current hardcoded defaults) ──────────
   home_hero_title:    'Onde suas vendas se tornam [gold]conquistas[/gold]',
   home_hero_subtitle: 'Participe das campanhas, escaneie seus cupons e acumule pontos para conquistar prêmios exclusivos.',
