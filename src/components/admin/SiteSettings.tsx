@@ -473,11 +473,13 @@ export default function SiteSettings() {
             </ContentSection>
 
             {/* ── Section: Steps ── */}
-            <ContentSection title="Como Funciona — 3 Passos" icon="📋">
+            <ContentSection title="Como Funciona — 5 Passos" icon="📋">
               {([
                 { n: '01', tk: 'home_step_01_title', dk: 'home_step_01_desc' },
                 { n: '02', tk: 'home_step_02_title', dk: 'home_step_02_desc' },
                 { n: '03', tk: 'home_step_03_title', dk: 'home_step_03_desc' },
+                { n: '04', tk: 'home_step_04_title', dk: 'home_step_04_desc' },
+                { n: '05', tk: 'home_step_05_title', dk: 'home_step_05_desc' },
               ] as const).map(({ n, tk, dk }) => (
                 <div key={n} className="space-y-2 pb-4 border-b border-gray-100 last:border-0">
                   <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest">Passo {n}</p>

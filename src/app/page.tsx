@@ -42,6 +42,8 @@ const STEP_ICONS = [
   'M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z',
   'M6.429 9.75 2.25 12l4.179 2.25m0-4.5 5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0 4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0-5.571 3-5.571-3',
   'M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5ZM6.75 6.75h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75Z',
+  'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z',
+  'M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 0 0 7.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 0 0 2.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 0 1 2.916.52 6.003 6.003 0 0 1-5.395 4.972m0 0a6.726 6.726 0 0 1-2.749 1.35m0 0a6.772 6.772 0 0 1-3.044 0',
 ]
 
 const FEATURE_ICONS = ['⚡', '🏆', '🎯', '🔔']
@@ -299,6 +301,8 @@ export default function Home() {
     { number: '01', title: brand.home_step_01_title, description: brand.home_step_01_desc, icon: STEP_ICONS[0] },
     { number: '02', title: brand.home_step_02_title, description: brand.home_step_02_desc, icon: STEP_ICONS[1] },
     { number: '03', title: brand.home_step_03_title, description: brand.home_step_03_desc, icon: STEP_ICONS[2] },
+    { number: '04', title: brand.home_step_04_title, description: brand.home_step_04_desc, icon: STEP_ICONS[3] },
+    { number: '05', title: brand.home_step_05_title, description: brand.home_step_05_desc, icon: STEP_ICONS[4] },
   ]
   const features = [
     { icon: FEATURE_ICONS[0], title: brand.home_feat_01_title, description: brand.home_feat_01_desc },
@@ -478,19 +482,14 @@ export default function Home() {
           <FadeSection className="text-center mb-10">
             <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--brand-accent)' }}>Simples assim</p>
             <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">Como Funciona</h2>
-            <p className="text-white/50 max-w-md mx-auto text-sm">Em três passos você já está acumulando pontos e disputando prêmios incríveis.</p>
+            <p className="text-white/50 max-w-md mx-auto text-sm">Em cinco passos você já está acumulando pontos e disputando prêmios incríveis.</p>
           </FadeSection>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="flex flex-wrap justify-center gap-5">
             {steps.map((step, i) => (
-              <FadeSection key={step.number} delay={i} className="relative">
-                {/* Connector line desktop */}
-                {i < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-8 left-full w-full h-px z-0"
-                    style={{ background: 'linear-gradient(90deg,color-mix(in srgb, var(--brand-accent) 35%, transparent),transparent)' }} />
-                )}
+              <FadeSection key={step.number} delay={i} className="w-full sm:w-[calc(50%-10px)] md:w-[calc(33.33%-14px)]">
                 <div
-                  className="relative z-10 rounded-2xl p-5 h-full border border-white/10 hover:border-yellow-400/30 transition-colors"
+                  className="rounded-2xl p-5 h-full border border-white/10 hover:border-yellow-400/30 transition-colors"
                   style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(10px)' }}
                 >
                   {/* Top row: number left, icon right */}
