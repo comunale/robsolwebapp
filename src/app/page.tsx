@@ -48,12 +48,14 @@ const STEP_ICONS = [
 
 const FEATURE_ICONS = ['⚡', '🏆', '🎯', '🔔']
 
-const PAST_PRIZES = [
-  { title: 'Kit Maquiagem Sabrina Sato', subtitle: 'Linha Premium completa',    image: '/prizes/sabrina.png',  color: 'from-rose-800 to-pink-600',    winner: 'Fernanda S.', deliveredAt: 'Fev 2025' },
-  { title: 'Final de Semana Surpresa',   subtitle: 'Viagem + hospedagem para 2', image: '/prizes/weekend.png',  color: 'from-indigo-700 to-purple-600', winner: 'Carlos M.',   deliveredAt: 'Jan 2025' },
-  { title: 'Gift Card R$ 500',           subtitle: 'Lojas parceiras selecionadas',image: '/prizes/giftcard.png',color: 'from-amber-600 to-yellow-500',  winner: 'Ana P.',      deliveredAt: 'Dez 2024' },
-  { title: 'Smart TV 55"',               subtitle: '4K QLED Ultra HD',           image: '/prizes/tv.png',       color: 'from-teal-700 to-cyan-600',     winner: 'Ricardo L.',  deliveredAt: 'Nov 2024' },
+// Decorative per-slot styles for past prizes gallery (not CMS-managed)
+const PRIZE_COLORS = [
+  'from-rose-800 to-pink-600',
+  'from-indigo-700 to-purple-600',
+  'from-amber-600 to-yellow-500',
+  'from-teal-700 to-cyan-600',
 ]
+const PRIZE_IMAGES = ['/prizes/sabrina.png', '/prizes/weekend.png', '/prizes/giftcard.png', '/prizes/tv.png']
 
 const PLATFORM_LINKS = [
   { label: 'Como Funciona',    href: '#como-funciona' },
@@ -295,7 +297,14 @@ export default function Home() {
     headline:    brand.home_hero_title,
     subheadline: brand.home_hero_subtitle,
     cta:         brand.home_hero_cta,
-    lastPrize:   { label: 'Último Prêmio Entregue', winner: 'Fernanda S.', prize: 'iPhone 15 Pro', date: 'Fev 2025' },
+  }
+
+  const badge = {
+    show:   brand.badge_show !== 'false',
+    label:  brand.badge_label,
+    winner: brand.badge_winner,
+    prize:  brand.badge_prize,
+    date:   brand.badge_date,
   }
   const steps = [
     { number: '01', title: brand.home_step_01_title, description: brand.home_step_01_desc, icon: STEP_ICONS[0] },
@@ -311,7 +320,13 @@ export default function Home() {
     { icon: FEATURE_ICONS[3], title: brand.home_feat_04_title, description: brand.home_feat_04_desc },
   ]
   const footer = { description: brand.home_footer_desc, platformLinks: PLATFORM_LINKS }
-  const prizes = PAST_PRIZES
+
+  const prizes = [
+    { title: brand.prize_01_title, subtitle: brand.prize_01_subtitle, winner: brand.prize_01_winner, deliveredAt: brand.prize_01_date, color: PRIZE_COLORS[0], image: PRIZE_IMAGES[0] },
+    { title: brand.prize_02_title, subtitle: brand.prize_02_subtitle, winner: brand.prize_02_winner, deliveredAt: brand.prize_02_date, color: PRIZE_COLORS[1], image: PRIZE_IMAGES[1] },
+    { title: brand.prize_03_title, subtitle: brand.prize_03_subtitle, winner: brand.prize_03_winner, deliveredAt: brand.prize_03_date, color: PRIZE_COLORS[2], image: PRIZE_IMAGES[2] },
+    { title: brand.prize_04_title, subtitle: brand.prize_04_subtitle, winner: brand.prize_04_winner, deliveredAt: brand.prize_04_date, color: PRIZE_COLORS[3], image: PRIZE_IMAGES[3] },
+  ]
 
   // Dynamic support links from DB, with static fallbacks
   const supportLinks = [
@@ -401,22 +416,24 @@ export default function Home() {
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section className="relative min-h-[80vh] flex flex-col items-center justify-center px-4 text-center pt-10 pb-16">
-        {/* Floating last-prize badge */}
-        <motion.div
-          initial={{ opacity: 0, x: 60 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.8, duration: 0.6, ease: EASE_OUT_EXPO }}
-          className="absolute top-8 right-4 sm:right-12 z-10"
-        >
-          <div className="rounded-2xl px-4 py-3 text-left shadow-2xl border border-yellow-400/40"
-            style={{ background: 'rgba(30,27,75,0.85)', backdropFilter: 'blur(16px)' }}>
-            <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: 'var(--brand-accent)' }}>
-              {hero.lastPrize.label}
-            </p>
-            <p className="text-white font-bold text-sm">{hero.lastPrize.prize}</p>
-            <p className="text-white/60 text-xs">{hero.lastPrize.winner} · {hero.lastPrize.date}</p>
-          </div>
-        </motion.div>
+        {/* Floating last-prize badge — shown/hidden via Admin CMS */}
+        {badge.show && (
+          <motion.div
+            initial={{ opacity: 0, x: 60 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.8, duration: 0.6, ease: EASE_OUT_EXPO }}
+            className="absolute top-8 right-4 sm:right-12 z-10"
+          >
+            <div className="rounded-2xl px-4 py-3 text-left shadow-2xl border border-yellow-400/40"
+              style={{ background: 'rgba(30,27,75,0.85)', backdropFilter: 'blur(16px)' }}>
+              <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: 'var(--brand-accent)' }}>
+                {badge.label}
+              </p>
+              <p className="text-white font-bold text-sm">{badge.prize}</p>
+              <p className="text-white/60 text-xs">{badge.winner} · {badge.date}</p>
+            </div>
+          </motion.div>
+        )}
 
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <span

@@ -89,6 +89,37 @@ function ContentSection({ title, icon, children }: { title: string; icon: string
   )
 }
 
+function ToggleField({
+  dbKey, label, desc, value, onToggle, saving, saved,
+}: {
+  dbKey: string; label: string; desc?: string; value: string
+  onToggle: () => void; saving: boolean; saved: boolean
+}) {
+  const isOn = (value ?? 'true') !== 'false'
+  return (
+    <div className="flex items-center justify-between gap-3 py-1">
+      <div className="min-w-0">
+        <p className="text-xs font-semibold text-gray-700">{label}</p>
+        {desc && <p className="text-xs text-gray-400 mt-0.5">{desc}</p>}
+        <p className="text-xs text-gray-300 font-mono mt-0.5">{dbKey}</p>
+      </div>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {saving && <span className="text-xs text-gray-400">...</span>}
+        {saved && !saving && <span className="text-xs text-green-600 font-semibold">✓ Salvo</span>}
+        <button
+          onClick={onToggle}
+          disabled={saving}
+          role="switch"
+          aria-checked={isOn}
+          className={`relative w-11 h-6 rounded-full transition-colors disabled:opacity-50 ${isOn ? 'bg-indigo-600' : 'bg-gray-200'}`}
+        >
+          <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${isOn ? 'translate-x-5' : ''}`} />
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function CmsField({
   dbKey, label, placeholder, value, onChange, saving, saved, onSave, multiline,
 }: {
@@ -172,6 +203,27 @@ export default function SiteSettings() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key, value: settings[key] ?? '' }),
+      })
+      if (!res.ok) throw new Error('Falha ao salvar')
+      setSaved((p) => ({ ...p, [key]: true }))
+      setTimeout(() => setSaved((p) => ({ ...p, [key]: false })), 2500)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erro ao salvar')
+    } finally {
+      setSaving((p) => ({ ...p, [key]: false }))
+    }
+  }
+
+  const handleToggle = async (key: string) => {
+    const isOn = (settings[key] ?? 'true') !== 'false'
+    const newVal = isOn ? 'false' : 'true'
+    setValue(key, newVal)
+    setSaving((p) => ({ ...p, [key]: true }))
+    try {
+      const res = await fetch('/api/admin/site-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, value: newVal }),
       })
       if (!res.ok) throw new Error('Falha ao salvar')
       setSaved((p) => ({ ...p, [key]: true }))
@@ -513,6 +565,61 @@ export default function SiteSettings() {
                     value={settings[dk] ?? ''} onChange={(v) => setValue(dk, v)}
                     saving={!!saving[dk]} saved={!!saved[dk]} onSave={() => handleSave(dk)}
                     multiline={true} />
+                </div>
+              ))}
+            </ContentSection>
+
+            {/* ── Section: Social Proof ── */}
+            <ContentSection title="Prova Social & Badge" icon="🏆">
+              <p className="text-xs text-gray-400 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                Fase atual: preencha manualmente com dados reais ou fictícios.
+                Futuramente esses campos serão preenchidos automaticamente a partir dos prêmios entregues.
+              </p>
+
+              {/* Floating badge */}
+              <div className="space-y-3 pb-4 border-b border-gray-100">
+                <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest">Badge Flutuante (Hero)</p>
+                <ToggleField
+                  dbKey="badge_show" label="Exibir badge no Hero"
+                  desc="Mostra o card flutuante do último prêmio entregue"
+                  value={settings.badge_show ?? 'true'}
+                  onToggle={() => handleToggle('badge_show')}
+                  saving={!!saving.badge_show} saved={!!saved.badge_show}
+                />
+                {[
+                  { key: 'badge_label',  label: 'Rótulo',        placeholder: (BRAND_DEFAULTS as Record<string,string>).badge_label },
+                  { key: 'badge_prize',  label: 'Nome do Prêmio', placeholder: (BRAND_DEFAULTS as Record<string,string>).badge_prize  },
+                  { key: 'badge_winner', label: 'Nome do Ganhador', placeholder: (BRAND_DEFAULTS as Record<string,string>).badge_winner },
+                  { key: 'badge_date',   label: 'Data (ex: Fev 2025)', placeholder: (BRAND_DEFAULTS as Record<string,string>).badge_date },
+                ].map(({ key, label, placeholder }) => (
+                  <CmsField key={key} dbKey={key} label={label} placeholder={placeholder}
+                    value={settings[key] ?? ''} onChange={(v) => setValue(key, v)}
+                    saving={!!saving[key]} saved={!!saved[key]} onSave={() => handleSave(key)}
+                    multiline={false} />
+                ))}
+              </div>
+
+              {/* Past prizes gallery */}
+              {([
+                { n: '01', keys: ['prize_01_title', 'prize_01_subtitle', 'prize_01_winner', 'prize_01_date'] },
+                { n: '02', keys: ['prize_02_title', 'prize_02_subtitle', 'prize_02_winner', 'prize_02_date'] },
+                { n: '03', keys: ['prize_03_title', 'prize_03_subtitle', 'prize_03_winner', 'prize_03_date'] },
+                { n: '04', keys: ['prize_04_title', 'prize_04_subtitle', 'prize_04_winner', 'prize_04_date'] },
+              ] as const).map(({ n, keys }) => (
+                <div key={n} className="space-y-2 pb-4 border-b border-gray-100 last:border-0">
+                  <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest">Prêmio Sorteado {n}</p>
+                  {([
+                    { key: keys[0], label: 'Título',         multiline: false },
+                    { key: keys[1], label: 'Subtítulo',      multiline: false },
+                    { key: keys[2], label: 'Ganhador',       multiline: false },
+                    { key: keys[3], label: 'Data de entrega',multiline: false },
+                  ] as const).map(({ key, label, multiline }) => (
+                    <CmsField key={key} dbKey={key} label={label}
+                      placeholder={(BRAND_DEFAULTS as Record<string,string>)[key]}
+                      value={settings[key] ?? ''} onChange={(v) => setValue(key, v)}
+                      saving={!!saving[key]} saved={!!saved[key]} onSave={() => handleSave(key)}
+                      multiline={multiline} />
+                  ))}
                 </div>
               ))}
             </ContentSection>

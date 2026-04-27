@@ -40,6 +40,33 @@ export const BRAND_DEFAULTS = {
   home_feat_04_title: 'Notificações ao Vivo',
   home_feat_04_desc:  'Receba alertas instantâneos quando seus cupons forem aprovados ou recompensas liberadas.',
   home_footer_desc:   'A plataforma de fidelidade que transforma cada compra em uma conquista.',
+  // ── Social Proof — Floating badge (Hero section) ────────────────────────────
+  // TODO: future phase — pull winner/prize/date from user_prize_selections
+  // WHERE status = 'fulfilled' ORDER BY fulfilled_at DESC LIMIT 1
+  badge_show:         'true',
+  badge_label:        'ÚLTIMO PRÊMIO ENTREGUE',
+  badge_winner:       'Fernanda S.',
+  badge_prize:        'iPhone 15 Pro',
+  badge_date:         'Fev 2025',
+  // ── Social Proof — Past prizes gallery (4 manual slots) ─────────────────────
+  // TODO: future phase — pull from user_prize_selections WHERE status = 'fulfilled'
+  // ORDER BY fulfilled_at DESC LIMIT 4, joining prizes_catalog for title/subtitle
+  prize_01_title:     'Kit Maquiagem Sabrina Sato',
+  prize_01_subtitle:  'Linha Premium completa',
+  prize_01_winner:    'Fernanda S.',
+  prize_01_date:      'Fev 2025',
+  prize_02_title:     'Final de Semana Surpresa',
+  prize_02_subtitle:  'Viagem + hospedagem para 2',
+  prize_02_winner:    'Carlos M.',
+  prize_02_date:      'Jan 2025',
+  prize_03_title:     'Gift Card R$ 500',
+  prize_03_subtitle:  'Lojas parceiras selecionadas',
+  prize_03_winner:    'Ana P.',
+  prize_03_date:      'Dez 2024',
+  prize_04_title:     'Smart TV 55"',
+  prize_04_subtitle:  '4K QLED Ultra HD',
+  prize_04_winner:    'Ricardo L.',
+  prize_04_date:      'Nov 2024',
   // ── Campaign settings ───────────────────────────────────────────────────────
   campaign_end_date:  '',
 } as const
