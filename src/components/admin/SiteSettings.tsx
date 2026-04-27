@@ -5,13 +5,14 @@ import Image from 'next/image'
 import AdminHeader from './AdminHeader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import { BRAND_DEFAULTS } from '@/lib/brand-config'
+import FaqManager from './FaqManager'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 interface Setting { key: string; label: string; value: string }
 
-type Tab = 'suporte' | 'logos' | 'cores' | 'conteudo'
+type Tab = 'suporte' | 'logos' | 'cores' | 'conteudo' | 'faq'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Logo config
@@ -263,6 +264,7 @@ export default function SiteSettings() {
     { id: 'cores',    label: 'Paleta de Cores',    icon: '🎨' },
     { id: 'logos',    label: 'Identidade Visual',  icon: '🖼️' },
     { id: 'conteudo', label: 'Conteúdo da Home',   icon: '✏️' },
+    { id: 'faq',      label: 'FAQ / Ajuda',         icon: '❓' },
     { id: 'suporte',  label: 'Links de Suporte',   icon: '🔗' },
   ]
 
@@ -734,6 +736,17 @@ export default function SiteSettings() {
                 onSave={() => handleSave('home_footer_desc')}
                 multiline={false} />
             </ContentSection>
+          </div>
+        )}
+
+        {/* ── TAB: FAQ ───────────────────────────────────────────────────────── */}
+        {tab === 'faq' && (
+          <div>
+            <p className="text-sm text-gray-500 mb-5">
+              Gerencie as perguntas frequentes exibidas na página de Ajuda do WebApp.
+              Itens inativos ficam ocultos para os usuários sem serem excluídos.
+            </p>
+            <FaqManager />
           </div>
         )}
 

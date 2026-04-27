@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
+import { useBrand } from '@/components/shared/BrandProvider'
 import CabecalhoUsuario from './CabecalhoUsuario'
 import BarraNavegacao from './BarraNavegacao'
 import DestaquesCampanhas from './DestaquesCampanhas'
@@ -11,6 +12,64 @@ import CarrosselBanners from './CarrosselBanners'
 import ProgressoMetas from './ProgressoMetas'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import type { Campaign } from '@/types/campaign'
+
+function UrgenciaBanner({ endDate }: { endDate: string }) {
+  const [remaining, setRemaining] = useState<{ days: number; hours: number } | null>(null)
+
+  useEffect(() => {
+    if (!endDate) return
+    const end = new Date(endDate + 'T23:59:59')
+    const update = () => {
+      const diff = end.getTime() - Date.now()
+      if (diff <= 0) { setRemaining({ days: 0, hours: 0 }); return }
+      setRemaining({
+        days:  Math.floor(diff / 86_400_000),
+        hours: Math.floor((diff % 86_400_000) / 3_600_000),
+      })
+    }
+    update()
+    const id = setInterval(update, 60_000)
+    return () => clearInterval(id)
+  }, [endDate])
+
+  if (!endDate || !remaining) return null
+  if (remaining.days === 0 && remaining.hours === 0) return null
+
+  return (
+    <div
+      className="mb-6 rounded-2xl p-4 relative overflow-hidden border border-white/10"
+      style={{ background: 'linear-gradient(135deg, var(--brand-bg-from), var(--brand-bg-to))' }}
+    >
+      {/* subtle glow */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse at 80% 50%, rgba(212,175,55,0.12), transparent 60%)' }} />
+
+      <div className="relative flex items-center justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--brand-accent)' }}>
+            ⚠️ Atenção — Campanha encerrando
+          </p>
+          <p className="text-white font-bold text-sm leading-snug">
+            Faltam{' '}
+            <span className="font-black" style={{ color: 'var(--brand-accent)' }}>{remaining.days} dias</span>
+            {remaining.hours > 0 && (
+              <> e <span className="font-black" style={{ color: 'var(--brand-accent)' }}>{remaining.hours} horas</span></>
+            )}
+            {' '}para o encerramento!
+          </p>
+          <p className="text-white/50 text-xs mt-0.5">Garanta sua seleção antes do prazo.</p>
+        </div>
+        <Link
+          href="/dashboard/premios"
+          className="flex-shrink-0 px-4 py-2.5 rounded-xl text-xs font-black transition hover:opacity-90 active:scale-95"
+          style={{ background: 'linear-gradient(135deg,var(--brand-accent),var(--brand-accent-light))', color: 'var(--brand-bg-from)' }}
+        >
+          Ver Prêmios →
+        </Link>
+      </div>
+    </div>
+  )
+}
 
 interface TopUser {
   id: string
@@ -26,6 +85,7 @@ interface CouponStats {
 
 export default function PainelUsuario() {
   const { user, profile, loading } = useAuth()
+  const brand = useBrand()
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set())
   const [couponStats, setCouponStats] = useState<CouponStats>({ total: 0, approved: 0, rejected: 0 })
@@ -143,6 +203,9 @@ export default function PainelUsuario() {
 
         {/* Banner Carousel */}
         <CarrosselBanners />
+
+        {/* Urgency countdown — visible only when campaign_end_date is set */}
+        <UrgenciaBanner endDate={brand.campaign_end_date} />
 
         {/* ── Ranking Preview ─────────────────────────────────────────────── */}
         {topUsers.length > 0 && (
