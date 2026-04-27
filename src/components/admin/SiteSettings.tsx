@@ -752,38 +752,80 @@ export default function SiteSettings() {
 
         {/* ── TAB: SUPORTE ───────────────────────────────────────────────────── */}
         {tab === 'suporte' && (
-          <div className="space-y-3">
-            <p className="text-sm text-gray-500 mb-4">
-              Esses links aparecem na coluna &quot;Suporte&quot; do rodapé da Landing Page.
-            </p>
+          <div className="space-y-6">
 
-            {[
-              { key: 'support_whatsapp', label: 'Número WhatsApp (só dígitos)', placeholder: '5511999999999', hint: 'Usado como wa.me/número' },
-              { key: 'support_terms',    label: 'URL dos Termos de Uso',        placeholder: 'https://...', hint: '' },
-              { key: 'support_privacy',  label: 'URL da Política de Privacidade', placeholder: 'https://...', hint: '' },
-              { key: 'support_help',     label: 'URL da Central de Ajuda',      placeholder: 'https://...', hint: '' },
-              { key: 'support_contact',  label: 'URL de Contato',               placeholder: '#', hint: '' },
-            ].map(({ key, label, placeholder, hint }) => (
-              <div key={key} className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 flex items-center gap-4">
-                <div className="flex-1 min-w-0">
-                  <label className="block text-sm font-medium text-gray-800 mb-1">{label}</label>
-                  <input
-                    type="text"
-                    value={settings[key] ?? ''}
-                    onChange={(e) => setValue(key, e.target.value)}
-                    placeholder={placeholder}
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                  />
-                  {hint && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
-                  <p className="text-xs text-gray-300 mt-0.5 font-mono">{key}</p>
-                </div>
-                <SaveButton
-                  saving={!!saving[key]}
-                  saved={!!saved[key]}
-                  onClick={() => handleSave(key)}
-                />
+            {/* ── Links de Suporte ── */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-800 mb-1">Links de Suporte</h3>
+              <p className="text-xs text-gray-400 mb-3">
+                Aparecem na coluna &quot;Suporte&quot; do rodapé da Landing Page.
+              </p>
+              <div className="space-y-3">
+                {[
+                  { key: 'support_whatsapp', label: 'Número WhatsApp (só dígitos)', placeholder: '5511999999999', hint: 'Usado como wa.me/número' },
+                  { key: 'support_terms',    label: 'URL dos Termos de Uso',        placeholder: 'https://...', hint: '' },
+                  { key: 'support_privacy',  label: 'URL da Política de Privacidade', placeholder: 'https://...', hint: '' },
+                  { key: 'support_help',     label: 'URL da Central de Ajuda',      placeholder: 'https://...', hint: '' },
+                  { key: 'support_contact',  label: 'URL de Contato',               placeholder: '#', hint: '' },
+                ].map(({ key, label, placeholder, hint }) => (
+                  <div key={key} className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 flex items-center gap-4">
+                    <div className="flex-1 min-w-0">
+                      <label className="block text-sm font-medium text-gray-800 mb-1">{label}</label>
+                      <input
+                        type="text"
+                        value={settings[key] ?? ''}
+                        onChange={(e) => setValue(key, e.target.value)}
+                        placeholder={placeholder}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                      />
+                      {hint && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
+                      <p className="text-xs text-gray-300 mt-0.5 font-mono">{key}</p>
+                    </div>
+                    <SaveButton
+                      saving={!!saving[key]}
+                      saved={!!saved[key]}
+                      onClick={() => handleSave(key)}
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+
+            {/* ── Links Sociais ── */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-800 mb-1">Links Sociais</h3>
+              <p className="text-xs text-gray-400 mb-3">
+                Ícones aparecem no rodapé da Landing Page. Deixe em branco para ocultar o ícone.
+              </p>
+              <div className="space-y-3">
+                {[
+                  { key: 'social_instagram', label: 'Instagram', placeholder: 'https://instagram.com/suapagina', icon: '📷' },
+                  { key: 'social_facebook',  label: 'Facebook',  placeholder: 'https://facebook.com/suapagina',  icon: '👤' },
+                  { key: 'social_linkedin',  label: 'LinkedIn',  placeholder: 'https://linkedin.com/company/...', icon: '💼' },
+                  { key: 'social_whatsapp',  label: 'WhatsApp (link completo)', placeholder: 'https://wa.me/5511999999999', icon: '💬' },
+                ].map(({ key, label, placeholder, icon }) => (
+                  <div key={key} className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 flex items-center gap-4">
+                    <span className="text-xl flex-shrink-0">{icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <label className="block text-sm font-medium text-gray-800 mb-1">{label}</label>
+                      <input
+                        type="url"
+                        value={settings[key] ?? ''}
+                        onChange={(e) => setValue(key, e.target.value)}
+                        placeholder={placeholder}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                      />
+                      <p className="text-xs text-gray-300 mt-0.5 font-mono">{key}</p>
+                    </div>
+                    <SaveButton
+                      saving={!!saving[key]}
+                      saved={!!saved[key]}
+                      onClick={() => handleSave(key)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>

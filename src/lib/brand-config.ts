@@ -79,6 +79,11 @@ export const BRAND_DEFAULTS = {
   prize_04_image_url: '',
   // ── Campaign settings ───────────────────────────────────────────────────────
   campaign_end_date:  '',
+  // ── Social media links (footer) ─────────────────────────────────────────────
+  social_instagram: '',
+  social_facebook:  '',
+  social_linkedin:  '',
+  social_whatsapp:  '',
 } as const
 
 export type BrandSettings = { [K in keyof typeof BRAND_DEFAULTS]: string }
