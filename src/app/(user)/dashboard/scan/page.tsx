@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo, Suspense } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import confetti from 'canvas-confetti'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
@@ -13,6 +14,113 @@ import BarraNavegacao from '@/components/user/BarraNavegacao'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import type { Campaign } from '@/types/campaign'
 import type { ExtractedData } from '@/types/coupon'
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Victory Modal — shown when a coupon is successfully submitted
+// ─────────────────────────────────────────────────────────────────────────────
+function VictoryModal({
+  pointsPending,
+  currentPoints,
+  onScanAnother,
+}: {
+  pointsPending: number
+  currentPoints: number
+  onScanAnother: () => void
+}) {
+  const [count, setCount] = useState(0)
+
+  useEffect(() => {
+    if (pointsPending <= 0) return
+    const duration = 1200
+    const interval = 40
+    const steps = duration / interval
+    const increment = pointsPending / steps
+    let current = 0
+    const id = setInterval(() => {
+      current += increment
+      if (current >= pointsPending) {
+        setCount(pointsPending)
+        clearInterval(id)
+      } else {
+        setCount(Math.floor(current))
+      }
+    }, interval)
+    return () => clearInterval(id)
+  }, [pointsPending])
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+      <div
+        className="relative w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl"
+        style={{ background: 'linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)' }}
+      >
+        {/* Gold shimmer top strip */}
+        <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #ffc400, #fff6cc, #ffc400)' }} />
+
+        <div className="px-6 py-8 text-center">
+          {/* Checkmark circle */}
+          <div
+            className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg"
+            style={{ background: 'linear-gradient(135deg, #ffc400, #ffe066)' }}
+          >
+            <svg className="w-10 h-10" fill="none" stroke="#1a1a2e" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+
+          {/* Headline */}
+          <h2 className="text-2xl font-black text-white mb-1 tracking-tight">Cupom Enviado!</h2>
+          <p className="text-white/50 text-sm mb-6">Aguardando aprovação do administrador</p>
+
+          {/* Points earned card */}
+          {pointsPending > 0 && (
+            <div
+              className="rounded-2xl p-4 mb-4 border border-yellow-400/20"
+              style={{ background: 'rgba(255, 196, 0, 0.08)' }}
+            >
+              <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: '#ffc400' }}>
+                Pontos em breve
+              </p>
+              <p className="text-4xl font-black" style={{ color: '#ffc400' }}>
+                +{count}
+              </p>
+              <p className="text-white/40 text-xs mt-1">após aprovação do cupom</p>
+            </div>
+          )}
+
+          {/* Current total */}
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <svg className="w-4 h-4 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <span className="text-white/50 text-sm">
+              Total atual: <span className="text-white font-bold">{currentPoints} pontos</span>
+            </span>
+          </div>
+
+          {/* Actions */}
+          <div className="space-y-3">
+            <button
+              onClick={onScanAnother}
+              className="w-full py-3.5 rounded-2xl text-sm font-black transition active:scale-95"
+              style={{ background: 'linear-gradient(135deg, #ffc400, #ffe066)', color: '#1a1a2e' }}
+            >
+              Enviar outro cupom
+            </button>
+            <Link
+              href="/dashboard/meus-cupons"
+              className="block w-full py-3 rounded-2xl text-sm font-semibold text-center transition"
+              style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.7)' }}
+            >
+              Ver Meus Cupons
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // Locale-agnostic date formatter — avoids SSR/client hydration mismatch
 // caused by Node.js not having the pt-BR ICU locale compiled in.
@@ -92,7 +200,7 @@ function compressImage(file: File): Promise<File> {
 type ScanPhase = 'idle' | 'uploading' | 'scanning' | 'ai_success' | 'ai_failed' | 'submitting' | 'done'
 
 function ScanPageContent() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, profile, loading: authLoading } = useAuth()
   const supabase = useMemo(() => createClient(), [])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const searchParams = useSearchParams()
@@ -150,6 +258,36 @@ function ScanPageContent() {
     void fetchData()
     return () => { active = false }
   }, [user, supabase])
+
+  // Confetti + haptic feedback on success
+  useEffect(() => {
+    if (phase !== 'done') return
+
+    // Haptic feedback
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate([200, 100, 200])
+    }
+
+    // Dual-cannon gold + white confetti burst
+    const fire = (origin: { x: number; y: number }, angle: number) => {
+      confetti({
+        particleCount: 60,
+        spread: 70,
+        angle,
+        origin,
+        colors: ['#ffc400', '#ffe066', '#ffffff', '#fff6cc', '#ffb300'],
+        zIndex: 9999,
+        scalar: 1.1,
+      })
+    }
+
+    fire({ x: 0.1, y: 0.6 }, 60)
+    fire({ x: 0.9, y: 0.6 }, 120)
+    setTimeout(() => {
+      fire({ x: 0.2, y: 0.7 }, 75)
+      fire({ x: 0.8, y: 0.7 }, 105)
+    }, 250)
+  }, [phase])
 
   // Auto-select campaign from URL param (e.g. coming from "Corrigir e Reenviar")
   useEffect(() => {
@@ -357,23 +495,13 @@ function ScanPageContent() {
           </div>
         )}
 
-        {/* ── DONE STATE ─────────────────────────────────── */}
+        {/* ── DONE STATE — Victory Modal ──────────────────── */}
         {phase === 'done' && (
-          <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
-            <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-base font-bold text-green-800 mb-1">Cupom enviado!</h2>
-            <p className="text-sm text-green-700 mb-4">{successMessage}</p>
-            <button
-              onClick={handleReset}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition"
-            >
-              Enviar outro cupom
-            </button>
-          </div>
+          <VictoryModal
+            pointsPending={selectedCampaign?.settings?.points_per_coupon ?? 0}
+            currentPoints={profile?.total_points ?? 0}
+            onScanAnother={handleReset}
+          />
         )}
 
         {/* ── NORMAL WORKFLOW (not done) ──────────────────── */}
