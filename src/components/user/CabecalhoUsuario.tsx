@@ -55,7 +55,10 @@ export default function CabecalhoUsuario() {
   }, [user, supabase])
 
   return (
-    <header className="md:hidden bg-white shadow-sm sticky top-0 z-40">
+    <header
+      className="md:hidden shadow-sm sticky top-0 z-40"
+      style={{ backgroundColor: 'var(--brand-bg-from)' }}
+    >
       <div className="max-w-lg mx-auto px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {/* Logo — configure via Admin › Configurações › Identidade Visual */}
@@ -72,15 +75,15 @@ export default function CabecalhoUsuario() {
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
           />
           <div>
-            <p className="text-sm font-semibold text-gray-900">Ola, {profile?.full_name?.split(' ')[0]}!</p>
-            <p className="text-xs text-indigo-600 font-bold">{profile?.total_points || 0} pontos</p>
+            <p className="text-sm font-semibold text-white">Ola, {profile?.full_name?.split(' ')[0]}!</p>
+            <p className="text-xs text-white/80 font-bold">{profile?.total_points || 0} pontos</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2 text-gray-600 hover:text-gray-900 transition"
+            className="relative p-2 text-white hover:text-white/80 transition"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -93,7 +96,7 @@ export default function CabecalhoUsuario() {
           </button>
           <button
             onClick={async () => { await signOut(); window.location.href = '/login' }}
-            className="p-2 text-gray-400 hover:text-red-500 transition"
+            className="p-2 text-white hover:text-white/80 transition"
             title="Sair"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
