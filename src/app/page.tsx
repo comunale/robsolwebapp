@@ -444,12 +444,13 @@ export default function Home() {
           </nav>
 
           <div className="flex items-center gap-2">
+            {/* Desktop-only: Entrar + Cadastre-se — hidden on mobile (both live in burger menu) */}
             <Link href="/login"
-              className="hidden sm:inline-flex items-center text-sm font-medium text-white/70 hover:text-white transition px-3 py-2">
+              className="hidden md:inline-flex items-center text-sm font-medium text-white/70 hover:text-white transition px-3 py-2">
               Entrar
             </Link>
             <Link href="/login"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition hover:opacity-90"
+              className="hidden md:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition hover:opacity-90"
               style={{ background: 'linear-gradient(135deg,var(--brand-accent),var(--brand-accent-light))', color: 'var(--brand-bg-from)' }}>
               Cadastre-se
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
@@ -466,27 +467,57 @@ export default function Home() {
           </div>
         </div>
 
+        {/* ── Mobile dropdown menu ────────────────────────────────────────── */}
         {menuOpen && (
-          <nav className="md:hidden border-t border-white/10 px-4 py-3 flex flex-col gap-2.5 text-sm font-medium"
-            style={{ background: 'color-mix(in srgb, var(--brand-bg-from) 95%, transparent)' }}>
-            {[['#como-funciona', 'Como Funciona'], ['#recursos', 'Recursos'], ['#ranking', 'Ranking'], ['#premios', 'Prêmios']].map(([href, label]) => (
-              <a key={href} href={href} onClick={() => setMenuOpen(false)}
-                className="text-white/70 hover:text-white transition py-1">{label}</a>
-            ))}
-            <Link href="/login" onClick={() => setMenuOpen(false)} className="text-white/70 hover:text-white transition py-1">Entrar</Link>
+          <nav className="md:hidden border-t border-white/10 px-4 pb-5 pt-3 flex flex-col"
+            style={{ background: 'color-mix(in srgb, var(--brand-bg-from) 96%, transparent)', backdropFilter: 'blur(20px)' }}>
+
+            {/* Nav links */}
+            <div className="flex flex-col mb-4">
+              {[['#como-funciona', 'Como Funciona'], ['#recursos', 'Recursos'], ['#ranking', 'Ranking'], ['#premios', 'Prêmios']].map(([href, label]) => (
+                <a key={href} href={href} onClick={() => setMenuOpen(false)}
+                  className="text-white/70 hover:text-white transition py-2.5 text-sm font-medium border-b border-white/5 last:border-0">
+                  {label}
+                </a>
+              ))}
+            </div>
+
+            {/* CTA buttons */}
+            <div className="flex flex-col gap-2.5 pt-1">
+              <Link
+                href="/login"
+                onClick={() => setMenuOpen(false)}
+                className="w-full flex items-center justify-center py-3 rounded-xl text-sm font-semibold border transition"
+                style={{ borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.85)' }}
+              >
+                Entrar
+              </Link>
+              <Link
+                href="/login"
+                onClick={() => setMenuOpen(false)}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-black transition hover:opacity-90 active:scale-95"
+                style={{ background: 'linear-gradient(135deg,var(--brand-accent),var(--brand-accent-light))', color: 'var(--brand-bg-from)' }}
+              >
+                Cadastre-se
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                </svg>
+              </Link>
+            </div>
           </nav>
         )}
       </header>
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section className="relative min-h-[80vh] flex flex-col items-center justify-center px-4 text-center pt-10 pb-16">
-        {/* Floating last-prize badge — shown/hidden via Admin CMS */}
+
+        {/* Desktop badge — absolute right, hidden on mobile */}
         {badge.show && (
           <motion.div
             initial={{ opacity: 0, x: 60 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.8, duration: 0.6, ease: EASE_OUT_EXPO }}
-            className="absolute top-8 right-4 sm:right-12 z-10"
+            className="hidden sm:block absolute top-8 right-4 sm:right-12 z-10"
           >
             <div className="rounded-2xl px-4 py-3 text-left shadow-2xl border border-yellow-400/40"
               style={{ background: 'rgba(30,27,75,0.85)', backdropFilter: 'blur(16px)' }}>
@@ -499,6 +530,7 @@ export default function Home() {
           </motion.div>
         )}
 
+        {/* ── VIP pill ── */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <span
             className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6 border"
@@ -509,6 +541,7 @@ export default function Home() {
           </span>
         </motion.div>
 
+        {/* ── Headline ── */}
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -518,15 +551,38 @@ export default function Home() {
           <GoldText text={hero.headline} />
         </motion.h1>
 
+        {/* ── Subheadline ── */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6 }}
-          className="text-white/60 text-lg sm:text-xl max-w-xl mx-auto mb-8"
+          className="text-white/60 text-lg sm:text-xl max-w-xl mx-auto mb-6"
         >
           {hero.subheadline}
         </motion.p>
 
+        {/* Mobile badge — inline, centered, visible only on mobile */}
+        {badge.show && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.38, duration: 0.5 }}
+            className="sm:hidden w-full max-w-xs mb-6"
+          >
+            <div
+              className="rounded-2xl px-4 py-3 text-center border border-yellow-400/40 shadow-xl"
+              style={{ background: 'rgba(30,27,75,0.85)', backdropFilter: 'blur(16px)' }}
+            >
+              <p className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: 'var(--brand-accent)' }}>
+                {badge.label}
+              </p>
+              <p className="text-white font-bold text-sm">{badge.prize}</p>
+              <p className="text-white/50 text-xs mt-0.5">{badge.winner} · {badge.date}</p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── CTAs ── */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
