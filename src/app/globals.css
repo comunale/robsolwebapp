@@ -63,7 +63,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-montserrat);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-montserrat);
 
   /* Brand palette */
   --color-brand-50: #eef2ff;
@@ -73,14 +73,13 @@
   --color-brand-700: #4338ca;
 }
 
-/*
-  Direct reference to --font-montserrat (set on <html> via next/font class).
-  We bypass var(--font-sans) because @theme inline does not emit CSS custom
-  properties at :root — only utility classes get the inlined value.
-*/
-html,
-body {
-  font-family: var(--font-montserrat), Arial, Helvetica, sans-serif;
+:root {
+  --font-sans: var(--font-montserrat);
+  --font-mono: var(--font-montserrat);
+}
+
+html, body, * {
+  font-family: var(--font-montserrat), sans-serif !important;
 }
 
 body {

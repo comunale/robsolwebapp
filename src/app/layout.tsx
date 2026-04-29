@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next"
-import { Montserrat, Geist_Mono } from "next/font/google"
+import { Montserrat } from "next/font/google"
 import "./globals.css"
 import { createClient } from "@/lib/supabase/server"
 import { buildCssVarsString, BRAND_DEFAULTS, type BrandSettings } from "@/lib/brand-config"
@@ -13,11 +13,6 @@ const montserrat = Montserrat({
   display: "swap",
 })
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: "swap",
-})
 
 export const viewport: Viewport = {
   themeColor: '#0f0c29',
@@ -72,7 +67,7 @@ export default async function RootLayout({
   const cssVars = buildCssVarsString(brand)
 
   return (
-    <html lang="pt-BR" className={`${montserrat.variable} ${geistMono.variable}`}>
+    <html lang="pt-BR" className={montserrat.variable}>
       <head>
         {/* Brand CSS variables injected before paint — prevents FOUC */}
         <style dangerouslySetInnerHTML={{ __html: `:root { ${cssVars} }` }} />
