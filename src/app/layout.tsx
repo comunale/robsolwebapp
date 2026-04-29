@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Montserrat } from "next/font/google"
 import "./globals.css"
 import { createClient } from "@/lib/supabase/server"
@@ -12,6 +12,10 @@ const montserrat = Montserrat({
   weight: ["400", "600", "800"],
   display: "swap",
 })
+
+export const viewport: Viewport = {
+  themeColor: '#0f0c29',
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await getBrandSettings()
@@ -29,7 +33,6 @@ export async function generateMetadata(): Promise<Metadata> {
         { url: pwaIconUrl, sizes: '512x512', type: 'image/png' },
       ],
     },
-    themeColor: '#0f0c29',
     appleWebApp: {
       capable: true,
       statusBarStyle: 'black-translucent',
