@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>
@@ -8,8 +9,9 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 const SNOOZE_KEY = 'pwa_prompt_snoozed_until'
-const SNOOZE_MS = 14 * 24 * 60 * 60 * 1000
+const SNOOZE_MS = 7 * 24 * 60 * 60 * 1000
 const PWA_INSTALL_EVENT = 'robsol:pwa-install'
+const PWA_SNOOZE_EVENT = 'robsol:pwa-snooze'
 
 function isSnoozed(): boolean {
   try {
@@ -169,6 +171,7 @@ function AndroidInstall({
 }
 
 export default function PwaInstallPrompt() {
+  const pathname = usePathname()
   const [platform, setPlatform] = useState<'ios' | 'android' | 'other'>(() => {
     if (typeof window === 'undefined') return 'other'
     return detectPlatform()
@@ -186,14 +189,15 @@ export default function PwaInstallPrompt() {
 
   const showPrompt = useCallback((force = false) => {
     if (isStandalone()) return
+    if (pathname === '/login') return
     const currentPlatform = detectPlatform()
     setPlatform(deferred ? 'android' : currentPlatform)
     setSuccess(false)
     if (force || !isSnoozed()) setVisible(true)
-  }, [deferred])
+  }, [deferred, pathname])
 
   useEffect(() => {
-    if (typeof window === 'undefined' || isStandalone()) return
+    if (typeof window === 'undefined' || isStandalone() || pathname === '/login') return
 
     const initialPlatform = detectPlatform()
 
@@ -219,7 +223,7 @@ export default function PwaInstallPrompt() {
       window.removeEventListener('beforeinstallprompt', onBeforeInstall)
       window.removeEventListener(PWA_INSTALL_EVENT, onManualInstallRequest)
     }
-  }, [showPrompt])
+  }, [showPrompt, pathname])
 
   const handleInstall = async () => {
     if (!deferred) return
@@ -233,16 +237,18 @@ export default function PwaInstallPrompt() {
       setTimeout(() => setVisible(false), 2_200)
     } else {
       snooze()
+      window.dispatchEvent(new Event(PWA_SNOOZE_EVENT))
       setVisible(false)
     }
   }
 
   const handleDismiss = () => {
     snooze()
+    window.dispatchEvent(new Event(PWA_SNOOZE_EVENT))
     setVisible(false)
   }
 
-  if (!visible || platform === 'other') return null
+  if (pathname === '/login' || !visible || platform === 'other') return null
 
   return (
     <div

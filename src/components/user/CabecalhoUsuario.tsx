@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import { useBrand } from '@/components/shared/BrandProvider'
 import Notificacoes from './Notificacoes'
+import PwaInstallButton from '@/components/shared/PwaInstallButton'
 
 export default function CabecalhoUsuario() {
   const { user, profile, signOut } = useAuth()
@@ -81,6 +82,7 @@ export default function CabecalhoUsuario() {
         </div>
 
         <div className="flex items-center gap-2">
+          <PwaInstallButton variant="dark" className="px-2.5" />
           <button
             onClick={() => setShowNotifications(!showNotifications)}
             className="relative p-2 text-white hover:text-white/80 transition"

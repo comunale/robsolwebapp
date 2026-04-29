@@ -132,6 +132,14 @@ button,
   animation: pwa-share-arrow 1.15s ease-in-out infinite;
 }
 
+@media (max-width: 767px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
