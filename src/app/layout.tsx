@@ -1,18 +1,21 @@
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Montserrat, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { createClient } from "@/lib/supabase/server"
 import { buildCssVarsString, BRAND_DEFAULTS, type BrandSettings } from "@/lib/brand-config"
 import { BrandProvider } from "@/components/shared/BrandProvider"
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  display: "swap",
 })
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 })
 
 export const metadata: Metadata = {
@@ -57,7 +60,7 @@ export default async function RootLayout({
         {/* Brand CSS variables injected before paint — prevents FOUC */}
         <style dangerouslySetInnerHTML={{ __html: `:root { ${cssVars} }` }} />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${montserrat.variable} ${geistMono.variable} antialiased`}>
         <BrandProvider settings={brand}>
           {children}
         </BrandProvider>
