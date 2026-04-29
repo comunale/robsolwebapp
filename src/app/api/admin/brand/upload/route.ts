@@ -9,6 +9,7 @@ const ALLOWED_LOGO_KEYS = [
   'logo_header_url',
   'logo_favicon_url',
   'logo_landing_url',
+  'pwa_icon_url',
   'prize_01_image_url',
   'prize_02_image_url',
   'prize_03_image_url',
@@ -64,7 +65,7 @@ export async function POST(request: Request) {
   }
 
   const ext = file.name.split('.').pop()?.toLowerCase() ?? 'png'
-  const folder = key.startsWith('prize_') ? 'prizes' : 'logos'
+  const folder = key.startsWith('prize_') ? 'prizes' : key === 'pwa_icon_url' ? 'pwa' : 'logos'
   const slug   = key.replace('_url', '').replace(/_/g, '-')
   const path   = `${folder}/${slug}-${Date.now()}.${ext}`
   const buffer = Buffer.from(await file.arrayBuffer())
@@ -84,7 +85,7 @@ export async function POST(request: Request) {
   const { error: dbError } = await admin
     .from('site_settings')
     .upsert(
-      { key, value: publicUrl, updated_at: new Date().toISOString() },
+      { key, label: key, value: publicUrl, updated_at: new Date().toISOString() },
       { onConflict: 'key' },
     )
 

@@ -13,22 +13,29 @@ const montserrat = Montserrat({
   display: "swap",
 })
 
-export const metadata: Metadata = {
-  title: "Robsol VIP",
-  description: "Gerencie campanhas, escaneie cupons e ganhe recompensas",
-  icons: {
-    icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
-    ],
-    apple: '/logo.png',
-  },
-  themeColor: '#0f0c29',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'black-translucent',
-    title: 'Robsol VIP',
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  const brand = await getBrandSettings()
+  const pwaIconUrl = brand.pwa_icon_url || '/logo.png'
+
+  return {
+    title: "Robsol VIP",
+    description: "Gerencie campanhas, escaneie cupons e ganhe recompensas",
+    icons: {
+      icon: [
+        { url: '/favicon.ico', sizes: 'any' },
+        { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      ],
+      apple: [
+        { url: pwaIconUrl, sizes: '512x512', type: 'image/png' },
+      ],
+    },
+    themeColor: '#0f0c29',
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'black-translucent',
+      title: 'Robsol VIP',
+    },
+  }
 }
 
 /** Fetch brand settings server-side — falls back to defaults on any error. */

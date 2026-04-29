@@ -17,6 +17,7 @@ export const BRAND_DEFAULTS = {
   logo_header_url:  '',
   logo_favicon_url: '',
   logo_landing_url: '',
+  pwa_icon_url:     '',
   // Logo display widths (px) — empty falls back to default
   logo_landing_width: '120',
   logo_admin_width:   '140',

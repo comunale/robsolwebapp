@@ -18,14 +18,16 @@ type Tab = 'suporte' | 'logos' | 'cores' | 'conteudo' | 'faq'
 // Logo config
 // ─────────────────────────────────────────────────────────────────────────────
 const LOGO_META: Record<string, {
-  size: string; fallback: string; aspect: string
+  label: string; size: string; fallback: string; aspect: string
+  note?: string; accept?: string
   widthKey?: string; defaultWidth?: number; maxWidth?: number
 }> = {
-  logo_landing_url: { size: '400 × 100 px', fallback: '/logo.png',        aspect: 'aspect-[4/1]',  widthKey: 'logo_landing_width', defaultWidth: 120, maxWidth: 300 },
-  logo_admin_url:   { size: '180 × 48 px',  fallback: '/logo-admin.png',  aspect: 'aspect-[15/4]', widthKey: 'logo_admin_width',   defaultWidth: 140, maxWidth: 200 },
-  logo_login_url:   { size: '200 × 200 px', fallback: '/logo.png',        aspect: 'aspect-square', widthKey: 'logo_login_width',   defaultWidth: 80,  maxWidth: 200 },
-  logo_header_url:  { size: '120 × 32 px',  fallback: '/logo-header.png', aspect: 'aspect-[15/4]', widthKey: 'logo_header_width',  defaultWidth: 100, maxWidth: 160 },
-  logo_favicon_url: { size: '32 × 32 px',   fallback: '/favicon.ico',     aspect: 'aspect-square' },
+  logo_landing_url: { label: 'Landing Page', size: '400 x 100 px', fallback: '/logo.png',        aspect: 'aspect-[4/1]',  widthKey: 'logo_landing_width', defaultWidth: 120, maxWidth: 300 },
+  logo_admin_url:   { label: 'Admin', size: '180 x 48 px',  fallback: '/logo-admin.png',  aspect: 'aspect-[15/4]', widthKey: 'logo_admin_width',   defaultWidth: 140, maxWidth: 200 },
+  logo_login_url:   { label: 'Login', size: '200 x 200 px', fallback: '/logo.png',        aspect: 'aspect-square', widthKey: 'logo_login_width',   defaultWidth: 80,  maxWidth: 200 },
+  logo_header_url:  { label: 'Header Mobile', size: '120 x 32 px',  fallback: '/logo-header.png', aspect: 'aspect-[15/4]', widthKey: 'logo_header_width',  defaultWidth: 100, maxWidth: 160 },
+  logo_favicon_url: { label: 'Favicon', size: '32 x 32 px',   fallback: '/favicon.ico',     aspect: 'aspect-square' },
+  pwa_icon_url:     { label: 'Icone do Aplicativo (PWA)', size: '512 x 512 px', fallback: '/logo.png', aspect: 'aspect-square', accept: 'image/png', note: 'A imagem deve ser quadrada (512x512px) e em PNG para melhores resultados no Android e iOS.' },
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -429,11 +431,13 @@ export default function SiteSettings() {
 
                     {/* Info + controls */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-800 mb-0.5">
-                        {settings[`${key.replace('_url', '')}_label`] ??
-                          key.replace('logo_', '').replace('_url', '').replace(/_/g, ' ').toUpperCase()}
-                      </p>
+                      <p className="text-sm font-semibold text-gray-800 mb-0.5">{meta.label}</p>
                       <p className="text-xs text-gray-400 mb-1">Tamanho recomendado: <strong>{meta.size}</strong></p>
+                      {meta.note && (
+                        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5 mb-2">
+                          {meta.note}
+                        </p>
+                      )}
                       <p className="text-xs font-mono text-gray-400 mb-3">{key}</p>
 
                       {/* URL input (manual) */}
@@ -477,7 +481,7 @@ export default function SiteSettings() {
                       </button>
                       <input
                         type="file"
-                        accept="image/*"
+                        accept={meta.accept ?? 'image/*'}
                         className="hidden"
                         ref={(el) => { fileRefs.current[key] = el }}
                         onChange={(e) => {
@@ -486,7 +490,9 @@ export default function SiteSettings() {
                           if (file) handleLogoUpload(key, file)
                         }}
                       />
-                      <p className="text-xs text-gray-400 mt-1.5">PNG, SVG, WebP · máx 2 MB</p>
+                      <p className="text-xs text-gray-400 mt-1.5">
+                        {key === 'pwa_icon_url' ? 'PNG quadrado 512x512 px - max 2 MB' : 'PNG, SVG, WebP - max 2 MB'}
+                      </p>
 
                       {/* Width control — only for rendered logos, not favicon */}
                       {meta.widthKey ? (
@@ -536,6 +542,7 @@ export default function SiteSettings() {
                 <li><strong>Login (200×200)</strong> — Tela de autenticação</li>
                 <li><strong>Header Mobile (120×32)</strong> — Cabeçalho do app do usuário</li>
                 <li><strong>Favicon (32×32)</strong> — Ícone na aba do navegador</li>
+                <li><strong>Icone do Aplicativo (512x512 PNG)</strong> - Manifest PWA e Apple Touch Icon</li>
               </ul>
             </div>
           </div>

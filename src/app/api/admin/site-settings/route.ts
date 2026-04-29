@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   const { error: dbError } = await admin
     .from('site_settings')
     .upsert(
-      { key: body.key, value: body.value ?? '', updated_at: new Date().toISOString() },
+      { key: body.key, label: body.key, value: body.value ?? '', updated_at: new Date().toISOString() },
       { onConflict: 'key' },
     )
 
