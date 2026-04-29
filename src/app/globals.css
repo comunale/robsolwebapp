@@ -63,7 +63,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-montserrat);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-montserrat);
 
   /* Brand palette */
   --color-brand-50: #eef2ff;
@@ -77,6 +77,59 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-weight: 400;
+}
+
+h1,
+h2,
+.font-black,
+.font-extrabold,
+.font-bold {
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-weight: 800;
+}
+
+h3,
+h4,
+h5,
+h6,
+label,
+th,
+.font-semibold,
+.font-medium {
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-weight: 600;
+}
+
+p,
+li,
+dd,
+dt,
+input,
+textarea,
+select,
+button,
+.font-normal {
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+.font-normal {
+  font-weight: 400;
+}
+
+@keyframes pwa-share-arrow {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.75;
+  }
+  50% {
+    transform: translateY(8px);
+    opacity: 1;
+  }
+}
+
+.pwa-share-arrow {
+  animation: pwa-share-arrow 1.15s ease-in-out infinite;
 }
 
 /* Smooth scrolling */

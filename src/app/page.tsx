@@ -3,10 +3,11 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { motion, useInView } from 'framer-motion'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useBrand } from '@/components/shared/BrandProvider'
+
+const PWA_INSTALL_EVENT = 'robsol:pwa-install'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // [gold]text[/gold] highlight renderer — uses brand accent gradient
@@ -328,6 +329,9 @@ export default function Home() {
   ]
   const footer = { description: brand.home_footer_desc, platformLinks: PLATFORM_LINKS }
   const landingLogoW = Math.min(parseInt(brand.logo_landing_width || '120', 10) || 120, 300)
+  const triggerPwaInstall = () => {
+    window.dispatchEvent(new Event(PWA_INSTALL_EVENT))
+  }
 
   const prizes = [
     { title: brand.prize_01_title, subtitle: brand.prize_01_subtitle, winner: brand.prize_01_winner, deliveredAt: brand.prize_01_date, color: PRIZE_COLORS[0], image: brand.prize_01_image_url },
@@ -411,10 +415,10 @@ export default function Home() {
 
       {/* ── STICKY NAV ───────────────────────────────────────────────────── */}
       <header
-        className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'border-b border-white/15' : 'border-b border-transparent'}`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled || menuOpen ? 'border-b border-white/15' : 'border-b border-transparent'}`}
         style={{
-          backdropFilter: scrolled ? 'blur(24px) saturate(180%)' : 'blur(0px)',
-          background: scrolled ? 'color-mix(in srgb, var(--brand-bg-from) 85%, transparent)' : 'transparent',
+          backdropFilter: scrolled || menuOpen ? 'blur(24px) saturate(180%)' : 'blur(0px)',
+          background: scrolled || menuOpen ? 'color-mix(in srgb, var(--brand-bg-from) 82%, transparent)' : 'transparent',
           boxShadow: scrolled ? '0 4px 32px rgba(0,0,0,0.25)' : 'none',
           transition: 'background 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease',
         }}
@@ -484,6 +488,20 @@ export default function Home() {
 
             {/* CTA buttons */}
             <div className="flex flex-col gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false)
+                  triggerPwaInstall()
+                }}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold border transition"
+                style={{ borderColor: 'rgba(255,196,0,0.35)', color: 'var(--brand-accent)', background: 'rgba(255,196,0,0.08)' }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0-12 4 4m-4-4-4 4M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
+                </svg>
+                Instalar App
+              </button>
               <Link
                 href="/login"
                 onClick={() => setMenuOpen(false)}
@@ -509,7 +527,7 @@ export default function Home() {
       </header>
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section className="relative min-h-[80vh] flex flex-col items-center justify-center px-4 text-center pt-10 pb-16">
+      <section className="relative min-h-[80vh] flex flex-col items-center justify-center px-4 text-center pt-26 pb-16">
 
         {/* Desktop badge — absolute right, hidden on mobile */}
         {badge.show && (
@@ -903,6 +921,17 @@ export default function Home() {
               <p className="text-white/40 text-xs leading-relaxed mb-4 max-w-xs">
                 {footer.description}
               </p>
+              <button
+                type="button"
+                onClick={triggerPwaInstall}
+                className="inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition hover:bg-white/10"
+                style={{ borderColor: 'rgba(255,196,0,0.35)', color: 'var(--brand-accent)' }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0-12 4 4m-4-4-4 4M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
+                </svg>
+                Instalar App
+              </button>
 
               {/* Social icons — hidden when empty */}
               {socialLinks.length > 0 && (

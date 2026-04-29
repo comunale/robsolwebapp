@@ -1,27 +1,31 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
-// BeforeInstallPromptEvent is not in the standard TypeScript lib
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 const SNOOZE_KEY = 'pwa_prompt_snoozed_until'
-const SNOOZE_MS  = 14 * 24 * 60 * 60 * 1000  // 14 days
+const SNOOZE_MS = 14 * 24 * 60 * 60 * 1000
+const PWA_INSTALL_EVENT = 'robsol:pwa-install'
 
 function isSnoozed(): boolean {
   try {
     const until = localStorage.getItem(SNOOZE_KEY)
     return !!until && Date.now() < parseInt(until, 10)
-  } catch { return false }
+  } catch {
+    return false
+  }
 }
 
 function snooze() {
-  try { localStorage.setItem(SNOOZE_KEY, String(Date.now() + SNOOZE_MS)) } catch { /**/ }
+  try {
+    localStorage.setItem(SNOOZE_KEY, String(Date.now() + SNOOZE_MS))
+  } catch {
+    /* no-op */
+  }
 }
 
 function isStandalone(): boolean {
@@ -40,54 +44,63 @@ function detectPlatform(): 'ios' | 'android' | 'other' {
   return 'other'
 }
 
-// ── iOS step-by-step instructions ─────────────────────────────────────────────
+function ShareIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} className="w-5 h-5" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0-12 4 4m-4-4-4 4" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 10v8.25A2.75 2.75 0 0 0 7.75 21h8.5A2.75 2.75 0 0 0 19 18.25V10" />
+    </svg>
+  )
+}
 
 function IOSSteps({ onDismiss }: { onDismiss: () => void }) {
   const steps = [
     {
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-        </svg>
-      ),
+      icon: <ShareIcon />,
       text: 'Toque em Compartilhar',
-      sub: 'ícone na barra inferior do Safari',
+      sub: 'Icone da seta para cima na barra inferior do Safari',
     },
     {
       icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
       ),
-      text: 'Adicionar à Tela de Início',
-      sub: 'role para baixo na lista de ações',
+      text: 'Escolha Adicionar a Tela de Inicio',
+      sub: 'Role a lista de acoes ate encontrar esta opcao',
     },
     {
       icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
         </svg>
       ),
       text: 'Toque em "Adicionar"',
-      sub: 'canto superior direito',
+      sub: 'Canto superior direito',
     },
   ]
 
   return (
     <>
       <p className="text-white/60 text-xs leading-relaxed mb-4">
-        Instale o Robsol VIP para acesso direto — sem abrir o navegador.
+        Instale o Robsol VIP para acesso direto, sem abrir o navegador.
       </p>
 
-      <div className="space-y-2 mb-4">
+      <ol className="space-y-3 mb-4">
         {steps.map((s, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-3 rounded-xl px-3 py-2.5"
-            style={{ background: 'rgba(255,255,255,0.06)' }}
+          <li
+            key={s.text}
+            className="grid grid-cols-[2rem_2.5rem_1fr] items-center gap-3 rounded-2xl px-3 py-3 border border-white/10"
+            style={{ background: 'rgba(255,255,255,0.045)' }}
           >
+            <span
+              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black"
+              style={{ background: 'rgba(255,255,255,0.08)', color: '#ffc400' }}
+            >
+              {i + 1}
+            </span>
             <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+              className="w-10 h-10 rounded-2xl flex items-center justify-center"
               style={{ background: 'rgba(255,196,0,0.12)', color: '#ffc400' }}
             >
               {s.icon}
@@ -96,8 +109,15 @@ function IOSSteps({ onDismiss }: { onDismiss: () => void }) {
               <p className="text-white text-xs font-semibold leading-snug">{s.text}</p>
               <p className="text-white/40 text-xs">{s.sub}</p>
             </div>
-          </div>
+          </li>
         ))}
+      </ol>
+
+      <div className="flex flex-col items-center gap-1 mb-3 text-white/45">
+        <span className="text-[10px] uppercase tracking-widest">Botao compartilhar do Safari</span>
+        <svg className="w-7 h-7 pwa-share-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m0 0 5-5m-5 5-5-5" />
+        </svg>
       </div>
 
       <button
@@ -109,8 +129,6 @@ function IOSSteps({ onDismiss }: { onDismiss: () => void }) {
     </>
   )
 }
-
-// ── Android/Chrome install button ──────────────────────────────────────────────
 
 function AndroidInstall({
   onInstall,
@@ -124,8 +142,8 @@ function AndroidInstall({
   return (
     <>
       <p className="text-white/60 text-xs leading-relaxed mb-4">
-        Acesse com um toque — ícone na tela de início, sem barra de endereço e com
-        notificações rápidas.
+        Acesse com um toque: icone na tela de inicio, sem barra de endereco e com
+        notificacoes rapidas.
       </p>
       <div className="space-y-2">
         <button
@@ -137,76 +155,76 @@ function AndroidInstall({
             color: '#0f0c29',
           }}
         >
-          {installing ? 'Aguarde…' : 'Instalar Agora'}
+          {installing ? 'Aguarde...' : 'Instalar Agora'}
         </button>
         <button
           onClick={onDismiss}
           className="w-full py-2 text-xs font-medium text-white/35 hover:text-white/60 transition"
         >
-          Agora não
+          Agora nao
         </button>
       </div>
     </>
   )
 }
 
-// ── Main component ─────────────────────────────────────────────────────────────
-
 export default function PwaInstallPrompt() {
-  const [platform, setPlatform] = useState<'ios' | 'android' | 'other'>('other')
-  const [visible, setVisible]   = useState(false)
-  const [success, setSuccess]   = useState(false)
+  const [platform, setPlatform] = useState<'ios' | 'android' | 'other'>(() => {
+    if (typeof window === 'undefined') return 'other'
+    return detectPlatform()
+  })
+  const [visible, setVisible] = useState(false)
+  const [success, setSuccess] = useState(false)
   const [installing, setInstalling] = useState(false)
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null)
 
-  // Register service worker
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => { /* silent — SW is optional */ })
+      navigator.serviceWorker.register('/sw.js').catch(() => { /* service worker is optional */ })
     }
   }, [])
+
+  const showPrompt = useCallback((force = false) => {
+    if (isStandalone()) return
+    const currentPlatform = detectPlatform()
+    setPlatform(deferred ? 'android' : currentPlatform)
+    setSuccess(false)
+    if (force || !isSnoozed()) setVisible(true)
+  }, [deferred])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
+    if (typeof window === 'undefined' || isStandalone()) return
 
-    // Already installed as standalone — never show
-    if (isStandalone()) return
+    const initialPlatform = detectPlatform()
 
-    const p = detectPlatform()
-    setPlatform(p)
-
-    // Android/Chrome: capture the browser's deferred prompt
     const onBeforeInstall = (e: Event) => {
       e.preventDefault()
-      const bip = e as BeforeInstallPromptEvent
-      setDeferred(bip)
-      if (!isSnoozed()) {
-        setTimeout(() => setVisible(true), 4_000)
-      }
+      setDeferred(e as BeforeInstallPromptEvent)
+      setPlatform('android')
+      if (!isSnoozed()) setTimeout(() => setVisible(true), 4_000)
     }
 
-    if (p === 'android') {
-      window.addEventListener('beforeinstallprompt', onBeforeInstall)
+    const onManualInstallRequest = () => showPrompt(true)
+
+    window.addEventListener('beforeinstallprompt', onBeforeInstall)
+    window.addEventListener(PWA_INSTALL_EVENT, onManualInstallRequest)
+
+    let timer: ReturnType<typeof setTimeout> | undefined
+    if (initialPlatform === 'ios') {
+      timer = setTimeout(() => showPrompt(false), 4_000)
     }
 
-    // iOS: no browser event — show manual instructions after delay
-    if (p === 'ios') {
-      const t = setTimeout(() => {
-        if (!isStandalone() && !isSnoozed()) setVisible(true)
-      }, 4_000)
-      return () => {
-        clearTimeout(t)
-        window.removeEventListener('beforeinstallprompt', onBeforeInstall)
-      }
+    return () => {
+      if (timer) clearTimeout(timer)
+      window.removeEventListener('beforeinstallprompt', onBeforeInstall)
+      window.removeEventListener(PWA_INSTALL_EVENT, onManualInstallRequest)
     }
-
-    return () => window.removeEventListener('beforeinstallprompt', onBeforeInstall)
-  }, [])
+  }, [showPrompt])
 
   const handleInstall = async () => {
     if (!deferred) return
     setInstalling(true)
-    deferred.prompt()
+    await deferred.prompt()
     const { outcome } = await deferred.userChoice
     setInstalling(false)
     setDeferred(null)
@@ -227,7 +245,6 @@ export default function PwaInstallPrompt() {
   if (!visible || platform === 'other') return null
 
   return (
-    // Positioned above the mobile nav bar (which is ~60 px + safe-area)
     <div
       className="fixed left-0 right-0 z-[9998] px-3 flex justify-center"
       style={{ bottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}
@@ -239,7 +256,6 @@ export default function PwaInstallPrompt() {
           border: '1px solid rgba(255,255,255,0.1)',
         }}
       >
-        {/* Gold shimmer strip */}
         <div
           className="h-[3px] w-full"
           style={{ background: 'linear-gradient(90deg,#ffc400,#ffe066,#ffc400)' }}
@@ -247,7 +263,6 @@ export default function PwaInstallPrompt() {
 
         <div className="px-5 py-4">
           {success ? (
-            /* ── Success state ── */
             <div className="text-center py-2">
               <div
                 className="w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center shadow-lg"
@@ -258,11 +273,10 @@ export default function PwaInstallPrompt() {
                 </svg>
               </div>
               <p className="text-white font-bold text-sm">Instalado com sucesso!</p>
-              <p className="text-white/50 text-xs mt-1">Robsol VIP está na sua tela de início.</p>
+              <p className="text-white/50 text-xs mt-1">Robsol VIP esta na sua tela de inicio.</p>
             </div>
           ) : (
             <>
-              {/* ── Card header ── */}
               <div className="flex items-center gap-3 mb-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -273,7 +287,7 @@ export default function PwaInstallPrompt() {
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-white font-bold text-sm">Robsol VIP</p>
-                  <p className="text-white/45 text-xs">Adicionar à Tela de Início</p>
+                  <p className="text-white/45 text-xs">Adicionar a Tela de Inicio</p>
                 </div>
                 <button
                   onClick={handleDismiss}
@@ -281,12 +295,11 @@ export default function PwaInstallPrompt() {
                   className="w-7 h-7 rounded-full flex items-center justify-center text-white/35 hover:text-white hover:bg-white/10 transition flex-shrink-0"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
 
-              {/* ── Platform-specific body ── */}
               {platform === 'ios' ? (
                 <IOSSteps onDismiss={handleDismiss} />
               ) : (
