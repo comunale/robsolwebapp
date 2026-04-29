@@ -63,7 +63,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-montserrat);
-  --font-mono: var(--font-montserrat);
+  --font-mono: var(--font-geist-mono);
 
   /* Brand palette */
   --color-brand-50: #eef2ff;
@@ -73,48 +73,19 @@
   --color-brand-700: #4338ca;
 }
 
+/*
+  Direct reference to --font-montserrat (set on <html> via next/font class).
+  We bypass var(--font-sans) because @theme inline does not emit CSS custom
+  properties at :root — only utility classes get the inlined value.
+*/
+html,
+body {
+  font-family: var(--font-montserrat), Arial, Helvetica, sans-serif;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-  font-weight: 400;
-}
-
-h1,
-h2,
-.font-black,
-.font-extrabold,
-.font-bold {
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-  font-weight: 800;
-}
-
-h3,
-h4,
-h5,
-h6,
-label,
-th,
-.font-semibold,
-.font-medium {
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-  font-weight: 600;
-}
-
-p,
-li,
-dd,
-dt,
-input,
-textarea,
-select,
-button,
-.font-normal {
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-}
-
-.font-normal {
-  font-weight: 400;
 }
 
 @keyframes pwa-share-arrow {
