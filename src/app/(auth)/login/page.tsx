@@ -19,6 +19,13 @@ function LoginForm() {
   const loginLogoW = Math.min(parseInt(brand.logo_login_width || '80', 10) || 80, 200)
 
   const redirectTo = searchParams.get('redirectTo') || null
+  const authError = searchParams.get('error')
+
+  useEffect(() => {
+    if (authError === 'link_expired') {
+      setError('Este link expirou ou é inválido. Solicite um novo link de recuperação.')
+    }
+  }, [authError])
 
   useEffect(() => {
     if (profile) {

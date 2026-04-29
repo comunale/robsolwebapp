@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useBrand } from '@/components/shared/BrandProvider'
 
-const RESET_REDIRECT = 'https://appbeneficios.robsol.com.br/reset-password'
+const RESET_REDIRECT = 'https://appbeneficios.robsol.com.br/auth/callback?next=/reset-password'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail]     = useState('')
