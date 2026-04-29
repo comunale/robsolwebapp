@@ -4,6 +4,7 @@ import "./globals.css"
 import { createClient } from "@/lib/supabase/server"
 import { buildCssVarsString, BRAND_DEFAULTS, type BrandSettings } from "@/lib/brand-config"
 import { BrandProvider } from "@/components/shared/BrandProvider"
+import PwaInstallPrompt from "@/components/shared/PwaInstallPrompt"
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -27,6 +28,12 @@ export const metadata: Metadata = {
       { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
     ],
     apple: '/logo.png',
+  },
+  themeColor: '#0f0c29',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Robsol VIP',
   },
 }
 
@@ -63,6 +70,7 @@ export default async function RootLayout({
       <body className={`${montserrat.variable} ${geistMono.variable} antialiased`}>
         <BrandProvider settings={brand}>
           {children}
+          <PwaInstallPrompt />
         </BrandProvider>
       </body>
     </html>
