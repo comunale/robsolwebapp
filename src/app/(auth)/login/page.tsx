@@ -93,9 +93,18 @@ function LoginForm() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
-              Senha
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Senha
+              </label>
+              <Link
+                href="/forgot-password"
+                className="text-xs font-medium hover:underline"
+                style={{ color: 'var(--brand-primary)' }}
+              >
+                Esqueci minha senha
+              </Link>
+            </div>
             <div className="relative">
               <input
                 id="password"
