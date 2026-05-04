@@ -85,6 +85,7 @@ export const BRAND_DEFAULTS = {
   social_facebook:  '',
   social_linkedin:  '',
   social_whatsapp:  '',
+  social_youtube:   '',
 } as const
 
 export type BrandSettings = { [K in keyof typeof BRAND_DEFAULTS]: string }

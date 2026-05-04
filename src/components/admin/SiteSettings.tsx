@@ -857,6 +857,7 @@ export default function SiteSettings() {
                   { key: 'social_facebook',  label: 'Facebook',  placeholder: 'https://facebook.com/suapagina',  icon: '👤' },
                   { key: 'social_linkedin',  label: 'LinkedIn',  placeholder: 'https://linkedin.com/company/...', icon: '💼' },
                   { key: 'social_whatsapp',  label: 'WhatsApp (link completo)', placeholder: 'https://wa.me/5511999999999', icon: '💬' },
+                  { key: 'social_youtube',   label: 'YouTube',   placeholder: 'https://youtube.com/@seucanal',    icon: '▶️' },
                 ].map(({ key, label, placeholder, icon }) => (
                   <div key={key} className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 flex items-center gap-4">
                     <span className="text-xl flex-shrink-0">{icon}</span>
