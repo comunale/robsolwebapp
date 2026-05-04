@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm'
 import type { Components } from 'react-markdown'
 
 // Tailwind-styled component map — no @tailwindcss/typography needed
-const mdComponents: Components = {
+export const mdComponents: Components = {
   h1: ({ children }) => <h1 className="text-2xl font-bold text-gray-900 mb-4 mt-6 first:mt-0">{children}</h1>,
   h2: ({ children }) => <h2 className="text-xl font-bold text-gray-800 mb-3 mt-6">{children}</h2>,
   h3: ({ children }) => <h3 className="text-base font-bold text-gray-800 mb-2 mt-4">{children}</h3>,
@@ -49,9 +49,14 @@ interface Props {
   title: string
   content: string
   backHref?: string
+  /** Optional slot rendered below the markdown content inside the card */
+  children?: React.ReactNode
 }
 
-export default function SupportPage({ title, content, backHref = '/' }: Props) {
+export default function SupportPage({ title, content, backHref = '/', children }: Props) {
+  const hasContent = content.trim().length > 0
+  const showFallback = !hasContent && !children
+
   return (
     <div className="min-h-screen brand-auth-bg">
       <div className="max-w-2xl mx-auto px-4 py-8">
@@ -78,13 +83,15 @@ export default function SupportPage({ title, content, backHref = '/' }: Props) {
               {title}
             </h1>
 
-            {content ? (
+            {hasContent && (
               <div className="text-base leading-relaxed">
                 <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
                   {content}
                 </ReactMarkdown>
               </div>
-            ) : (
+            )}
+
+            {showFallback && (
               <div className="text-center py-12">
                 <p className="text-4xl mb-3">📄</p>
                 <p className="text-gray-700 font-semibold">Conteúdo em breve</p>
@@ -93,6 +100,8 @@ export default function SupportPage({ title, content, backHref = '/' }: Props) {
                 </p>
               </div>
             )}
+
+            {children}
           </div>
         </div>
 
