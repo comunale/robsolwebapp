@@ -43,6 +43,9 @@ export interface LuckyNumber {
   goal_completion_id: string | null
   number: number
   is_winner: boolean
+  is_public: boolean
   drawn_at: string | null
+  published_at: string | null
+  winner_notified_at: string | null
   created_at: string
 }

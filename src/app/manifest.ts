@@ -22,16 +22,21 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const iconUrl = await getPwaIconUrl()
 
   return {
+    id: '/dashboard',
     name: 'Robsol VIP',
     short_name: 'Robsol VIP',
-    description: 'Plataforma de fidelidade - escaneie cupons e ganhe premios exclusivos',
+    description: 'Plataforma de fidelidade para vendedores Robsol VIP.',
     start_url: '/dashboard',
     scope: '/',
+    lang: 'pt-BR',
+    dir: 'ltr',
     display: 'standalone',
+    display_override: ['standalone', 'minimal-ui'],
     orientation: 'portrait',
     background_color: '#0f0c29',
     theme_color: '#0f0c29',
     categories: ['business', 'productivity'],
+    prefer_related_applications: false,
     icons: [
       {
         src: iconUrl,

@@ -11,6 +11,7 @@ export interface Campaign {
   banner_url_mobile: string | null
   keywords: string[]
   settings: CampaignSettings | null
+  draw_base_notified_at: string | null
   created_at: string
   updated_at: string
 }
@@ -25,6 +26,7 @@ export interface CreateCampaignInput {
   banner_url_mobile: string | null
   keywords?: string[]
   settings?: CampaignSettings | null
+  draw_base_notified_at?: string | null
 }
 
 export interface UpdateCampaignInput {
@@ -37,4 +39,5 @@ export interface UpdateCampaignInput {
   banner_url_mobile?: string | null
   keywords?: string[]
   settings?: CampaignSettings | null
+  draw_base_notified_at?: string | null
 }

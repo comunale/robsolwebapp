@@ -23,8 +23,11 @@ export async function generateMetadata(): Promise<Metadata> {
   const pwaIconUrl = brand.pwa_icon_url || '/logo.png'
 
   return {
+    applicationName: 'Robsol VIP',
     title: "Robsol VIP",
     description: "Gerencie campanhas, escaneie cupons e ganhe recompensas",
+    manifest: '/manifest.webmanifest',
+    metadataBase: new URL('https://appbeneficios.robsol.com.br'),
     icons: {
       icon: [
         { url: '/favicon.ico', sizes: 'any' },
@@ -38,6 +41,16 @@ export async function generateMetadata(): Promise<Metadata> {
       capable: true,
       statusBarStyle: 'black-translucent',
       title: 'Robsol VIP',
+    },
+    formatDetection: {
+      telephone: false,
+    },
+    openGraph: {
+      title: 'Robsol VIP',
+      description: 'Gerencie campanhas, escaneie cupons e ganhe recompensas',
+      siteName: 'Robsol VIP',
+      locale: 'pt_BR',
+      type: 'website',
     },
   }
 }

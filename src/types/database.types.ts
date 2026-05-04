@@ -93,6 +93,7 @@ export interface Database {
           banner_url: string | null
           keywords: string[]
           settings: Json | null
+          draw_base_notified_at: string | null
           created_at: string
           updated_at: string
         }
@@ -106,6 +107,7 @@ export interface Database {
           banner_url?: string | null
           keywords?: string[]
           settings?: Json | null
+          draw_base_notified_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -119,6 +121,7 @@ export interface Database {
           banner_url?: string | null
           keywords?: string[]
           settings?: Json | null
+          draw_base_notified_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -204,7 +207,10 @@ export interface Database {
           goal_completion_id: string | null
           number: number
           is_winner: boolean
+          is_public: boolean
           drawn_at: string | null
+          published_at: string | null
+          winner_notified_at: string | null
           created_at: string
         }
         Insert: {
@@ -214,7 +220,10 @@ export interface Database {
           goal_completion_id?: string | null
           number: number
           is_winner?: boolean
+          is_public?: boolean
           drawn_at?: string | null
+          published_at?: string | null
+          winner_notified_at?: string | null
           created_at?: string
         }
         Update: {
@@ -224,7 +233,10 @@ export interface Database {
           goal_completion_id?: string | null
           number?: number
           is_winner?: boolean
+          is_public?: boolean
           drawn_at?: string | null
+          published_at?: string | null
+          winner_notified_at?: string | null
           created_at?: string
         }
       }
