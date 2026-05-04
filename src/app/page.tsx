@@ -336,11 +336,11 @@ export default function Home() {
     { title: brand.prize_04_title, subtitle: brand.prize_04_subtitle, winner: brand.prize_04_winner, deliveredAt: brand.prize_04_date, color: PRIZE_COLORS[3], image: brand.prize_04_image_url },
   ]
 
-  // Dynamic support links from DB, with static fallbacks
+  // Support links — internal routes are canonical; WhatsApp from DB
   const supportLinks = [
-    { label: 'Central de Ajuda', href: siteSettings.support_help || '#' },
-    { label: 'Termos de Uso', href: siteSettings.support_terms || '#' },
-    { label: 'Privacidade', href: siteSettings.support_privacy || '#' },
+    { label: 'Central de Ajuda', href: '/ajuda' },
+    { label: 'Termos de Uso', href: '/termos' },
+    { label: 'Privacidade', href: '/privacidade' },
     {
       label: 'WhatsApp',
       href: siteSettings.support_whatsapp
@@ -959,8 +959,8 @@ export default function Home() {
           <div className="border-t border-white/10 pt-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-white/30">
             <span>© {new Date().getFullYear()} Robsol VIP. Todos os direitos reservados.</span>
             <div className="flex items-center gap-3">
-              <a href={siteSettings.support_privacy || '#'} className="hover:text-white/60 transition">Privacidade</a>
-              <a href={siteSettings.support_terms || '#'} className="hover:text-white/60 transition">Termos</a>
+              <a href="/privacidade" className="hover:text-white/60 transition">Privacidade</a>
+              <a href="/termos" className="hover:text-white/60 transition">Termos</a>
             </div>
           </div>
         </div>

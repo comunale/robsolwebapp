@@ -761,6 +761,56 @@ export default function SiteSettings() {
         {tab === 'suporte' && (
           <div className="space-y-6">
 
+            {/* ── Markdown Content Pages ── */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-800 mb-1">Conteúdo das Páginas Públicas</h3>
+              <p className="text-xs text-gray-400 mb-3">
+                Escreva em <strong>Markdown</strong>. O conteúdo é exibido nas rotas{' '}
+                <code className="font-mono bg-gray-100 px-1 rounded">/ajuda</code>,{' '}
+                <code className="font-mono bg-gray-100 px-1 rounded">/termos</code> e{' '}
+                <code className="font-mono bg-gray-100 px-1 rounded">/privacidade</code>.
+                Se vazio, a página exibe &quot;Conteúdo em breve&quot;.
+              </p>
+              <div className="space-y-4">
+                {([
+                  { key: 'help_center_markdown', label: 'Central de Ajuda',         route: '/ajuda',        icon: '❓', placeholder: '# Central de Ajuda\n\n## Perguntas Frequentes\n\n**Como cadastrar meu cupom?**\n\nDescreva aqui...' },
+                  { key: 'terms_markdown',       label: 'Termos de Uso',            route: '/termos',       icon: '📋', placeholder: '# Termos de Uso\n\nÚltima atualização: ...\n\n## 1. Aceitação dos Termos\n\n...' },
+                  { key: 'privacy_markdown',     label: 'Política de Privacidade',  route: '/privacidade',  icon: '🔒', placeholder: '# Política de Privacidade\n\nÚltima atualização: ...\n\n## 1. Dados Coletados\n\n...' },
+                ] as const).map(({ key, label, route, icon, placeholder }) => (
+                  <div key={key} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-2">
+                        <span>{icon}</span>
+                        <span className="text-sm font-semibold text-gray-800">{label}</span>
+                      </div>
+                      <a
+                        href={route}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-mono text-indigo-500 hover:underline flex items-center gap-1"
+                      >
+                        {route}
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    </div>
+                    <textarea
+                      rows={12}
+                      value={settings[key] ?? ''}
+                      onChange={(e) => setValue(key, e.target.value)}
+                      placeholder={placeholder}
+                      className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-y font-mono leading-relaxed"
+                    />
+                    <div className="flex items-center justify-between mt-2">
+                      <p className="text-xs text-gray-300 font-mono">{key}</p>
+                      <SaveButton saving={!!saving[key]} saved={!!saved[key]} onClick={() => handleSave(key)} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* ── Links de Suporte ── */}
             <div>
               <h3 className="text-sm font-semibold text-gray-800 mb-1">Links de Suporte</h3>
@@ -770,9 +820,6 @@ export default function SiteSettings() {
               <div className="space-y-3">
                 {[
                   { key: 'support_whatsapp', label: 'Número WhatsApp (só dígitos)', placeholder: '5511999999999', hint: 'Usado como wa.me/número' },
-                  { key: 'support_terms',    label: 'URL dos Termos de Uso',        placeholder: 'https://...', hint: '' },
-                  { key: 'support_privacy',  label: 'URL da Política de Privacidade', placeholder: 'https://...', hint: '' },
-                  { key: 'support_help',     label: 'URL da Central de Ajuda',      placeholder: 'https://...', hint: '' },
                   { key: 'support_contact',  label: 'URL de Contato',               placeholder: '#', hint: '' },
                 ].map(({ key, label, placeholder, hint }) => (
                   <div key={key} className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 flex items-center gap-4">
