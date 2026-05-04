@@ -7,8 +7,8 @@ const SECURITY_HEADERS = [
   { key: 'X-Frame-Options', value: 'DENY' },
   // Only send origin in the Referer header for same-origin requests
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-  // Restrict permissions — no camera/mic/geolocation
-  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+  // Camera required by the coupon-scan feature; all other sensitive APIs blocked
+  { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=()' },
   // Force HTTPS for 1 year, include subdomains
   { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
   // Basic XSS protection for older browsers
@@ -18,9 +18,19 @@ const SECURITY_HEADERS = [
 const nextConfig: NextConfig = {
   async headers() {
     return [
+      // Security headers on every route
       {
         source: '/(.*)',
         headers: SECURITY_HEADERS,
+      },
+      // Service worker must never be served from a stale browser cache.
+      // Browsers already cap SW cache-max-age at 24h, but be explicit.
+      {
+        source: '/sw.js',
+        headers: [
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+          { key: 'Service-Worker-Allowed', value: '/' },
+        ],
       },
     ]
   },
