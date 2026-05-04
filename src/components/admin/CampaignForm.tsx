@@ -9,6 +9,7 @@ import AdminHeader from './AdminHeader'
 import { useAdmin } from './AdminGuard'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import type { GoalConfig, CampaignSettings } from '@/types/goal'
+import type { CampaignType } from '@/types/campaign'
 
 interface CampaignFormProps {
   campaignId?: string
@@ -16,7 +17,7 @@ interface CampaignFormProps {
 
 export default function CampaignForm({ campaignId }: CampaignFormProps) {
   const isEditMode = !!campaignId
-  const { user } = useAdmin()
+  useAdmin()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(isEditMode)
@@ -35,6 +36,8 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
   const [mobileBannerFile, setMobileBannerFile] = useState<File | null>(null)
   const [mobileBannerPreview, setMobileBannerPreview] = useState<string | null>(null)
   const [existingMobileBannerUrl, setExistingMobileBannerUrl] = useState<string | null>(null)
+
+  const [campaignType, setCampaignType] = useState<CampaignType>('incentive')
 
   // Campaign Settings
   const [pointsPerCoupon, setPointsPerCoupon] = useState(10)
@@ -56,6 +59,7 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
         setStartDate(c.start_date ? c.start_date.split('T')[0] : '')
         setEndDate(c.end_date ? c.end_date.split('T')[0] : '')
         setIsActive(c.is_active ?? true)
+        setCampaignType(c.type ?? 'incentive')
         setKeywords(c.keywords || [])
         if (c.banner_url) {
           setExistingBannerUrl(c.banner_url)
@@ -190,6 +194,7 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
         start_date: startDate,
         end_date: endDate,
         is_active: isActive,
+        type: campaignType,
         banner_url: bannerUrl,
         banner_url_mobile: mobileBannerUrl,
         keywords,
@@ -307,6 +312,39 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
               <label htmlFor="isActive" className="ml-2 text-sm text-gray-700">
                 Ativar campanha imediatamente
               </label>
+            </div>
+
+            {/* Campaign Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Campanha</label>
+              <div className="grid grid-cols-2 gap-3">
+                {([
+                  { value: 'incentive', label: 'Incentivo (Cupons)', desc: 'Usuários escaneiam cupons e acumulam pontos' },
+                  { value: 'raffle_only', label: 'Sorteio Direto', desc: 'Usuários participam do sorteio com um clique' },
+                ] as { value: CampaignType; label: string; desc: string }[]).map((opt) => (
+                  <label
+                    key={opt.value}
+                    className={`flex flex-col gap-1 p-3 rounded-lg border-2 cursor-pointer transition ${
+                      campaignType === opt.value
+                        ? 'border-indigo-500 bg-indigo-50'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="campaignType"
+                      value={opt.value}
+                      checked={campaignType === opt.value}
+                      onChange={() => setCampaignType(opt.value)}
+                      className="sr-only"
+                    />
+                    <span className={`text-sm font-semibold ${campaignType === opt.value ? 'text-indigo-700' : 'text-gray-700'}`}>
+                      {opt.label}
+                    </span>
+                    <span className="text-xs text-gray-500">{opt.desc}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             {/* Target Keywords */}

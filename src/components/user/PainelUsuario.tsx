@@ -88,6 +88,7 @@ export default function PainelUsuario() {
   const brand = useBrand()
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set())
+  const [luckyNumbersByCampaign, setLuckyNumbersByCampaign] = useState<Record<string, number>>({})
   const [couponStats, setCouponStats] = useState<CouponStats>({ total: 0, approved: 0, rejected: 0 })
   const [topUsers, setTopUsers] = useState<TopUser[]>([])
   const supabase = useMemo(() => createClient(), [])
@@ -96,7 +97,7 @@ export default function PainelUsuario() {
     if (!user) return
     let active = true
     const fetchData = async () => {
-      const [campaignsRes, participantsRes, totalRes, approvedRes, rejectedRes, topUsersRes] =
+      const [campaignsRes, participantsRes, luckyNumbersRes, totalRes, approvedRes, rejectedRes, topUsersRes] =
         await Promise.all([
           supabase
             .from('campaigns')
@@ -106,6 +107,10 @@ export default function PainelUsuario() {
           supabase
             .from('campaign_participants')
             .select('campaign_id')
+            .eq('user_id', user.id),
+          supabase
+            .from('lucky_numbers')
+            .select('campaign_id, number')
             .eq('user_id', user.id),
           supabase
             .from('coupons')
@@ -134,6 +139,13 @@ export default function PainelUsuario() {
       if (participantsRes.data) {
         setJoinedIds(new Set(participantsRes.data.map((p: { campaign_id: string }) => p.campaign_id)))
       }
+      if (luckyNumbersRes.data) {
+        const map: Record<string, number> = {}
+        for (const ln of luckyNumbersRes.data as { campaign_id: string; number: number }[]) {
+          map[ln.campaign_id] = ln.number
+        }
+        setLuckyNumbersByCampaign(map)
+      }
       setCouponStats({
         total: totalRes.count ?? 0,
         approved: approvedRes.count ?? 0,
@@ -155,7 +167,10 @@ export default function PainelUsuario() {
 
   const joinedCampaigns = campaigns.filter((c) => joinedIds.has(c.id))
 
-  const quickActions = [
+  // Hide scanner if all active campaigns are raffle-only (no coupon scanning needed)
+  const hasIncentiveCampaigns = campaigns.length === 0 || campaigns.some((c) => !c.type || c.type === 'incentive')
+
+  const allQuickActions = [
     {
       label: 'Escanear Cupons',
       href: '/dashboard/scan',
@@ -163,6 +178,7 @@ export default function PainelUsuario() {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
       ),
       color: 'bg-indigo-100 text-indigo-600',
+      scanOnly: true,
     },
     {
       label: 'Meus Cupons',
@@ -171,6 +187,7 @@ export default function PainelUsuario() {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       ),
       color: 'bg-green-100 text-green-600',
+      scanOnly: true,
     },
     {
       label: 'Ranking',
@@ -179,6 +196,7 @@ export default function PainelUsuario() {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
       ),
       color: 'bg-purple-100 text-purple-600',
+      scanOnly: false,
     },
     {
       label: 'Números da Sorte',
@@ -187,8 +205,11 @@ export default function PainelUsuario() {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
       ),
       color: 'bg-amber-100 text-amber-600',
+      scanOnly: false,
     },
   ]
+
+  const quickActions = allQuickActions.filter((a) => !a.scanOnly || hasIncentiveCampaigns)
 
   const rankColors = [
     { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-200' },
@@ -249,7 +270,11 @@ export default function PainelUsuario() {
         <DestaquesCampanhas
           campaigns={campaigns}
           joinedIds={joinedIds}
+          luckyNumbersByCampaign={luckyNumbersByCampaign}
           onJoin={handleJoinCampaign}
+          onLuckyNumberJoined={(campaignId, number) =>
+            setLuckyNumbersByCampaign((prev) => ({ ...prev, [campaignId]: number }))
+          }
         />
 
         {/* ── Goal progress — only for joined campaigns ────────────────────── */}

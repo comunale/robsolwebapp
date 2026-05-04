@@ -227,7 +227,6 @@ function ScanPageContent() {
 
   // Feedback
   const [error, setError] = useState('')
-  const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
     if (!user) return
@@ -315,7 +314,6 @@ function ScanPageContent() {
     setUploadedImageUrl(null)   // new image → clear any previously uploaded URL
     setExtractedData(null)
     setError('')
-    setSuccessMessage('')
     setPhase('idle')
     setManualModel('')
     setManualQuantity(1)
@@ -446,7 +444,6 @@ function ScanPageContent() {
       }
 
       console.log('[scan] Coupon submitted successfully')
-      setSuccessMessage('Cupom enviado com sucesso! Aguardando revisão do administrador.')
       setPhase('done')
     } catch (err: unknown) {
       console.error('[scan] Submit error:', err)
@@ -462,7 +459,6 @@ function ScanPageContent() {
     setUploadedImageUrl(null)
     setExtractedData(null)
     setError('')
-    setSuccessMessage('')
     setPhase('idle')
     setManualModel('')
     setManualQuantity(1)

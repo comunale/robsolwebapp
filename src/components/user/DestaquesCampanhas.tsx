@@ -8,10 +8,18 @@ import type { Campaign } from '@/types/campaign'
 interface DestaquesCampanhasProps {
   campaigns: Campaign[]
   joinedIds: Set<string>
+  luckyNumbersByCampaign?: Record<string, number>
   onJoin: (campaignId: string) => void
+  onLuckyNumberJoined?: (campaignId: string, number: number) => void
 }
 
-export default function DestaquesCampanhas({ campaigns, joinedIds, onJoin }: DestaquesCampanhasProps) {
+export default function DestaquesCampanhas({
+  campaigns,
+  joinedIds,
+  luckyNumbersByCampaign = {},
+  onJoin,
+  onLuckyNumberJoined,
+}: DestaquesCampanhasProps) {
   const [joining, setJoining] = useState<Set<string>>(new Set())
 
   if (campaigns.length === 0) return null
@@ -29,6 +37,27 @@ export default function DestaquesCampanhas({ campaigns, joinedIds, onJoin }: Des
     }
   }
 
+  const handleJoinRaffle = async (e: React.MouseEvent, campaignId: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (joining.has(campaignId)) return
+    setJoining((prev) => new Set([...prev, campaignId]))
+    try {
+      const res = await fetch('/api/lucky-numbers/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campaign_id: campaignId }),
+      })
+      const d = await res.json()
+      if (res.ok && d.lucky_number) {
+        onLuckyNumberJoined?.(campaignId, d.lucky_number.number)
+        onJoin(campaignId)
+      }
+    } catch { /* silent */ } finally {
+      setJoining((prev) => { const n = new Set(prev); n.delete(campaignId); return n })
+    }
+  }
+
   return (
     <section className="mb-6">
       <h2 className="text-sm font-semibold text-gray-700 mb-3 px-1">Campanhas Disponíveis</h2>
@@ -37,8 +66,11 @@ export default function DestaquesCampanhas({ campaigns, joinedIds, onJoin }: Des
         style={{ scrollbarWidth: 'none' }}
       >
         {campaigns.map((campaign) => {
+          const isRaffle = campaign.type === 'raffle_only'
           const isJoined = joinedIds.has(campaign.id)
           const isJoining = joining.has(campaign.id)
+          const luckyNumber = luckyNumbersByCampaign[campaign.id]
+
           return (
             <Link
               key={campaign.id}
@@ -74,16 +106,38 @@ export default function DestaquesCampanhas({ campaigns, joinedIds, onJoin }: Des
               )}
 
               <div className="flex items-center justify-between text-xs mb-3">
-                <span className="bg-white/20 px-2 py-0.5 rounded-full">
-                  {campaign.settings?.points_per_coupon || 10} pts/cupom
-                </span>
+                {isRaffle ? (
+                  <span className="bg-amber-400/30 text-amber-200 px-2 py-0.5 rounded-full font-semibold">
+                    🎲 Sorteio
+                  </span>
+                ) : (
+                  <span className="bg-white/20 px-2 py-0.5 rounded-full">
+                    {campaign.settings?.points_per_coupon || 10} pts/cupom
+                  </span>
+                )}
                 <span className="text-white/70">
                   ate {new Date(campaign.end_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
                 </span>
               </div>
 
               {/* Participation CTA */}
-              {isJoined ? (
+              {isRaffle ? (
+                luckyNumber != null ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1 bg-amber-400 text-amber-900 text-xs font-black px-2.5 py-1 rounded-full">
+                      🎲 Número #{luckyNumber}
+                    </span>
+                  </div>
+                ) : (
+                  <button
+                    onClick={(e) => void handleJoinRaffle(e, campaign.id)}
+                    disabled={isJoining}
+                    className="w-full bg-amber-400 hover:bg-amber-300 disabled:opacity-50 text-amber-900 text-xs font-black px-3 py-1.5 rounded-lg transition"
+                  >
+                    {isJoining ? 'Entrando...' : 'Participar do Sorteio'}
+                  </button>
+                )
+              ) : isJoined ? (
                 <div className="flex items-center gap-1.5">
                   <span className="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,7 +156,7 @@ export default function DestaquesCampanhas({ campaigns, joinedIds, onJoin }: Des
                 </button>
               )}
 
-              {campaign.settings?.goals && campaign.settings.goals.length > 0 && (
+              {!isRaffle && campaign.settings?.goals && campaign.settings.goals.length > 0 && (
                 <div className="mt-1.5 text-xs text-white/60">
                   {campaign.settings.goals.length} meta(s) disponivel(is)
                 </div>

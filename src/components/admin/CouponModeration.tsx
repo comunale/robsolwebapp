@@ -241,6 +241,7 @@ export default function CouponModeration() {
       } catch { /* fallback to 10 */ }
     }
     void loadCampaignPoints()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCoupon?.campaign_id])
 
   const handleOpenRejectModal = () => {

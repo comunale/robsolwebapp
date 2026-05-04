@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import AdminHeader from './AdminHeader'
+import { uploadPrizeImage } from '@/lib/storage/imageStorage'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -9,7 +10,7 @@ import AdminHeader from './AdminHeader'
 interface Prize {
   id: string
   title: string
-  points_cost: number
+  points_cost: number | null
   image_url: string | null
   description: string | null
   is_active: boolean
@@ -36,7 +37,7 @@ interface Selection {
   status: 'pending' | 'fulfilled' | 'cancelled'
   created_at: string
   profiles: SelectionProfile
-  prizes_catalog: { id: string; title: string; points_cost: number; image_url: string | null }
+  prizes_catalog: { id: string; title: string; points_cost: number | null; image_url: string | null }
   campaigns: { title: string } | null
 }
 
@@ -102,14 +103,47 @@ function PrizeForm({
 }) {
   const [form, setForm] = useState({
     title: initial?.title ?? '',
-    points_cost: String(initial?.points_cost ?? ''),
+    points_cost: initial?.points_cost != null ? String(initial.points_cost) : '',
     image_url: initial?.image_url ?? '',
     description: initial?.description ?? '',
     is_active: initial?.is_active ?? true,
     campaign_id: initial?.campaign_id ?? '',
   })
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(initial?.image_url ?? null)
+  const [uploading, setUploading] = useState(false)
 
   const set = (k: string, v: string | boolean) => setForm((p) => ({ ...p, [k]: v }))
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) { alert('Selecione um arquivo de imagem'); return }
+    if (file.size > 5 * 1024 * 1024) { alert('Imagem deve ter menos de 5MB'); return }
+    setImageFile(file)
+    const reader = new FileReader()
+    reader.onloadend = () => setImagePreview(reader.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  const handleSave = async () => {
+    if (!form.title) return
+    setUploading(true)
+    try {
+      let imageUrl = form.image_url
+      if (imageFile) {
+        const uploadId = initial?.id ?? crypto.randomUUID()
+        imageUrl = await uploadPrizeImage(imageFile, uploadId)
+      }
+      onSave({ ...form, image_url: imageUrl })
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Erro ao enviar imagem')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const isBusy = saving || uploading
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4">
@@ -125,7 +159,9 @@ function PrizeForm({
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1">Pontos Necessários *</label>
+          <label className="block text-xs font-semibold text-gray-700 mb-1">
+            Pontos Necessários <span className="font-normal text-gray-400">(deixe vazio para sorteio)</span>
+          </label>
           <input
             type="number"
             min={1}
@@ -136,16 +172,40 @@ function PrizeForm({
           />
         </div>
       </div>
+
+      {/* Image upload */}
       <div>
-        <label className="block text-xs font-semibold text-gray-700 mb-1">URL da Imagem</label>
-        <input
-          type="url"
-          value={form.image_url}
-          onChange={(e) => set('image_url', e.target.value)}
-          placeholder="https://..."
-          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-        />
+        <label className="block text-xs font-semibold text-gray-700 mb-1">Imagem do Prêmio</label>
+        <label
+          htmlFor="prize-image-upload"
+          className="flex items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition overflow-hidden relative"
+        >
+          {imagePreview ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
+              <button
+                type="button"
+                onClick={(e) => { e.preventDefault(); setImageFile(null); setImagePreview(null); set('image_url', '') }}
+                className="absolute top-1.5 right-1.5 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </>
+          ) : (
+            <div className="flex flex-col items-center text-gray-400">
+              <svg className="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span className="text-xs">Clique para enviar · máx. 5MB</span>
+            </div>
+          )}
+        </label>
+        <input id="prize-image-upload" type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
       </div>
+
       <div>
         <label className="block text-xs font-semibold text-gray-700 mb-1">Descrição</label>
         <textarea
@@ -183,11 +243,11 @@ function PrizeForm({
       </div>
       <div className="flex gap-2 pt-1">
         <button
-          onClick={() => onSave(form)}
-          disabled={saving || !form.title || !form.points_cost}
+          onClick={() => void handleSave()}
+          disabled={isBusy || !form.title}
           className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white text-sm font-semibold rounded-lg transition"
         >
-          {saving ? 'Salvando...' : 'Salvar Prêmio'}
+          {isBusy ? 'Salvando...' : 'Salvar Prêmio'}
         </button>
         <button
           onClick={onCancel}
@@ -255,7 +315,10 @@ export default function PrizeCatalogManager() {
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, points_cost: Number(form.points_cost) }),
+        body: JSON.stringify({
+          ...form,
+          points_cost: form.points_cost !== '' ? Number(form.points_cost) : null,
+        }),
       })
       if (!res.ok) {
         const d = await res.json()
@@ -315,7 +378,7 @@ export default function PrizeCatalogManager() {
   // Group pending by prize for the fulfillment summary
   const pendingByPrize = selections
     .filter((s) => s.status === 'pending')
-    .reduce<Record<string, { title: string; count: number; points: number }>>((acc, s) => {
+    .reduce<Record<string, { title: string; count: number; points: number | null }>>((acc, s) => {
       const key = s.prizes_catalog.id
       if (!acc[key]) acc[key] = { title: s.prizes_catalog.title, count: 0, points: s.prizes_catalog.points_cost }
       acc[key].count++
@@ -413,7 +476,7 @@ export default function PrizeCatalogManager() {
                           <div className="flex items-start justify-between gap-2 mb-1">
                             <h3 className="text-sm font-semibold text-gray-900 leading-tight">{prize.title}</h3>
                             <span className="flex-shrink-0 text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full">
-                              {prize.points_cost} pts
+                              {prize.points_cost != null ? `${prize.points_cost} pts` : '🎲 Sorteio'}
                             </span>
                           </div>
                           {prize.description && (
@@ -457,7 +520,7 @@ export default function PrizeCatalogManager() {
                   <div key={p.title} className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
                     <p className="text-xs font-semibold text-indigo-700 truncate">{p.title}</p>
                     <p className="text-2xl font-black text-indigo-900 mt-0.5">{p.count}</p>
-                    <p className="text-xs text-indigo-500">{p.points} pts/unid</p>
+                    <p className="text-xs text-indigo-500">{p.points != null ? `${p.points} pts/unid` : '🎲 Sorteio'}</p>
                   </div>
                 ))}
               </div>
@@ -529,7 +592,9 @@ export default function PrizeCatalogManager() {
                           <p className="font-medium text-gray-900">{sel.prizes_catalog.title}</p>
                         </td>
                         <td className="px-4 py-3">
-                          <span className="font-bold text-indigo-700">{sel.prizes_catalog.points_cost}</span>
+                          <span className="font-bold text-indigo-700">
+                            {sel.prizes_catalog.points_cost != null ? sel.prizes_catalog.points_cost : '—'}
+                          </span>
                         </td>
                         <td className="px-4 py-3 text-gray-600 text-xs">
                           {sel.campaigns?.title ?? '—'}

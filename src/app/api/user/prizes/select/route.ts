@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       .single()
 
     const spendable = (profile?.total_points ?? 0) - (profile?.allocated_points ?? 0)
-    if (spendable < prize.points_cost) {
+    if (prize.points_cost != null && spendable < prize.points_cost) {
       return NextResponse.json({
         error: `Pontos insuficientes. Você tem ${spendable} pts disponíveis, o prêmio custa ${prize.points_cost} pts.`,
       }, { status: 422 })
@@ -50,8 +50,10 @@ export async function POST(request: Request) {
 
     if (insertErr) throw insertErr
 
-    // Reserve points atomically
-    await admin.rpc('increment_allocated_points', { uid: userId, amount: prize.points_cost })
+    // Reserve points atomically (raffle prizes have no cost)
+    if (prize.points_cost != null && prize.points_cost > 0) {
+      await admin.rpc('increment_allocated_points', { uid: userId, amount: prize.points_cost })
+    }
 
     return NextResponse.json({ selection }, { status: 201 })
   } catch (e) {

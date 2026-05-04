@@ -155,6 +155,18 @@ export const uploadMuralSlideImage = async (
   return publicUrl
 }
 
+export const uploadPrizeImage = async (file: File, prizeImageId: string): Promise<string> => {
+  const supabase = createClient()
+  const fileExt = file.name.split('.').pop()
+  const filePath = `prizes/${prizeImageId}/image.${fileExt}`
+  const { error } = await supabase.storage
+    .from('prize-images')
+    .upload(filePath, file, { cacheControl: '3600', upsert: true })
+  if (error) throw error
+  const { data: { publicUrl } } = supabase.storage.from('prize-images').getPublicUrl(filePath)
+  return publicUrl
+}
+
 /**
  * Deletes a campaign banner from Supabase Storage
  * @param campaignId - The campaign ID

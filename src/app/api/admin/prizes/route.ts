@@ -34,14 +34,20 @@ export async function POST(request: Request) {
   const body = await request.json()
   const { title, points_cost, image_url, description, is_active } = body
 
-  if (!title || !points_cost) {
-    return NextResponse.json({ error: 'title e points_cost são obrigatórios' }, { status: 400 })
+  if (!title) {
+    return NextResponse.json({ error: 'title é obrigatório' }, { status: 400 })
   }
 
   const admin = createAdminClient()
   const { data, error } = await admin
     .from('prizes_catalog')
-    .insert({ title, points_cost: Number(points_cost), image_url, description, is_active: is_active ?? true })
+    .insert({
+      title,
+      points_cost: points_cost != null && points_cost !== '' ? Number(points_cost) : null,
+      image_url,
+      description,
+      is_active: is_active ?? true,
+    })
     .select()
     .single()
 

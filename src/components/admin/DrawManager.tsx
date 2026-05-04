@@ -106,7 +106,26 @@ function HelpModal({ onClose }: { onClose: () => void }) {
 
 type LuckyNumberWithProfile = LuckyNumber & {
   full_name?: string
+  whatsapp?: string
+  cpf?: string
   store_name?: string
+}
+
+function exportLuckyNumbersCsv(numbers: LuckyNumberWithProfile[], campaignTitle: string) {
+  const header = 'Número,Nome,WhatsApp,CPF,Loja,Ganhador'
+  const rows = numbers.map((n) =>
+    [n.number, n.full_name ?? '', n.whatsapp ?? '', n.cpf ?? '', n.store_name ?? '', n.is_winner ? 'Sim' : 'Não']
+      .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+      .join(',')
+  )
+  const csv = [header, ...rows].join('\n')
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `sorteio-${campaignTitle.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().slice(0, 10)}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 type DrawAction = 'publish_winners' | 'notify_winners' | 'notify_base'
@@ -147,14 +166,16 @@ export default function DrawManager() {
     try {
       const { data } = await supabase
         .from('lucky_numbers')
-        .select('*, profiles(full_name, stores(name))')
+        .select('*, profiles(full_name, whatsapp, cpf, stores(name))')
         .eq('campaign_id', selectedCampaign)
         .order('number')
 
       if (data) {
-        setLuckyNumbers(data.map((n: LuckyNumber & { profiles?: { full_name: string; stores?: { name: string } | null } | null }) => ({
+        setLuckyNumbers(data.map((n: LuckyNumber & { profiles?: { full_name: string; whatsapp?: string; cpf?: string; stores?: { name: string } | null } | null }) => ({
           ...n,
           full_name: n.profiles?.full_name,
+          whatsapp: n.profiles?.whatsapp,
+          cpf: n.profiles?.cpf,
           store_name: n.profiles?.stores?.name,
         })))
       }
@@ -374,7 +395,20 @@ export default function DrawManager() {
             </div>
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold mb-4">Todos os Números da Sorte</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Todos os Números da Sorte</h3>
+                {luckyNumbers.length > 0 && (
+                  <button
+                    onClick={() => exportLuckyNumbersCsv(luckyNumbers, currentCampaign?.title ?? 'sorteio')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    Exportar CSV
+                  </button>
+                )}
+              </div>
               {luckyNumbers.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">Nenhum número da sorte gerado para esta campanha.</p>
               ) : (

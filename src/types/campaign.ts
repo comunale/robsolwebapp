@@ -1,5 +1,7 @@
 import type { CampaignSettings } from './goal'
 
+export type CampaignType = 'incentive' | 'raffle_only'
+
 export interface Campaign {
   id: string
   title: string
@@ -7,6 +9,7 @@ export interface Campaign {
   start_date: string
   end_date: string
   is_active: boolean
+  type: CampaignType
   banner_url: string | null
   banner_url_mobile: string | null
   keywords: string[]
@@ -22,6 +25,7 @@ export interface CreateCampaignInput {
   start_date: string
   end_date: string
   is_active: boolean
+  type?: CampaignType
   banner_url: string | null
   banner_url_mobile: string | null
   keywords?: string[]
@@ -35,6 +39,7 @@ export interface UpdateCampaignInput {
   start_date?: string
   end_date?: string
   is_active?: boolean
+  type?: CampaignType
   banner_url?: string | null
   banner_url_mobile?: string | null
   keywords?: string[]
