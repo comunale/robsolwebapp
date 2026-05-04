@@ -64,15 +64,26 @@ export function useAuth() {
     return { data, error }
   }
 
-  const signUp = async (email: string, password: string, fullName: string, whatsapp: string, storeId?: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    whatsapp: string,
+    storeId?: string,
+    cpf?: string,
+    requestedStoreName?: string
+  ) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: 'https://appbeneficios.robsol.com.br/auth/callback',
         data: {
           full_name: fullName,
           whatsapp,
+          cpf: cpf || null,
           store_id: storeId || null,
+          requested_store_name: requestedStoreName || null,
         },
       },
     })

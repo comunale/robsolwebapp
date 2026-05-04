@@ -462,7 +462,7 @@ export default function Home() {
               className="hidden md:inline-flex items-center text-sm font-medium text-white/70 hover:text-white transition px-3 py-2">
               Entrar
             </Link>
-            <Link href="/login"
+            <Link href="/register"
               className="hidden md:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition hover:opacity-90"
               style={{ background: 'linear-gradient(135deg,var(--brand-accent),var(--brand-accent-light))', color: 'var(--brand-bg-from)' }}>
               Cadastre-se
@@ -506,7 +506,7 @@ export default function Home() {
                 Entrar
               </Link>
               <Link
-                href="/login"
+                href="/register"
                 onClick={() => setMenuOpen(false)}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-black transition hover:opacity-90 active:scale-95"
                 style={{ background: 'linear-gradient(135deg,var(--brand-accent),var(--brand-accent-light))', color: 'var(--brand-bg-from)' }}
@@ -602,7 +602,7 @@ export default function Home() {
           transition={{ delay: 0.45, duration: 0.5 }}
           className="flex flex-col sm:flex-row items-center gap-3"
         >
-          <Link href="/login"
+          <Link href="/register"
             className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-black shadow-xl transition-transform hover:scale-105 active:scale-95"
             style={{ background: 'linear-gradient(135deg,var(--brand-accent),var(--brand-accent-light))', color: 'var(--brand-bg-from)' }}>
             {hero.cta}
@@ -876,7 +876,7 @@ export default function Home() {
               <p className="text-white/50 mb-6 max-w-sm mx-auto text-sm">
                 Junte-se a vendedores que já estão acumulando pontos e conquistando prêmios.
               </p>
-              <Link href="/login"
+              <Link href="/register"
                 className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl text-base font-black shadow-xl transition-transform hover:scale-105"
                 style={{ background: 'linear-gradient(135deg,var(--brand-accent),var(--brand-accent-light))', color: 'var(--brand-bg-from)' }}>
                 Cadastre-se Gratuitamente
