@@ -53,10 +53,7 @@ export default function CarrosselBanners() {
     return () => clearInterval(timer)
   }, [activeSlides.length])
 
-  // Reset to first slide when slides change
-  useEffect(() => {
-    setCurrent(0)
-  }, [slides])
+  // current is 0 on mount and slides only loads once, so no explicit reset needed
 
   return (
     <section className="mb-6">

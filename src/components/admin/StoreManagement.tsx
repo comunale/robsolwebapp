@@ -118,7 +118,7 @@ export default function StoreManagement() {
 
     try {
       const ext = file.name.split('.').pop()?.toLowerCase()
-      let rows: { name: string; cnpj: string; location?: string }[] = []
+      const rows: { name: string; cnpj: string; location?: string }[] = []
       const errors: string[] = []
 
       if (ext === 'csv') {

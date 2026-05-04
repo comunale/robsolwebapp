@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -34,15 +34,12 @@ interface StoreData {
 // Countdown to campaign end date
 // ─────────────────────────────────────────────────────────────────────────────
 function CampaignCountdown({ endDate }: { endDate: string }) {
-  const [days, setDays] = useState<number | null>(null)
-
-  useEffect(() => {
+  const days = useMemo(() => {
     const end = new Date(endDate + 'T23:59:59')
+    // eslint-disable-next-line react-hooks/purity
     const diff = Math.ceil((end.getTime() - Date.now()) / 86_400_000)
-    setDays(diff > 0 ? diff : 0)
+    return diff > 0 ? diff : 0
   }, [endDate])
-
-  if (days === null) return null
 
   return (
     <div className="mx-4 mt-4 rounded-2xl p-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-center">

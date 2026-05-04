@@ -45,7 +45,8 @@ export const mdComponents: Components = {
 
   // Paragraph — detect solo links and render them as CTA buttons
   p: ({ children, node }) => {
-    const nc = (node as any)?.children as Array<{ type: string; tagName?: string; properties?: Record<string, unknown> }> | undefined
+    type HastChild = { type: string; tagName?: string; properties?: Record<string, unknown> }
+    const nc = (node as { children?: HastChild[] } | undefined)?.children
     const isSoloLink =
       nc?.length === 1 &&
       nc[0]?.type === 'element' &&

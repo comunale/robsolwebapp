@@ -7,6 +7,103 @@ import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import type { Campaign } from '@/types/campaign'
 import type { LuckyNumber } from '@/types/goal'
 
+// ── Operator Manual modal ──────────────────────────────────────────────────────
+
+const HELP_STEPS = [
+  {
+    icon: '🔄',
+    title: 'Sincronizar Números',
+    color: 'bg-indigo-50 border-indigo-200',
+    titleColor: 'text-indigo-800',
+    body: 'Gera números da sorte para participantes elegíveis que ainda não os possuem. Execute antes de qualquer sorteio para garantir que nenhum participante seja esquecido.',
+  },
+  {
+    icon: '🎲',
+    title: 'Realizar Sorteio',
+    color: 'bg-green-50 border-green-200',
+    titleColor: 'text-green-800',
+    body: 'Sorteia os ganhadores de forma aleatória e os salva em modo RASCUNHO — invisível para os participantes. Você pode revisar e validar os resultados antes de publicar.',
+  },
+  {
+    icon: '📢',
+    title: 'Publicar Ganhadores',
+    color: 'bg-amber-50 border-amber-200',
+    titleColor: 'text-amber-800',
+    body: 'Torna os resultados visíveis na página pública /sorteios. Irreversível — publique somente após validar os ganhadores com a equipe responsável.',
+  },
+  {
+    icon: '🏆',
+    title: 'Notificar Ganhadores',
+    color: 'bg-purple-50 border-purple-200',
+    titleColor: 'text-purple-800',
+    body: 'Envia um e-mail personalizado de "Você ganhou!" para cada ganhador que ainda não foi notificado. Execute após publicar para que os ganhadores saibam do prêmio.',
+  },
+  {
+    icon: '📣',
+    title: 'Notificar Base',
+    color: 'bg-slate-50 border-slate-200',
+    titleColor: 'text-slate-800',
+    body: 'Envia uma notificação geral para TODOS os participantes da campanha, informando que os resultados foram divulgados e convidando-os a conferir o ranking.',
+  },
+]
+
+function HelpModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">Manual do Operador</h2>
+            <p className="text-xs text-gray-500 mt-0.5">Ordem recomendada de execução</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
+            aria-label="Fechar"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-6 space-y-3">
+          {HELP_STEPS.map((step, i) => (
+            <div key={step.title} className={`rounded-xl border p-4 ${step.color}`}>
+              <div className="flex items-start gap-3">
+                <span className="text-2xl flex-shrink-0 mt-0.5">{step.icon}</span>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Passo {i + 1}
+                    </span>
+                  </div>
+                  <p className={`text-sm font-bold mb-1 ${step.titleColor}`}>{step.title}</p>
+                  <p className="text-xs text-gray-600 leading-relaxed">{step.body}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          <div className="mt-4 rounded-xl bg-gray-50 border border-gray-200 p-4">
+            <p className="text-xs font-semibold text-gray-700 mb-1">Dica de segurança</p>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              O sorteio é irreversível após a publicação. Sempre valide os números sorteados internamente antes de executar &ldquo;Publicar Ganhadores&rdquo;.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 type LuckyNumberWithProfile = LuckyNumber & {
   full_name?: string
   store_name?: string
@@ -26,6 +123,7 @@ export default function DrawManager() {
   const [notifyingBase, setNotifyingBase] = useState(false)
   const [drawCount, setDrawCount] = useState(1)
   const [lastWinners, setLastWinners] = useState<{ number: number; user_id: string }[]>([])
+  const [showHelp, setShowHelp] = useState(false)
   const supabase = useMemo(() => createClient(), [])
 
   const fetchCampaigns = useCallback(async () => {
@@ -147,7 +245,20 @@ export default function DrawManager() {
 
   return (
     <>
-      <AdminHeader title="Gerenciador de Sorteios" subtitle="Realize, publique e notifique ganhadores manualmente" />
+      {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
+
+      <AdminHeader title="Gerenciador de Sorteios" subtitle="Realize, publique e notifique ganhadores manualmente">
+        <button
+          onClick={() => setShowHelp(true)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:text-gray-900 hover:border-gray-300 transition shadow-sm"
+          title="Manual do operador"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Ajuda
+        </button>
+      </AdminHeader>
 
       <div className="p-6 space-y-6">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

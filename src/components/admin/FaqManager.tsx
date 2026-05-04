@@ -200,7 +200,7 @@ export default function FaqManager() {
         <div className="text-center py-12 text-gray-400">
           <p className="text-4xl mb-2">❓</p>
           <p className="font-semibold">Nenhuma pergunta cadastrada</p>
-          <p className="text-sm mt-1">Clique em "Nova Pergunta" para começar.</p>
+          <p className="text-sm mt-1">Clique em &ldquo;Nova Pergunta&rdquo; para começar.</p>
         </div>
       ) : (
         <div className="space-y-4">
