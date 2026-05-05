@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import {
   PRIZE_IMAGES_BUCKET,
+  getStoragePathFromUrl,
   removeStoragePaths,
   scanOrphanedPrizeImages,
 } from '@/lib/storage/adminStorageCleanup'
@@ -47,6 +48,14 @@ export async function DELETE(request: Request) {
     }
 
     const admin = createAdminClient()
+    if (Array.isArray(body.files)) {
+      const paths = body.files
+        .map((file: unknown) => typeof file === 'string' ? getStoragePathFromUrl(file, PRIZE_IMAGES_BUCKET) : null)
+        .filter(Boolean) as string[]
+      const deletedFiles = await removeStoragePaths(admin, PRIZE_IMAGES_BUCKET, paths)
+      return NextResponse.json({ deletedFiles })
+    }
+
     const scan = await scanOrphanedPrizeImages(admin)
     const deletedFiles = await removeStoragePaths(admin, PRIZE_IMAGES_BUCKET, scan.orphanedFiles)
 

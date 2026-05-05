@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import AdminHeader from './AdminHeader'
-import { uploadPrizeImage, uploadPrizeImageHorizontal } from '@/lib/storage/imageStorage'
+import { uploadPrizeGalleryImage, uploadPrizeImage, uploadPrizeImageHorizontal } from '@/lib/storage/imageStorage'
 import { compressImageForUpload } from '@/lib/images/compressImage'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -101,7 +101,7 @@ function PrizeForm({
 }: {
   initial?: Partial<Prize>
   campaigns: Campaign[]
-  onSave: (data: typeof EMPTY_FORM) => void
+  onSave: (data: typeof EMPTY_FORM) => Promise<void>
   onCancel: () => void
   saving: boolean
 }) {
@@ -116,12 +116,14 @@ function PrizeForm({
     is_active: initial?.is_active ?? true,
     campaign_id: initial?.campaign_id ?? '',
   })
-  const [newImageUrl, setNewImageUrl] = useState('')
+  const [uploadId] = useState(initial?.id ?? crypto.randomUUID())
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(initial?.image_url ?? null)
   const [imageHorizFile, setImageHorizFile] = useState<File | null>(null)
   const [imageHorizPreview, setImageHorizPreview] = useState<string | null>(initial?.image_horizontal ?? null)
   const [uploading, setUploading] = useState(false)
+  const [galleryUploading, setGalleryUploading] = useState(false)
+  const [pendingGalleryUploads, setPendingGalleryUploads] = useState<string[]>([])
 
   const set = (k: string, v: string | boolean) => setForm((p) => ({ ...p, [k]: v }))
 
@@ -147,11 +149,82 @@ function PrizeForm({
     reader.readAsDataURL(file)
   }
 
+  const deletePrizeStorageFiles = async (urls: string[]) => {
+    if (urls.length === 0) return
+    const res = await fetch('/api/admin/storage-maintenance/prize-images', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirm: true, files: urls }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(data.error ?? 'Erro ao remover imagem do storage')
+  }
+
+  const handleGalleryFiles = async (files: FileList | File[]) => {
+    const selectedFiles = Array.from(files)
+    if (selectedFiles.length === 0) return
+
+    const availableSlots = 30 - form.images.length
+    if (availableSlots <= 0) {
+      alert('A galeria ja possui o limite de 30 imagens')
+      return
+    }
+
+    const imageFiles = selectedFiles.filter((file) => file.type.startsWith('image/')).slice(0, availableSlots)
+    if (imageFiles.length === 0) {
+      alert('Selecione apenas arquivos de imagem')
+      return
+    }
+    if (selectedFiles.length > availableSlots) {
+      alert(`Apenas ${availableSlots} imagem(ns) foram adicionadas para respeitar o limite de 30.`)
+    }
+
+    setGalleryUploading(true)
+    try {
+      const uploadedUrls: string[] = []
+      for (const file of imageFiles) {
+        const compressed = await compressImageForUpload(file)
+        const url = await uploadPrizeGalleryImage(compressed, uploadId)
+        uploadedUrls.push(url)
+      }
+      setForm((p) => ({ ...p, images: [...p.images, ...uploadedUrls].slice(0, 30) }))
+      setPendingGalleryUploads((p) => [...p, ...uploadedUrls])
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Erro ao enviar galeria')
+    } finally {
+      setGalleryUploading(false)
+    }
+  }
+
+  const handleRemoveGalleryImage = async (src: string) => {
+    if (!confirm('Remover esta imagem da galeria?')) return
+    setGalleryUploading(true)
+    try {
+      await deletePrizeStorageFiles([src])
+      setForm((p) => ({ ...p, images: p.images.filter((url) => url !== src) }))
+      setPendingGalleryUploads((p) => p.filter((url) => url !== src))
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Erro ao remover imagem')
+    } finally {
+      setGalleryUploading(false)
+    }
+  }
+
+  const handleCancel = async () => {
+    if (pendingGalleryUploads.length > 0) {
+      try {
+        await deletePrizeStorageFiles(pendingGalleryUploads)
+      } catch {
+        // Best effort cleanup; the maintenance purge can still catch abandoned uploads.
+      }
+    }
+    onCancel()
+  }
+
   const handleSave = async () => {
     if (!form.title) return
     setUploading(true)
     try {
-      const uploadId = initial?.id ?? crypto.randomUUID()
       let imageUrl = form.image_url
       let imageHorizUrl = form.image_horizontal
       if (imageFile) {
@@ -162,7 +235,8 @@ function PrizeForm({
         const compressedImageHoriz = await compressImageForUpload(imageHorizFile)
         imageHorizUrl = await uploadPrizeImageHorizontal(compressedImageHoriz, uploadId)
       }
-      onSave({ ...form, image_url: imageUrl, image_horizontal: imageHorizUrl })
+      await onSave({ ...form, image_url: imageUrl, image_horizontal: imageHorizUrl })
+      setPendingGalleryUploads([])
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Erro ao enviar imagem')
     } finally {
@@ -170,7 +244,7 @@ function PrizeForm({
     }
   }
 
-  const isBusy = saving || uploading
+  const isBusy = saving || uploading || galleryUploading
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4">
@@ -295,54 +369,53 @@ function PrizeForm({
         <p className="text-[10px] text-gray-400 mt-0.5">Aparece como botão &quot;Baixar Catálogo&quot; na página do prêmio</p>
       </div>
 
-      {/* Additional images gallery (up to 30 URLs) */}
+      {/* Additional images gallery */}
       <div>
         <label className="block text-xs font-semibold text-gray-700 mb-1">
-          Galeria de Imagens <span className="font-normal text-gray-400">(até 30 URLs)</span>
+          Galeria de Imagens <span className="font-normal text-gray-400">(ate 30 imagens)</span>
         </label>
-        <div className="flex gap-2 mb-2">
+        <label
+          htmlFor={`gallery-upload-${uploadId}`}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault()
+            void handleGalleryFiles(e.dataTransfer.files)
+          }}
+          className="flex flex-col items-center justify-center w-full min-h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition p-4 text-center"
+        >
+          <svg className="w-8 h-8 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+          </svg>
+          <span className="text-sm font-semibold text-gray-700">
+            {galleryUploading ? 'Enviando e comprimindo...' : 'Arraste imagens ou clique para enviar'}
+          </span>
+          <span className="text-xs text-gray-400 mt-1">WebP automatico, 1200px, ate {30 - form.images.length} restantes</span>
           <input
-            type="url"
-            value={newImageUrl}
-            onChange={(e) => setNewImageUrl(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                const url = newImageUrl.trim()
-                if (url && form.images.length < 30 && !form.images.includes(url)) {
-                  setForm((p) => ({ ...p, images: [...p.images, url] }))
-                  setNewImageUrl('')
-                }
-              }
+            id={`gallery-upload-${uploadId}`}
+            type="file"
+            accept="image/*"
+            multiple
+            disabled={galleryUploading || form.images.length >= 30}
+            onChange={(e) => {
+              const files = e.target.files
+              e.target.value = ''
+              if (files) void handleGalleryFiles(files)
             }}
-            placeholder="Cole a URL da imagem e pressione Enter"
-            className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+            className="hidden"
           />
-          <button
-            type="button"
-            disabled={!newImageUrl.trim() || form.images.length >= 30}
-            onClick={() => {
-              const url = newImageUrl.trim()
-              if (url && form.images.length < 30 && !form.images.includes(url)) {
-                setForm((p) => ({ ...p, images: [...p.images, url] }))
-                setNewImageUrl('')
-              }
-            }}
-            className="px-3 py-2 bg-indigo-100 hover:bg-indigo-200 disabled:opacity-40 text-indigo-700 text-sm font-medium rounded-lg transition"
-          >
-            Adicionar
-          </button>
-        </div>
+        </label>
         {form.images.length > 0 && (
-          <div className="grid grid-cols-4 gap-2">
-            {form.images.map((src, i) => (
-              <div key={i} className="relative group">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 mt-3">
+            {form.images.map((src) => (
+              <div key={src} className="relative group">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" className="w-full h-16 object-cover rounded-lg border border-gray-200" />
+                <img src={src} alt="" className="w-full aspect-square object-cover rounded-lg border border-gray-200" />
                 <button
                   type="button"
-                  onClick={() => setForm((p) => ({ ...p, images: p.images.filter((_, j) => j !== i) }))}
-                  className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition"
+                  onClick={() => void handleRemoveGalleryImage(src)}
+                  disabled={galleryUploading}
+                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition disabled:opacity-50"
+                  aria-label="Remover imagem"
                 >
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -353,7 +426,7 @@ function PrizeForm({
           </div>
         )}
         {form.images.length === 0 && (
-          <p className="text-xs text-gray-400">Nenhuma imagem de galeria adicionada</p>
+          <p className="text-xs text-gray-400 mt-2">Nenhuma imagem de galeria adicionada</p>
         )}
       </div>
 
@@ -391,7 +464,7 @@ function PrizeForm({
           {isBusy ? 'Salvando...' : 'Salvar Prêmio'}
         </button>
         <button
-          onClick={onCancel}
+          onClick={() => void handleCancel()}
           className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition"
         >
           Cancelar
@@ -533,7 +606,7 @@ export default function PrizeCatalogManager() {
         subtitle="Gerencie o catálogo de prêmios e processe as seleções dos consultores"
       />
 
-      <div className="p-6 lg:p-8">
+      <div className="p-6">
         {/* Tab bar */}
         <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 w-fit">
           {[
@@ -570,11 +643,12 @@ export default function PrizeCatalogManager() {
               </button>
             )}
 
-            {(showForm && !editingPrize) && (
+            {(showForm || editingPrize) && (
               <PrizeForm
+                initial={editingPrize ?? undefined}
                 campaigns={campaigns}
                 onSave={handleSavePrize}
-                onCancel={() => setShowForm(false)}
+                onCancel={() => { setShowForm(false); setEditingPrize(null) }}
                 saving={saving}
               />
             )}
@@ -589,7 +663,7 @@ export default function PrizeCatalogManager() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {prizes.map((prize) => (
+                {prizes.filter((prize) => prize.id !== editingPrize?.id).map((prize) => (
                   <div key={prize.id}>
                     {editingPrize?.id === prize.id ? (
                       <PrizeForm
