@@ -277,7 +277,7 @@ export default function SiteSettings() {
         subtitle="Gerencie a identidade visual, logos e links do Robsol VIP"
       />
 
-      <div className="p-6 max-w-4xl">
+      <div className="p-6 lg:p-8">
         {/* Tab bar */}
         <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 w-fit">
           {tabs.map((t) => (

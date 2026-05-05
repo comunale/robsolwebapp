@@ -526,7 +526,7 @@ export default function PrizeCatalogManager() {
         subtitle="Gerencie o catálogo de prêmios e processe as seleções dos consultores"
       />
 
-      <div className="p-6 max-w-5xl">
+      <div className="p-6 lg:p-8">
         {/* Tab bar */}
         <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 w-fit">
           {[

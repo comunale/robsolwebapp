@@ -274,7 +274,7 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
         subtitle={isEditMode ? 'Atualize as informacoes da campanha' : 'Configure uma nova campanha de incentivo'}
       />
 
-      <div className="p-6 lg:p-8 w-full max-w-4xl">
+      <div className="p-6 lg:p-8 w-full">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 lg:p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Title */}

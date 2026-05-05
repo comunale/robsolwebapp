@@ -73,11 +73,6 @@
   --color-brand-700: #4338ca;
 }
 
-:root {
-  --font-sans: var(--font-montserrat);
-  --font-mono: var(--font-montserrat);
-}
-
 html, body, * {
   font-family: var(--font-montserrat), sans-serif !important;
 }
