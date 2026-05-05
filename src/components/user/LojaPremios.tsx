@@ -8,10 +8,12 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 interface Prize {
   id: string
   title: string
-  points_cost: number
+  points_cost: number | null
   image_url: string | null
+  image_horizontal: string | null
   description: string | null
   campaign_id: string | null
+  campaign_type?: string | null
 }
 
 interface PendingSelection {
@@ -138,18 +140,15 @@ export default function LojaPremios() {
     : 'A entrega será realizada ao final da campanha.'
 
   return (
-    <div className="pb-24 md:pb-8">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-5 md:px-6">
-        <h1 className="text-xl font-bold text-gray-900">Loja de Prêmios</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Selecione seu prêmio com os pontos acumulados</p>
-      </div>
+    <div className="px-4 py-4 pb-24 md:pb-8">
+      <h1 className="text-xl font-bold text-gray-900 mb-0.5">Loja de Prêmios</h1>
+      <p className="text-sm text-gray-500 mb-4">Selecione seu prêmio com os pontos acumulados</p>
 
       {/* Countdown */}
       {campaignEndDate && <CampaignCountdown endDate={campaignEndDate} />}
 
       {/* Points balance card */}
-      <div className="mx-4 mt-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-4">
+      <div className="mt-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-4">
         <div className="grid grid-cols-3 gap-3 text-center">
           <div>
             <p className="text-2xl font-black text-indigo-700">{totalPoints}</p>
@@ -168,7 +167,7 @@ export default function LojaPremios() {
 
       {/* Pending selections */}
       {pendingSelections.length > 0 && (
-        <div className="mx-4 mt-4 space-y-2">
+        <div className="mt-4 space-y-2">
           <p className="text-xs font-bold uppercase tracking-widest text-gray-400">Minha Seleção</p>
           {pendingSelections.map((sel) => (
             <div key={sel.id} className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between gap-3">
@@ -189,7 +188,7 @@ export default function LojaPremios() {
       )}
 
       {/* Prize grid */}
-      <div className="px-4 mt-5">
+      <div className="mt-5">
         <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">
           {prizes.length > 0 ? `${prizes.length} prêmio${prizes.length !== 1 ? 's' : ''} disponível${prizes.length !== 1 ? 'is' : ''}` : 'Catálogo'}
         </p>
@@ -203,9 +202,11 @@ export default function LojaPremios() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {prizes.map((prize) => {
+              const isRafflePrize = prize.points_cost == null
               const isSelected = selectedPrizeIds.has(prize.id)
-              const canAfford = spendablePoints >= prize.points_cost
+              const canAfford = isRafflePrize || spendablePoints >= (prize.points_cost ?? 0)
               const isSelecting = !!selecting[prize.id]
+              const displayImage = prize.image_horizontal ?? prize.image_url
 
               return (
                 <div
@@ -214,9 +215,9 @@ export default function LojaPremios() {
                     isSelected ? 'border-green-400 ring-2 ring-green-300' : 'border-gray-200'
                   }`}
                 >
-                  {prize.image_url ? (
+                  {displayImage ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={prize.image_url} alt={prize.title} className="w-full h-40 object-cover" />
+                    <img src={displayImage} alt={prize.title} className="w-full h-40 object-cover" />
                   ) : (
                     <div className="w-full h-40 bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
                       <span className="text-5xl">🎁</span>
@@ -230,11 +231,19 @@ export default function LojaPremios() {
                     )}
 
                     <div className="flex items-center justify-between mt-3 gap-2">
-                      <span className={`text-sm font-black ${canAfford || isSelected ? 'text-indigo-700' : 'text-gray-400'}`}>
-                        {prize.points_cost} pts
-                      </span>
+                      {isRafflePrize ? (
+                        <span className="text-sm font-black text-amber-600">🎲 Sorteio</span>
+                      ) : (
+                        <span className={`text-sm font-black ${canAfford || isSelected ? 'text-indigo-700' : 'text-gray-400'}`}>
+                          {prize.points_cost} pts
+                        </span>
+                      )}
 
-                      {isSelected ? (
+                      {isRafflePrize ? (
+                        <span className="text-xs text-gray-500 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl">
+                          Disponível por sorteio
+                        </span>
+                      ) : isSelected ? (
                         <span className="flex items-center gap-1.5 text-xs font-bold text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-xl">
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -248,13 +257,13 @@ export default function LojaPremios() {
                           className="text-xs font-bold px-4 py-2 rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed bg-indigo-600 hover:bg-indigo-700 text-white disabled:bg-gray-200 disabled:text-gray-400"
                           title={
                             !canAfford
-                              ? `Você precisa de ${prize.points_cost - spendablePoints} pts a mais`
+                              ? `Você precisa de ${(prize.points_cost ?? 0) - spendablePoints} pts a mais`
                               : pendingSelections.length > 0 && !isSelected
                               ? 'Cancele sua seleção atual antes de escolher outro prêmio'
                               : ''
                           }
                         >
-                          {isSelecting ? 'Selecionando...' : !canAfford ? `Faltam ${prize.points_cost - spendablePoints} pts` : 'Selecionar'}
+                          {isSelecting ? 'Selecionando...' : !canAfford ? `Faltam ${(prize.points_cost ?? 0) - spendablePoints} pts` : 'Selecionar'}
                         </button>
                       )}
                     </div>

@@ -38,12 +38,28 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
   const [existingMobileBannerUrl, setExistingMobileBannerUrl] = useState<string | null>(null)
 
   const [campaignType, setCampaignType] = useState<CampaignType>('incentive')
+  const [allPrizes, setAllPrizes] = useState<{ id: string; title: string; points_cost: number | null }[]>([])
+  const [selectedPrizeIds, setSelectedPrizeIds] = useState<string[]>([])
+  const [prizeSearch, setPrizeSearch] = useState('')
 
   // Campaign Settings
   const [pointsPerCoupon, setPointsPerCoupon] = useState(10)
   const [hasDraws, setHasDraws] = useState(false)
   const [drawType, setDrawType] = useState<'manual' | 'random'>('random')
   const [goals, setGoals] = useState<GoalConfig[]>([])
+
+  // Fetch prizes list (for multi-select)
+  useEffect(() => {
+    const fetchPrizes = async () => {
+      try {
+        const res = await fetch('/api/admin/prizes')
+        if (!res.ok) return
+        const d = await res.json()
+        setAllPrizes((d.prizes ?? []).filter((p: { is_active: boolean }) => p.is_active))
+      } catch { /* non-critical */ }
+    }
+    void fetchPrizes()
+  }, [])
 
   // Fetch existing campaign data in edit mode
   useEffect(() => {
@@ -76,6 +92,14 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
           setDrawType(settings.draw_type || 'random')
           setGoals(settings.goals || [])
         }
+        // Load existing prize links
+        try {
+          const prizeRes = await fetch(`/api/campaigns/${campaignId}/prizes`)
+          if (prizeRes.ok) {
+            const prizeData = await prizeRes.json()
+            setSelectedPrizeIds((prizeData.prizes ?? []).map((p: { id: string }) => p.id))
+          }
+        } catch { /* non-critical */ }
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Falha ao carregar campanha')
       } finally {
@@ -220,6 +244,18 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
         throw new Error(data.error || (isEditMode ? 'Falha ao atualizar campanha' : 'Falha ao criar campanha'))
       }
 
+      const savedData = await response.json()
+      const savedId = savedData.campaign?.id ?? campaignId
+
+      // Sync prize links via campaign_prizes
+      if (savedId) {
+        await fetch(`/api/campaigns/${savedId}/prizes`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prize_ids: selectedPrizeIds }),
+        })
+      }
+
       router.push('/admin/campaigns')
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : (isEditMode ? 'Falha ao atualizar campanha' : 'Falha ao criar campanha'))
@@ -345,6 +381,72 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
                   </label>
                 ))}
               </div>
+            </div>
+
+            {/* Prize Multi-select */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Prêmios Vinculados{' '}
+                <span className="text-xs font-normal text-gray-400">(opcional)</span>
+              </label>
+              <p className="text-xs text-gray-500 mb-2">
+                Selecione os prêmios que aparecerão na página desta campanha.
+              </p>
+              {selectedPrizeIds.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {selectedPrizeIds.map((pid) => {
+                    const p = allPrizes.find((x) => x.id === pid)
+                    if (!p) return null
+                    return (
+                      <span key={pid} className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">
+                        {p.title}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPrizeIds((prev) => prev.filter((id) => id !== pid))}
+                          className="hover:text-red-600"
+                        >
+                          &times;
+                        </button>
+                      </span>
+                    )
+                  })}
+                </div>
+              )}
+              <input
+                type="text"
+                value={prizeSearch}
+                onChange={(e) => setPrizeSearch(e.target.value)}
+                placeholder="Buscar prêmio..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none mb-1"
+              />
+              {allPrizes.length > 0 ? (
+                <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
+                  {allPrizes
+                    .filter((p) => p.title.toLowerCase().includes(prizeSearch.toLowerCase()))
+                    .map((p) => (
+                      <label key={p.id} className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50">
+                        <input
+                          type="checkbox"
+                          checked={selectedPrizeIds.includes(p.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedPrizeIds((prev) => [...prev, p.id])
+                            } else {
+                              setSelectedPrizeIds((prev) => prev.filter((id) => id !== p.id))
+                            }
+                          }}
+                          className="w-4 h-4 text-indigo-600 border-gray-300 rounded"
+                        />
+                        <span className="flex-1 text-sm text-gray-800 truncate">{p.title}</span>
+                        <span className="flex-shrink-0 text-xs text-gray-400">
+                          {p.points_cost != null ? `${p.points_cost} pts` : '🎲 Sorteio'}
+                        </span>
+                      </label>
+                    ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400 py-2">Nenhum prêmio ativo cadastrado.</p>
+              )}
             </div>
 
             {/* Target Keywords */}
@@ -525,10 +627,10 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
                 {/* Desktop Banner */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Banner Desktop
+                    Banner Horizontal (desktop / detalhes)
                   </label>
                   <p className="text-xs text-gray-400 mb-2">
-                    Ideal: <strong>1200 × 675 px</strong> · Proporção 16:9 · máx. 5MB
+                    Recomendado: <strong>1200 × 600 px</strong> · Proporção 2:1 · máx. 5MB
                   </p>
                   <label
                     htmlFor="banner-upload"
@@ -560,7 +662,7 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
                         <p className="text-xs text-gray-500"><span className="font-semibold">Clique para enviar</span></p>
-                        <p className="text-xs text-gray-400">1200 × 675 px recomendado</p>
+                        <p className="text-xs text-gray-400">1200 × 600 px recomendado</p>
                       </div>
                     )}
                     <input id="banner-upload" type="file" accept="image/*" onChange={handleBannerChange} className="hidden" />
@@ -570,10 +672,10 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
                 {/* Mobile Banner */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Banner Mobile
+                    Banner Quadrado (mobile / cards)
                   </label>
                   <p className="text-xs text-gray-400 mb-2">
-                    Ideal: <strong>900 × 675 px</strong> · Proporção 4:3 · máx. 5MB
+                    Recomendado: <strong>800 × 800 px</strong> · Proporção 1:1 · máx. 5MB
                   </p>
                   <label
                     htmlFor="mobile-banner-upload"
@@ -605,7 +707,7 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
                         <p className="text-xs text-gray-500"><span className="font-semibold">Clique para enviar</span></p>
-                        <p className="text-xs text-gray-400">900 × 675 px recomendado</p>
+                        <p className="text-xs text-gray-400">800 × 800 px recomendado</p>
                       </div>
                     )}
                     <input id="mobile-banner-upload" type="file" accept="image/*" onChange={handleMobileBannerChange} className="hidden" />

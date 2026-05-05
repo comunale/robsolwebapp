@@ -238,6 +238,7 @@ function ScanPageContent() {
           .from('campaigns')
           .select('*')
           .eq('is_active', true)
+          .neq('type', 'raffle_only')
           .gte('end_date', new Date().toISOString())
           .order('created_at', { ascending: false }),
         supabase

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import AdminHeader from './AdminHeader'
-import { uploadPrizeImage } from '@/lib/storage/imageStorage'
+import { uploadPrizeImage, uploadPrizeImageHorizontal } from '@/lib/storage/imageStorage'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -12,6 +12,9 @@ interface Prize {
   title: string
   points_cost: number | null
   image_url: string | null
+  image_horizontal: string | null
+  images: string[]
+  pdf_url: string | null
   description: string | null
   is_active: boolean
   campaign_id: string | null
@@ -86,7 +89,7 @@ function exportCsv(selections: Selection[]) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Prize Form (add / edit)
 // ─────────────────────────────────────────────────────────────────────────────
-const EMPTY_FORM = { title: '', points_cost: '', image_url: '', description: '', is_active: true, campaign_id: '' }
+const EMPTY_FORM = { title: '', points_cost: '', image_url: '', image_horizontal: '', images: [] as string[], pdf_url: '', description: '', is_active: true, campaign_id: '' }
 
 function PrizeForm({
   initial,
@@ -105,12 +108,18 @@ function PrizeForm({
     title: initial?.title ?? '',
     points_cost: initial?.points_cost != null ? String(initial.points_cost) : '',
     image_url: initial?.image_url ?? '',
+    image_horizontal: initial?.image_horizontal ?? '',
+    images: initial?.images ?? [] as string[],
+    pdf_url: initial?.pdf_url ?? '',
     description: initial?.description ?? '',
     is_active: initial?.is_active ?? true,
     campaign_id: initial?.campaign_id ?? '',
   })
+  const [newImageUrl, setNewImageUrl] = useState('')
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(initial?.image_url ?? null)
+  const [imageHorizFile, setImageHorizFile] = useState<File | null>(null)
+  const [imageHorizPreview, setImageHorizPreview] = useState<string | null>(initial?.image_horizontal ?? null)
   const [uploading, setUploading] = useState(false)
 
   const set = (k: string, v: string | boolean) => setForm((p) => ({ ...p, [k]: v }))
@@ -126,16 +135,27 @@ function PrizeForm({
     reader.readAsDataURL(file)
   }
 
+  const handleImageHorizChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) { alert('Selecione um arquivo de imagem'); return }
+    if (file.size > 5 * 1024 * 1024) { alert('Imagem deve ter menos de 5MB'); return }
+    setImageHorizFile(file)
+    const reader = new FileReader()
+    reader.onloadend = () => setImageHorizPreview(reader.result as string)
+    reader.readAsDataURL(file)
+  }
+
   const handleSave = async () => {
     if (!form.title) return
     setUploading(true)
     try {
+      const uploadId = initial?.id ?? crypto.randomUUID()
       let imageUrl = form.image_url
-      if (imageFile) {
-        const uploadId = initial?.id ?? crypto.randomUUID()
-        imageUrl = await uploadPrizeImage(imageFile, uploadId)
-      }
-      onSave({ ...form, image_url: imageUrl })
+      let imageHorizUrl = form.image_horizontal
+      if (imageFile) imageUrl = await uploadPrizeImage(imageFile, uploadId)
+      if (imageHorizFile) imageHorizUrl = await uploadPrizeImageHorizontal(imageHorizFile, uploadId)
+      onSave({ ...form, image_url: imageUrl, image_horizontal: imageHorizUrl })
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Erro ao enviar imagem')
     } finally {
@@ -173,37 +193,73 @@ function PrizeForm({
         </div>
       </div>
 
-      {/* Image upload */}
-      <div>
-        <label className="block text-xs font-semibold text-gray-700 mb-1">Imagem do Prêmio</label>
-        <label
-          htmlFor="prize-image-upload"
-          className="flex items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition overflow-hidden relative"
-        >
-          {imagePreview ? (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
-              <button
-                type="button"
-                onClick={(e) => { e.preventDefault(); setImageFile(null); setImagePreview(null); set('image_url', '') }}
-                className="absolute top-1.5 right-1.5 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      {/* Image uploads — square + horizontal */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 mb-0.5">Imagem Quadrada (card mobile)</label>
+          <p className="text-[10px] text-gray-400 mb-1">Recomendado: 800 × 800 px · máx. 5 MB</p>
+          <label
+            htmlFor="prize-image-upload"
+            className="flex items-center justify-center w-full h-28 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition overflow-hidden relative"
+          >
+            {imagePreview ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); setImageFile(null); setImagePreview(null); set('image_url', '') }}
+                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 transition"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </>
+            ) : (
+              <div className="flex flex-col items-center text-gray-400">
+                <svg className="w-7 h-7 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-              </button>
-            </>
-          ) : (
-            <div className="flex flex-col items-center text-gray-400">
-              <svg className="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <span className="text-xs">Clique para enviar · máx. 5MB</span>
-            </div>
-          )}
-        </label>
-        <input id="prize-image-upload" type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                <span className="text-[10px]">Clique para enviar</span>
+              </div>
+            )}
+          </label>
+          <input id="prize-image-upload" type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 mb-0.5">Imagem Horizontal (detalhes)</label>
+          <p className="text-[10px] text-gray-400 mb-1">Recomendado: 1200 × 600 px · máx. 5 MB</p>
+          <label
+            htmlFor="prize-image-horiz-upload"
+            className="flex items-center justify-center w-full h-28 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition overflow-hidden relative"
+          >
+            {imageHorizPreview ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imageHorizPreview} alt="preview horizontal" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); setImageHorizFile(null); setImageHorizPreview(null); set('image_horizontal', '') }}
+                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 transition"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </>
+            ) : (
+              <div className="flex flex-col items-center text-gray-400">
+                <svg className="w-7 h-7 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="text-[10px]">Clique para enviar</span>
+              </div>
+            )}
+          </label>
+          <input id="prize-image-horiz-upload" type="file" accept="image/*" onChange={handleImageHorizChange} className="hidden" />
+        </div>
       </div>
 
       <div>
@@ -216,6 +272,84 @@ function PrizeForm({
           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
         />
       </div>
+
+      {/* PDF URL */}
+      <div>
+        <label className="block text-xs font-semibold text-gray-700 mb-1">
+          URL do Catálogo PDF <span className="font-normal text-gray-400">(opcional)</span>
+        </label>
+        <input
+          type="url"
+          value={form.pdf_url}
+          onChange={(e) => set('pdf_url', e.target.value)}
+          placeholder="https://..."
+          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+        />
+        <p className="text-[10px] text-gray-400 mt-0.5">Aparece como botão &quot;Baixar Catálogo&quot; na página do prêmio</p>
+      </div>
+
+      {/* Additional images gallery (up to 30 URLs) */}
+      <div>
+        <label className="block text-xs font-semibold text-gray-700 mb-1">
+          Galeria de Imagens <span className="font-normal text-gray-400">(até 30 URLs)</span>
+        </label>
+        <div className="flex gap-2 mb-2">
+          <input
+            type="url"
+            value={newImageUrl}
+            onChange={(e) => setNewImageUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                const url = newImageUrl.trim()
+                if (url && form.images.length < 30 && !form.images.includes(url)) {
+                  setForm((p) => ({ ...p, images: [...p.images, url] }))
+                  setNewImageUrl('')
+                }
+              }
+            }}
+            placeholder="Cole a URL da imagem e pressione Enter"
+            className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+          />
+          <button
+            type="button"
+            disabled={!newImageUrl.trim() || form.images.length >= 30}
+            onClick={() => {
+              const url = newImageUrl.trim()
+              if (url && form.images.length < 30 && !form.images.includes(url)) {
+                setForm((p) => ({ ...p, images: [...p.images, url] }))
+                setNewImageUrl('')
+              }
+            }}
+            className="px-3 py-2 bg-indigo-100 hover:bg-indigo-200 disabled:opacity-40 text-indigo-700 text-sm font-medium rounded-lg transition"
+          >
+            Adicionar
+          </button>
+        </div>
+        {form.images.length > 0 && (
+          <div className="grid grid-cols-4 gap-2">
+            {form.images.map((src, i) => (
+              <div key={i} className="relative group">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt="" className="w-full h-16 object-cover rounded-lg border border-gray-200" />
+                <button
+                  type="button"
+                  onClick={() => setForm((p) => ({ ...p, images: p.images.filter((_, j) => j !== i) }))}
+                  className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        {form.images.length === 0 && (
+          <p className="text-xs text-gray-400">Nenhuma imagem de galeria adicionada</p>
+        )}
+      </div>
+
       <div>
         <label className="block text-xs font-semibold text-gray-700 mb-1">
           Campanha vinculada <span className="font-normal text-gray-400">(opcional — deixe vazio para prêmio global)</span>

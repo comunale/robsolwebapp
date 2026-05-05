@@ -34,7 +34,7 @@ export async function GET() {
     // Fetch eligible prizes: global OR in one of the user's campaigns
     const { data: prizes, error } = await admin
       .from('prizes_catalog')
-      .select('id, title, points_cost, image_url, description, campaign_id')
+      .select('id, title, points_cost, image_url, image_horizontal, description, campaign_id')
       .eq('is_active', true)
       .or(`campaign_id.is.null${campaignIds.length > 0 ? `,campaign_id.in.(${campaignIds.join(',')})` : ''}`)
       .order('points_cost', { ascending: true })

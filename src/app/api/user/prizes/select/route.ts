@@ -55,6 +55,14 @@ export async function POST(request: Request) {
       await admin.rpc('increment_allocated_points', { uid: userId, amount: prize.points_cost })
     }
 
+    // Log admin notification (non-critical — fire and forget)
+    void admin.from('admin_notifications').insert({
+      user_id: userId,
+      prize_id,
+      campaign_id: campaign_id ?? null,
+      type: 'prize_resgatar',
+    })
+
     return NextResponse.json({ selection }, { status: 201 })
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : 'Erro' }, { status: 500 })

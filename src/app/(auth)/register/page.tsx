@@ -272,8 +272,8 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden">
-      <div className="h-1 w-full brand-accent-bar" />
+    <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl">
+      <div className="h-1 w-full brand-accent-bar rounded-t-2xl overflow-hidden" />
 
       <div className="p-6 md:p-8">
         <div className="flex flex-col items-center mb-6">

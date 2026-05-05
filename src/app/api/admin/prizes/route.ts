@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   if (authError) return authError
 
   const body = await request.json()
-  const { title, points_cost, image_url, description, is_active } = body
+  const { title, points_cost, image_url, image_horizontal, description, is_active, pdf_url, images } = body
 
   if (!title) {
     return NextResponse.json({ error: 'title é obrigatório' }, { status: 400 })
@@ -44,9 +44,12 @@ export async function POST(request: Request) {
     .insert({
       title,
       points_cost: points_cost != null && points_cost !== '' ? Number(points_cost) : null,
-      image_url,
+      image_url: image_url || null,
+      image_horizontal: image_horizontal || null,
       description,
       is_active: is_active ?? true,
+      pdf_url: pdf_url || null,
+      images: Array.isArray(images) ? images : [],
     })
     .select()
     .single()

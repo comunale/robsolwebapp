@@ -16,9 +16,12 @@ export default function UserLayout({
       {/* Desktop sidebar — hidden on mobile, shown on md+ */}
       <SidebarUsuario />
 
-      {/* Content area — full width on mobile, offset by sidebar on desktop */}
+      {/* Content area — full width on mobile, offset by sidebar on desktop.
+          Max-width 520 px centered keeps the PWA feel on wide screens. */}
       <div className="md:ml-64">
-        {children}
+        <div className="max-w-[520px] mx-auto w-full">
+          {children}
+        </div>
       </div>
     </div>
   )
