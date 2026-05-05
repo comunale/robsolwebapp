@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { removePrizeStorageAssets } from '@/lib/storage/adminStorageCleanup'
 import { NextResponse } from 'next/server'
 
 async function requireAdmin() {
@@ -36,7 +37,7 @@ export async function PATCH(
 
 // DELETE /api/admin/prizes/[id] — soft-delete by setting is_active = false
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { error: authError } = await requireAdmin()
@@ -44,6 +45,7 @@ export async function DELETE(
 
   const { id } = await params
   const admin = createAdminClient()
+  const permanent = new URL(request.url).searchParams.get('permanent') === 'true'
 
   // Check if there are pending selections before deactivating
   const { count } = await admin
@@ -57,6 +59,26 @@ export async function DELETE(
       { error: `Não é possível remover: ${count} seleção(ões) pendente(s) para este prêmio.` },
       { status: 409 },
     )
+  }
+
+  if (permanent) {
+    const { data: prize, error: fetchError } = await admin
+      .from('prizes_catalog')
+      .select('image_url, image_horizontal, images')
+      .eq('id', id)
+      .single()
+
+    if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 500 })
+
+    const { error: deleteError } = await admin
+      .from('prizes_catalog')
+      .delete()
+      .eq('id', id)
+
+    if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 })
+
+    const deletedFiles = await removePrizeStorageAssets(admin, prize)
+    return NextResponse.json({ ok: true, deletedFiles })
   }
 
   const { error } = await admin

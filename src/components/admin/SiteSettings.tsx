@@ -12,7 +12,16 @@ import FaqManager from './FaqManager'
 // ─────────────────────────────────────────────────────────────────────────────
 interface Setting { key: string; label: string; value: string }
 
-type Tab = 'suporte' | 'logos' | 'cores' | 'conteudo' | 'faq'
+type Tab = 'suporte' | 'logos' | 'cores' | 'conteudo' | 'faq' | 'manutencao'
+
+interface MaintenanceScan {
+  bucket: string
+  totalFiles: number
+  referencedFiles: number
+  orphanedCount: number
+  orphanedFiles: string[]
+  deletedFiles?: number
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Logo config
@@ -171,6 +180,9 @@ export default function SiteSettings() {
   const [saving, setSaving] = useState<Record<string, boolean>>({})
   const [saved, setSaved]   = useState<Record<string, boolean>>({})
   const [uploading, setUploading] = useState<Record<string, boolean>>({})
+  const [maintenanceScan, setMaintenanceScan] = useState<MaintenanceScan | null>(null)
+  const [maintenanceBusy, setMaintenanceBusy] = useState(false)
+  const [maintenanceError, setMaintenanceError] = useState('')
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   useEffect(() => {
@@ -260,6 +272,54 @@ export default function SiteSettings() {
     }
   }
 
+  const scanPrizeImages = async () => {
+    setMaintenanceBusy(true)
+    setMaintenanceError('')
+    try {
+      const res = await fetch('/api/admin/storage-maintenance/prize-images')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Falha ao verificar arquivos')
+      setMaintenanceScan(data)
+      return data as MaintenanceScan
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Falha ao verificar arquivos'
+      setMaintenanceError(message)
+      return null
+    } finally {
+      setMaintenanceBusy(false)
+    }
+  }
+
+  const purgeUnusedPrizeImages = async () => {
+    const scan = maintenanceScan ?? await scanPrizeImages()
+    if (!scan) return
+
+    if (scan.orphanedCount === 0) {
+      alert('Nenhuma imagem inutilizada encontrada.')
+      return
+    }
+
+    if (!confirm(`Found ${scan.orphanedCount} unused images. Delete them?`)) return
+
+    setMaintenanceBusy(true)
+    setMaintenanceError('')
+    try {
+      const res = await fetch('/api/admin/storage-maintenance/prize-images', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: true }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Falha ao limpar arquivos')
+      setMaintenanceScan(data)
+      alert(`${data.deletedFiles ?? scan.orphanedCount} arquivo(s) removido(s).`)
+    } catch (err) {
+      setMaintenanceError(err instanceof Error ? err.message : 'Falha ao limpar arquivos')
+    } finally {
+      setMaintenanceBusy(false)
+    }
+  }
+
   if (loading) return <LoadingSpinner />
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
@@ -267,6 +327,7 @@ export default function SiteSettings() {
     { id: 'logos',    label: 'Identidade Visual',  icon: '🖼️' },
     { id: 'conteudo', label: 'Conteúdo da Home',   icon: '✏️' },
     { id: 'faq',      label: 'FAQ / Ajuda',         icon: '❓' },
+    { id: 'manutencao', label: 'Manutencao',        icon: 'M' },
     { id: 'suporte',  label: 'Links de Suporte',   icon: '🔗' },
   ]
 
@@ -754,6 +815,86 @@ export default function SiteSettings() {
               Itens inativos ficam ocultos para os usuários sem serem excluídos.
             </p>
             <FaqManager />
+          </div>
+        )}
+
+        {/* ── TAB: MANUTENCAO ────────────────────────────────────────────────── */}
+        {tab === 'manutencao' && (
+          <div className="space-y-5">
+            <ContentSection title="Manutencao de Arquivos" icon="M">
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-gray-600">
+                    Verifica o bucket <code className="font-mono text-xs bg-gray-100 px-1 rounded">prize-images</code>,
+                    compara os arquivos com as URLs salvas em <code className="font-mono text-xs bg-gray-100 px-1 rounded">prizes_catalog</code>
+                    {' '}e <code className="font-mono text-xs bg-gray-100 px-1 rounded">campaigns</code>, e remove somente arquivos sem referencia no banco.
+                  </p>
+                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mt-3">
+                    A exclusao e permanente no Supabase Storage. Revise a contagem antes de confirmar.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void scanPrizeImages()}
+                    disabled={maintenanceBusy}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-sm font-semibold rounded-lg transition"
+                  >
+                    {maintenanceBusy ? 'Verificando...' : 'Verificar imagens inutilizadas'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void purgeUnusedPrizeImages()}
+                    disabled={maintenanceBusy || maintenanceScan?.orphanedCount === 0}
+                    className="px-4 py-2 bg-red-50 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed text-red-700 text-sm font-semibold rounded-lg transition border border-red-100"
+                  >
+                    Limpar arquivos inutilizados
+                  </button>
+                </div>
+
+                {maintenanceError && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                    {maintenanceError}
+                  </div>
+                )}
+
+                {maintenanceScan && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <p className="text-xs text-gray-400">Arquivos no bucket</p>
+                        <p className="text-2xl font-black text-gray-900">{maintenanceScan.totalFiles}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400">Referenciados no banco</p>
+                        <p className="text-2xl font-black text-green-700">{maintenanceScan.referencedFiles}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400">Inutilizados</p>
+                        <p className="text-2xl font-black text-red-700">{maintenanceScan.orphanedCount}</p>
+                      </div>
+                    </div>
+
+                    {maintenanceScan.orphanedFiles.length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-xs font-semibold text-gray-500 mb-2">Amostra dos arquivos que serao removidos</p>
+                        <div className="max-h-48 overflow-auto rounded-lg bg-white border border-gray-200 divide-y divide-gray-100">
+                          {maintenanceScan.orphanedFiles.slice(0, 20).map((path) => (
+                            <p key={path} className="px-3 py-2 text-xs font-mono text-gray-600 break-all">{path}</p>
+                          ))}
+                        </div>
+                        {maintenanceScan.orphanedFiles.length > 20 && (
+                          <p className="text-xs text-gray-400 mt-2">
+                            + {maintenanceScan.orphanedFiles.length - 20} arquivo(s) adicionais.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </ContentSection>
           </div>
         )}
 

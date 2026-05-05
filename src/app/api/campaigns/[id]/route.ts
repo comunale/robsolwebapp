@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { removeCampaignStorageAssets } from '@/lib/storage/adminStorageCleanup'
 import { NextResponse } from 'next/server'
 import type { UpdateCampaignInput } from '@/types/campaign'
 
@@ -133,11 +135,22 @@ export async function DELETE(
       return NextResponse.json({ error: 'Acesso negado - apenas admin' }, { status: 403 })
     }
 
+    const admin = createAdminClient()
+    const { data: campaign, error: fetchError } = await admin
+      .from('campaigns')
+      .select('banner_url, banner_url_mobile')
+      .eq('id', id)
+      .single()
+
+    if (fetchError) throw fetchError
+
     const { error } = await supabase.from('campaigns').delete().eq('id', id)
 
     if (error) throw error
 
-    return NextResponse.json({ message: 'Campanha excluida com sucesso' })
+    const deletedFiles = await removeCampaignStorageAssets(admin, campaign)
+
+    return NextResponse.json({ message: 'Campanha excluida com sucesso', deletedFiles })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Falha ao excluir campanha'
     console.error('Error deleting campaign:', error)
