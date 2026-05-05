@@ -96,6 +96,7 @@ export default function DestaquesCampanhas({
                       alt={campaign.title}
                       fill
                       sizes="256px"
+                      loading="lazy"
                       className="object-cover md:hidden"
                     />
                   )}
@@ -105,6 +106,7 @@ export default function DestaquesCampanhas({
                       alt={campaign.title}
                       fill
                       sizes="320px"
+                      loading="lazy"
                       className={`object-cover ${campaign.banner_url_mobile ? 'hidden md:block' : ''}`}
                     />
                   )}
@@ -183,6 +185,7 @@ export default function DestaquesCampanhas({
                             <img
                               src={thumb}
                               alt=""
+                              loading="lazy"
                               className="w-7 h-7 rounded-md object-cover flex-shrink-0 ring-1 ring-white/20"
                             />
                           ) : (

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import AdminHeader from './AdminHeader'
 import { uploadPrizeImage, uploadPrizeImageHorizontal } from '@/lib/storage/imageStorage'
+import { compressImageForUpload } from '@/lib/images/compressImage'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -153,8 +154,14 @@ function PrizeForm({
       const uploadId = initial?.id ?? crypto.randomUUID()
       let imageUrl = form.image_url
       let imageHorizUrl = form.image_horizontal
-      if (imageFile) imageUrl = await uploadPrizeImage(imageFile, uploadId)
-      if (imageHorizFile) imageHorizUrl = await uploadPrizeImageHorizontal(imageHorizFile, uploadId)
+      if (imageFile) {
+        const compressedImage = await compressImageForUpload(imageFile)
+        imageUrl = await uploadPrizeImage(compressedImage, uploadId)
+      }
+      if (imageHorizFile) {
+        const compressedImageHoriz = await compressImageForUpload(imageHorizFile)
+        imageHorizUrl = await uploadPrizeImageHorizontal(compressedImageHoriz, uploadId)
+      }
       onSave({ ...form, image_url: imageUrl, image_horizontal: imageHorizUrl })
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Erro ao enviar imagem')

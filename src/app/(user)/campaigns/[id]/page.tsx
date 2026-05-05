@@ -66,6 +66,7 @@ function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
         src={src}
         alt=""
         className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+        loading="lazy"
         onClick={(e) => e.stopPropagation()}
       />
     </div>
@@ -105,7 +106,7 @@ function PrizeCard({
       {mainImage ? (
         <button type="button" className="w-full" onClick={() => onImageClick(mainImage)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={mainImage} alt={prize.title} className="w-full h-48 object-cover" />
+          <img src={mainImage} alt={prize.title} loading="lazy" className="w-full h-48 object-cover" />
         </button>
       ) : (
         <div className="w-full h-48 bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
@@ -124,7 +125,7 @@ function PrizeCard({
               className="flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border border-gray-200 hover:ring-2 hover:ring-indigo-400 transition"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" className="w-full h-full object-cover" />
+              <img src={src} alt="" loading="lazy" className="w-full h-full object-cover" />
             </button>
           ))}
         </div>
@@ -329,8 +330,8 @@ export default function CampaignDetailsPage() {
                 alt={campaign.title}
                 fill
                 sizes="100vw"
+                loading="lazy"
                 className="object-cover md:hidden"
-                priority
               />
             )}
             {campaign.banner_url && (
@@ -339,8 +340,8 @@ export default function CampaignDetailsPage() {
                 alt={campaign.title}
                 fill
                 sizes="100vw"
+                loading="lazy"
                 className={`object-cover ${campaign.banner_url_mobile ? 'hidden md:block' : ''}`}
-                priority
               />
             )}
           </div>

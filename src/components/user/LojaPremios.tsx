@@ -217,7 +217,7 @@ export default function LojaPremios() {
                 >
                   {displayImage ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={displayImage} alt={prize.title} className="w-full h-40 object-cover" />
+                    <img src={displayImage} alt={prize.title} loading="lazy" className="w-full h-40 object-cover" />
                   ) : (
                     <div className="w-full h-40 bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
                       <span className="text-5xl">🎁</span>

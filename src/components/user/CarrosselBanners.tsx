@@ -74,6 +74,7 @@ export default function CarrosselBanners() {
                   alt={slide.title}
                   fill
                   sizes="100vw"
+                  loading="lazy"
                   className="object-cover opacity-70"
                 />
               )}

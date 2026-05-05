@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { uploadCampaignBanner, uploadCampaignBannerMobile } from '@/lib/storage/imageStorage'
+import { compressImageForUpload } from '@/lib/images/compressImage'
 import AdminHeader from './AdminHeader'
 import { useAdmin } from './AdminGuard'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
@@ -193,7 +194,8 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
 
       if (bannerFile) {
         try {
-          bannerUrl = await uploadCampaignBanner(bannerFile, uploadId)
+          const compressedBanner = await compressImageForUpload(bannerFile)
+          bannerUrl = await uploadCampaignBanner(compressedBanner, uploadId)
         } catch (uploadErr: unknown) {
           const msg = uploadErr instanceof Error ? uploadErr.message : ''
           if (msg.includes('Bucket not found') || msg.includes('not found')) {
@@ -205,7 +207,8 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
 
       if (mobileBannerFile) {
         try {
-          mobileBannerUrl = await uploadCampaignBannerMobile(mobileBannerFile, uploadId)
+          const compressedMobileBanner = await compressImageForUpload(mobileBannerFile)
+          mobileBannerUrl = await uploadCampaignBannerMobile(compressedMobileBanner, uploadId)
         } catch (uploadErr: unknown) {
           const msg = uploadErr instanceof Error ? uploadErr.message : ''
           throw new Error(`Falha ao enviar banner mobile: ${msg}`)

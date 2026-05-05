@@ -132,6 +132,7 @@ export default function CampanhasPage() {
                           alt={campaign.title}
                           fill
                           sizes="(max-width:768px) 100vw, 50vw"
+                          loading="lazy"
                           className="object-cover md:hidden"
                         />
                       )}
@@ -141,6 +142,7 @@ export default function CampanhasPage() {
                           alt={campaign.title}
                           fill
                           sizes="(max-width:768px) 100vw, 50vw"
+                          loading="lazy"
                           className={`object-cover ${campaign.banner_url_mobile ? 'hidden md:block' : ''}`}
                         />
                       )}
