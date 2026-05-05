@@ -272,8 +272,8 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
         subtitle={isEditMode ? 'Atualize as informacoes da campanha' : 'Configure uma nova campanha de incentivo'}
       />
 
-      <div className="p-8 max-w-3xl">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+      <div className="p-6 lg:p-8 w-full max-w-4xl">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 lg:p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Title */}
             <div>
@@ -493,7 +493,8 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
               )}
             </div>
 
-            {/* Campaign Settings */}
+            {/* Campaign Settings — only relevant for incentive campaigns */}
+            {campaignType === 'incentive' && (
             <div className="border-t border-gray-200 pt-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Configuracoes da Campanha</h3>
 
@@ -502,38 +503,44 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Pontos por Cupom</label>
                   <input
                     type="number"
-                    min={1}
+                    min={0}
                     value={pointsPerCoupon}
-                    onChange={(e) => setPointsPerCoupon(parseInt(e.target.value) || 10)}
+                    onChange={(e) => setPointsPerCoupon(parseInt(e.target.value) || 0)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
                   />
                   <p className="text-xs text-gray-500 mt-1">Pontos padrao concedidos por cupom aprovado</p>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="flex items-center">
-                    <input
-                      id="hasDraws"
-                      type="checkbox"
-                      checked={hasDraws}
-                      onChange={(e) => setHasDraws(e.target.checked)}
-                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                    />
-                    <label htmlFor="hasDraws" className="ml-2 text-sm text-gray-700">Habilitar Sorteios</label>
-                  </div>
-                  {hasDraws && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Sorteio</label>
-                      <select
-                        value={drawType}
-                        onChange={(e) => setDrawType(e.target.value as 'manual' | 'random')}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white"
-                      >
-                        <option value="random">Aleatorio</option>
-                        <option value="manual">Manual</option>
-                      </select>
+                <div>
+                  {/* Invisible label keeps this column aligned with the left input label */}
+                  <span className="block text-sm font-medium text-gray-700 mb-1 select-none invisible" aria-hidden>
+                    &nbsp;
+                  </span>
+                  <div className="space-y-3">
+                    <div className="flex items-center">
+                      <input
+                        id="hasDraws"
+                        type="checkbox"
+                        checked={hasDraws}
+                        onChange={(e) => setHasDraws(e.target.checked)}
+                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      />
+                      <label htmlFor="hasDraws" className="ml-2 text-sm text-gray-700">Habilitar Sorteios</label>
                     </div>
-                  )}
+                    {hasDraws && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Sorteio</label>
+                        <select
+                          value={drawType}
+                          onChange={(e) => setDrawType(e.target.value as 'manual' | 'random')}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white"
+                        >
+                          <option value="random">Aleatorio</option>
+                          <option value="manual">Manual</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -615,6 +622,7 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
                 ))}
               </div>
             </div>
+            )} {/* end campaignType === 'incentive' */}
 
             {/* Banner Uploads */}
             <div className="border-t border-gray-200 pt-6">

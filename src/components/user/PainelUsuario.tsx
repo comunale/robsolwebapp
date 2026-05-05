@@ -86,9 +86,15 @@ interface CouponStats {
 export default function PainelUsuario() {
   const { user, profile, loading } = useAuth()
   const brand = useBrand()
+  interface CampaignPrizePreview {
+    id: string; title: string; points_cost: number | null
+    image_url: string | null; image_horizontal: string | null
+  }
+
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set())
   const [luckyNumbersByCampaign, setLuckyNumbersByCampaign] = useState<Record<string, number>>({})
+  const [prizesByCampaign, setPrizesByCampaign] = useState<Record<string, CampaignPrizePreview[]>>({})
   const [couponStats, setCouponStats] = useState<CouponStats>({ total: 0, approved: 0, rejected: 0 })
   const [topUsers, setTopUsers] = useState<TopUser[]>([])
   const supabase = useMemo(() => createClient(), [])
@@ -135,7 +141,26 @@ export default function PainelUsuario() {
         ])
 
       if (!active) return
-      if (campaignsRes.data) setCampaigns(campaignsRes.data as Campaign[])
+
+      const fetchedCampaigns = (campaignsRes.data ?? []) as Campaign[]
+      setCampaigns(fetchedCampaigns)
+
+      // Parallel-fetch prizes for each active campaign
+      if (fetchedCampaigns.length > 0) {
+        const prizeResults = await Promise.allSettled(
+          fetchedCampaigns.map((c) =>
+            fetch(`/api/campaigns/${c.id}/prizes`).then((r) => r.ok ? r.json() : { prizes: [] })
+          )
+        )
+        if (!active) return
+        const map: Record<string, CampaignPrizePreview[]> = {}
+        fetchedCampaigns.forEach((c, i) => {
+          const r = prizeResults[i]
+          if (r.status === 'fulfilled') map[c.id] = r.value.prizes ?? []
+        })
+        setPrizesByCampaign(map)
+      }
+
       if (participantsRes.data) {
         setJoinedIds(new Set(participantsRes.data.map((p: { campaign_id: string }) => p.campaign_id)))
       }
@@ -271,6 +296,7 @@ export default function PainelUsuario() {
           campaigns={campaigns}
           joinedIds={joinedIds}
           luckyNumbersByCampaign={luckyNumbersByCampaign}
+          prizesByCampaign={prizesByCampaign}
           onJoin={handleJoinCampaign}
           onLuckyNumberJoined={(campaignId, number) =>
             setLuckyNumbersByCampaign((prev) => ({ ...prev, [campaignId]: number }))

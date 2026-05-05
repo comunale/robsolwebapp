@@ -5,10 +5,19 @@ import Image from 'next/image'
 import Link from 'next/link'
 import type { Campaign } from '@/types/campaign'
 
+interface CampaignPrizePreview {
+  id: string
+  title: string
+  points_cost: number | null
+  image_url: string | null
+  image_horizontal: string | null
+}
+
 interface DestaquesCampanhasProps {
   campaigns: Campaign[]
   joinedIds: Set<string>
   luckyNumbersByCampaign?: Record<string, number>
+  prizesByCampaign?: Record<string, CampaignPrizePreview[]>
   onJoin: (campaignId: string) => void
   onLuckyNumberJoined?: (campaignId: string, number: number) => void
 }
@@ -17,6 +26,7 @@ export default function DestaquesCampanhas({
   campaigns,
   joinedIds,
   luckyNumbersByCampaign = {},
+  prizesByCampaign = {},
   onJoin,
   onLuckyNumberJoined,
 }: DestaquesCampanhasProps) {
@@ -70,12 +80,13 @@ export default function DestaquesCampanhas({
           const isJoined = joinedIds.has(campaign.id)
           const isJoining = joining.has(campaign.id)
           const luckyNumber = luckyNumbersByCampaign[campaign.id]
+          const prizes = prizesByCampaign[campaign.id] ?? []
 
           return (
             <Link
               key={campaign.id}
               href={`/campaigns/${campaign.id}`}
-              className="snap-start flex-shrink-0 w-64 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-4 text-white shadow-md hover:shadow-lg transition-shadow"
+              className="snap-start flex-shrink-0 w-64 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-4 text-white shadow-md hover:shadow-lg transition-shadow flex flex-col"
             >
               {(campaign.banner_url || campaign.banner_url_mobile) && (
                 <div className="relative w-full aspect-[4/3] md:aspect-video rounded-lg overflow-hidden mb-3 bg-white/10">
@@ -116,7 +127,7 @@ export default function DestaquesCampanhas({
                   </span>
                 )}
                 <span className="text-white/70">
-                  ate {new Date(campaign.end_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                  até {new Date(campaign.end_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
                 </span>
               </div>
 
@@ -156,7 +167,48 @@ export default function DestaquesCampanhas({
                 </button>
               )}
 
-              {!isRaffle && campaign.settings?.goals && campaign.settings.goals.length > 0 && (
+              {/* ── Prize Preview Strip ───────────────────────────────────── */}
+              {prizes.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-white/20">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-white/50 mb-1.5">
+                    {isRaffle ? 'Prêmios Disponíveis' : 'Prêmios'}
+                  </p>
+                  <div className="space-y-1.5">
+                    {prizes.slice(0, 3).map((prize) => {
+                      const thumb = prize.image_horizontal ?? prize.image_url
+                      return (
+                        <div key={prize.id} className="flex items-center gap-2">
+                          {thumb ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img
+                              src={thumb}
+                              alt=""
+                              className="w-7 h-7 rounded-md object-cover flex-shrink-0 ring-1 ring-white/20"
+                            />
+                          ) : (
+                            <div className="w-7 h-7 rounded-md bg-white/20 flex items-center justify-center flex-shrink-0">
+                              <span className="text-[10px]">🎁</span>
+                            </div>
+                          )}
+                          <span className="text-white/90 text-xs truncate flex-1">{prize.title}</span>
+                          {isRaffle ? (
+                            <span className="flex-shrink-0 text-[10px] text-amber-300 font-semibold">Sorteio</span>
+                          ) : prize.points_cost != null ? (
+                            <span className="flex-shrink-0 text-[10px] text-white/60">{prize.points_cost} pts</span>
+                          ) : null}
+                        </div>
+                      )
+                    })}
+                    {prizes.length > 3 && (
+                      <p className="text-[10px] text-white/40">
+                        + {prizes.length - 3} mais prêmio{prizes.length - 3 !== 1 ? 's' : ''}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {!isRaffle && campaign.settings?.goals && campaign.settings.goals.length > 0 && prizes.length === 0 && (
                 <div className="mt-1.5 text-xs text-white/60">
                   {campaign.settings.goals.length} meta(s) disponivel(is)
                 </div>
