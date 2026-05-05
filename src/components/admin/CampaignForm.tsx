@@ -222,12 +222,14 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
         banner_url: bannerUrl,
         banner_url_mobile: mobileBannerUrl,
         keywords,
-        settings: {
-          points_per_coupon: pointsPerCoupon,
-          has_draws: hasDraws,
-          draw_type: hasDraws ? drawType : null,
-          goals: goals.filter(g => g.label.trim()),
-        },
+        settings: campaignType === 'raffle_only'
+          ? { points_per_coupon: 0, has_draws: false, draw_type: null, goals: [] }
+          : {
+              points_per_coupon: pointsPerCoupon,
+              has_draws: hasDraws,
+              draw_type: hasDraws ? drawType : null,
+              goals: goals.filter((g) => g.label.trim()),
+            },
       }
 
       const url = isEditMode ? `/api/campaigns/${campaignId}` : '/api/campaigns'

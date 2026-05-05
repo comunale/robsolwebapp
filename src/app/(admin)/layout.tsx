@@ -13,9 +13,10 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex">
+      <div className="w-64 flex-shrink-0" />
       <AdminSidebar />
-      <div className="ml-64">
+      <div className="flex-1 min-w-0 flex flex-col overflow-x-hidden">
         <AdminGuard>{children}</AdminGuard>
       </div>
     </div>

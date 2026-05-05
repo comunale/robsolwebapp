@@ -96,18 +96,14 @@ function PrizeCard({
 }) {
   const mainImage = prize.image_horizontal ?? prize.image_url
   const galleryImages = prize.images?.filter(Boolean) ?? []
-  const canAfford = isRaffle || spendablePoints >= (prize.points_cost ?? 0)
+  const canAfford = spendablePoints >= (prize.points_cost ?? 0)
   const needed = (prize.points_cost ?? 0) - spendablePoints
 
   return (
-    <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${isSelected ? 'border-green-400 ring-2 ring-green-300' : 'border-gray-200'}`}>
+    <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${!isRaffle && isSelected ? 'border-green-400 ring-2 ring-green-300' : 'border-gray-200'}`}>
       {/* Main image */}
       {mainImage ? (
-        <button
-          type="button"
-          className="w-full"
-          onClick={() => onImageClick(mainImage)}
-        >
+        <button type="button" className="w-full" onClick={() => onImageClick(mainImage)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={mainImage} alt={prize.title} className="w-full h-48 object-cover" />
         </button>
@@ -156,40 +152,30 @@ function PrizeCard({
           </a>
         )}
 
-        <div className="flex items-center justify-between gap-2">
-          {isRaffle ? (
-            <span className="text-sm font-bold text-amber-600">🎲 Sorteio</span>
-          ) : (
+        {/* Incentive-only: points cost + resgatar button */}
+        {!isRaffle && (
+          <div className="flex items-center justify-between gap-2 mt-2">
             <span className={`text-sm font-black ${canAfford || isSelected ? 'text-indigo-700' : 'text-gray-400'}`}>
               {prize.points_cost} pts
             </span>
-          )}
-
-          {isRaffle ? (
-            <span className="text-xs text-gray-500 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl font-medium">
-              Prêmios Disponíveis
-            </span>
-          ) : isSelected ? (
-            <span className="flex items-center gap-1.5 text-xs font-bold text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-xl">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
-              Selecionado
-            </span>
-          ) : (
-            <button
-              onClick={() => onResgatar(prize)}
-              disabled={!canAfford || selecting || hasPendingSelection}
-              className="text-xs font-bold px-4 py-2 rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed bg-indigo-600 hover:bg-indigo-700 text-white disabled:bg-gray-200 disabled:text-gray-400"
-            >
-              {selecting
-                ? 'Resgatando...'
-                : !canAfford
-                ? `Faltam ${needed} pts`
-                : 'Resgatar'}
-            </button>
-          )}
-        </div>
+            {isSelected ? (
+              <span className="flex items-center gap-1.5 text-xs font-bold text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-xl">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                Selecionado
+              </span>
+            ) : (
+              <button
+                onClick={() => onResgatar(prize)}
+                disabled={!canAfford || selecting || hasPendingSelection}
+                className="text-xs font-bold px-4 py-2 rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed bg-indigo-600 hover:bg-indigo-700 text-white disabled:bg-gray-200 disabled:text-gray-400"
+              >
+                {selecting ? 'Resgatando...' : !canAfford ? `Faltam ${needed} pts` : 'Resgatar'}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -436,6 +422,60 @@ export default function CampaignDetailsPage() {
             </div>
           )}
 
+          {/* ── Prizes Section — directly below lucky number ────────────────── */}
+          {prizesData && prizesData.prizes.length > 0 && (
+            <div className="pt-1">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-base font-bold text-gray-900">Prêmios desta Campanha</h2>
+                <span className="text-xs text-gray-400">
+                  {prizesData.prizes.length} prêmio{prizesData.prizes.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+
+              {/* Points balance — incentive only */}
+              {!isRaffle && (
+                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100 p-3 mb-4">
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div>
+                      <p className="text-lg font-black text-indigo-700">{prizesData.totalPoints}</p>
+                      <p className="text-[10px] text-gray-500 font-medium">Total</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-black text-amber-600">{prizesData.totalPoints - prizesData.spendablePoints}</p>
+                      <p className="text-[10px] text-gray-500 font-medium">Reservados</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-black text-green-600">{prizesData.spendablePoints}</p>
+                      <p className="text-[10px] text-gray-500 font-medium">Disponíveis</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {isRaffle && (
+                <p className="text-xs text-gray-500 mb-4">
+                  Prêmios que serão sorteados entre os participantes ao final da campanha.
+                </p>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {prizesData.prizes.map((prize) => (
+                  <PrizeCard
+                    key={prize.id}
+                    prize={prize}
+                    isRaffle={isRaffle}
+                    spendablePoints={prizesData.spendablePoints}
+                    isSelected={selectedPrizeIds.has(prize.id)}
+                    hasPendingSelection={hasPendingSelection && !selectedPrizeIds.has(prize.id)}
+                    selecting={!!selecting[prize.id]}
+                    onResgatar={handleResgatar}
+                    onImageClick={setLightboxSrc}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Description */}
           {campaign.description && (
             <div>
@@ -501,60 +541,6 @@ export default function CampaignDetailsPage() {
                 </svg>
                 Escanear Cupom
               </Link>
-            </div>
-          )}
-
-          {/* ── Prizes Section ─────────────────────────────────────────────── */}
-          {prizesData && prizesData.prizes.length > 0 && (
-            <div className="pt-2">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-base font-bold text-gray-900">Prêmios desta Campanha</h2>
-                <span className="text-xs text-gray-400">
-                  {prizesData.prizes.length} prêmio{prizesData.prizes.length !== 1 ? 's' : ''}
-                </span>
-              </div>
-
-              {/* Points balance for incentive */}
-              {!isRaffle && (
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100 p-3 mb-4">
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    <div>
-                      <p className="text-lg font-black text-indigo-700">{prizesData.totalPoints}</p>
-                      <p className="text-[10px] text-gray-500 font-medium">Total</p>
-                    </div>
-                    <div>
-                      <p className="text-lg font-black text-amber-600">{prizesData.totalPoints - prizesData.spendablePoints}</p>
-                      <p className="text-[10px] text-gray-500 font-medium">Reservados</p>
-                    </div>
-                    <div>
-                      <p className="text-lg font-black text-green-600">{prizesData.spendablePoints}</p>
-                      <p className="text-[10px] text-gray-500 font-medium">Disponíveis</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {isRaffle && (
-                <p className="text-xs text-gray-500 mb-4">
-                  Prêmios que serão sorteados entre os participantes ao final da campanha.
-                </p>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {prizesData.prizes.map((prize) => (
-                  <PrizeCard
-                    key={prize.id}
-                    prize={prize}
-                    isRaffle={isRaffle}
-                    spendablePoints={prizesData.spendablePoints}
-                    isSelected={selectedPrizeIds.has(prize.id)}
-                    hasPendingSelection={hasPendingSelection && !selectedPrizeIds.has(prize.id)}
-                    selecting={!!selecting[prize.id]}
-                    onResgatar={handleResgatar}
-                    onImageClick={setLightboxSrc}
-                  />
-                ))}
-              </div>
             </div>
           )}
         </div>
