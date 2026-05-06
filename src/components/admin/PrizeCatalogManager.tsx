@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import AdminHeader from './AdminHeader'
 import { uploadPrizeGalleryImage, uploadPrizeImage, uploadPrizeImageHorizontal } from '@/lib/storage/imageStorage'
 import { compressImageForUpload } from '@/lib/images/compressImage'
@@ -123,7 +123,10 @@ function PrizeForm({
   const [imageHorizPreview, setImageHorizPreview] = useState<string | null>(initial?.image_horizontal ?? null)
   const [uploading, setUploading] = useState(false)
   const [galleryUploading, setGalleryUploading] = useState(false)
+  const [galleryMessage, setGalleryMessage] = useState('')
+  const [galleryError, setGalleryError] = useState('')
   const [pendingGalleryUploads, setPendingGalleryUploads] = useState<string[]>([])
+  const galleryInputRef = useRef<HTMLInputElement>(null)
 
   const set = (k: string, v: string | boolean) => setForm((p) => ({ ...p, [k]: v }))
 
@@ -161,36 +164,40 @@ function PrizeForm({
   }
 
   const handleGalleryFiles = async (files: FileList | File[]) => {
+    setGalleryError('')
+    setGalleryMessage('')
     const selectedFiles = Array.from(files)
     if (selectedFiles.length === 0) return
 
     const availableSlots = 30 - form.images.length
     if (availableSlots <= 0) {
-      alert('A galeria ja possui o limite de 30 imagens')
+      setGalleryError('A galeria ja possui o limite de 30 imagens.')
       return
     }
 
     const imageFiles = selectedFiles.filter((file) => file.type.startsWith('image/')).slice(0, availableSlots)
     if (imageFiles.length === 0) {
-      alert('Selecione apenas arquivos de imagem')
+      setGalleryError('Selecione apenas arquivos de imagem.')
       return
     }
     if (selectedFiles.length > availableSlots) {
-      alert(`Apenas ${availableSlots} imagem(ns) foram adicionadas para respeitar o limite de 30.`)
+      setGalleryMessage(`Apenas ${availableSlots} imagem(ns) serao adicionadas para respeitar o limite de 30.`)
     }
 
     setGalleryUploading(true)
     try {
       const uploadedUrls: string[] = []
-      for (const file of imageFiles) {
+      for (const [index, file] of imageFiles.entries()) {
+        setGalleryMessage(`Comprimindo e enviando ${index + 1}/${imageFiles.length}: ${file.name}`)
         const compressed = await compressImageForUpload(file)
         const url = await uploadPrizeGalleryImage(compressed, uploadId)
         uploadedUrls.push(url)
       }
       setForm((p) => ({ ...p, images: [...p.images, ...uploadedUrls].slice(0, 30) }))
       setPendingGalleryUploads((p) => [...p, ...uploadedUrls])
+      setGalleryMessage(`${uploadedUrls.length} imagem(ns) adicionada(s). Clique em Salvar Premio para gravar no banco.`)
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Erro ao enviar galeria')
+      setGalleryError(e instanceof Error ? e.message : 'Erro ao enviar galeria')
     } finally {
       setGalleryUploading(false)
     }
@@ -374,8 +381,7 @@ function PrizeForm({
         <label className="block text-xs font-semibold text-gray-700 mb-1">
           Galeria de Imagens <span className="font-normal text-gray-400">(ate 30 imagens)</span>
         </label>
-        <label
-          htmlFor={`gallery-upload-${uploadId}`}
+        <div
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
             e.preventDefault()
@@ -390,7 +396,16 @@ function PrizeForm({
             {galleryUploading ? 'Enviando e comprimindo...' : 'Arraste imagens ou clique para enviar'}
           </span>
           <span className="text-xs text-gray-400 mt-1">WebP automatico, 1200px, ate {30 - form.images.length} restantes</span>
+          <button
+            type="button"
+            onClick={() => galleryInputRef.current?.click()}
+            disabled={galleryUploading || form.images.length >= 30}
+            className="mt-3 px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 disabled:opacity-50 text-indigo-700 text-xs font-semibold rounded-lg transition"
+          >
+            Selecionar imagens
+          </button>
           <input
+            ref={galleryInputRef}
             id={`gallery-upload-${uploadId}`}
             type="file"
             accept="image/*"
@@ -403,7 +418,13 @@ function PrizeForm({
             }}
             className="hidden"
           />
-        </label>
+        </div>
+        {galleryMessage && (
+          <p className="text-xs text-indigo-600 mt-2">{galleryMessage}</p>
+        )}
+        {galleryError && (
+          <p className="text-xs text-red-600 mt-2">{galleryError}</p>
+        )}
         {form.images.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 mt-3">
             {form.images.map((src) => (
