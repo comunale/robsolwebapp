@@ -217,7 +217,17 @@ export const uploadPrizeGalleryImage = async (file: File, prizeImageId: string):
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       cause: (error as any).cause,
     })
-    throw error
+    const statusCode = typeof error === 'object' && error && 'statusCode' in error ? String(error.statusCode) : ''
+    const details = [
+      'Falha ao enviar imagem para o bucket prize-images.',
+      statusCode ? `Status ${statusCode}.` : '',
+      error.message,
+      'Verifique se voce esta logado e se a policy de INSERT do Supabase Storage permite uploads.',
+    ]
+      .filter(Boolean)
+      .join(' ')
+
+    throw new Error(details)
   }
 
   const { data: { publicUrl } } = supabase.storage.from('prize-images').getPublicUrl(filePath)

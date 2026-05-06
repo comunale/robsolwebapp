@@ -164,11 +164,35 @@ function PrizeForm({
     if (!res.ok) throw new Error(data.error ?? 'Erro ao remover imagem do storage')
   }
 
+  const openGalleryPicker = () => {
+    setGalleryError('')
+
+    if (galleryUploading) {
+      setGalleryMessage('Aguarde o envio atual terminar antes de selecionar mais imagens.')
+      return
+    }
+
+    if (form.images.length >= 30) {
+      setGalleryError('A galeria ja possui o limite de 30 imagens.')
+      return
+    }
+
+    if (!galleryInputRef.current) {
+      setGalleryError('Nao foi possivel abrir o seletor de arquivos. Recarregue a pagina e tente novamente.')
+      return
+    }
+
+    galleryInputRef.current.click()
+  }
+
   const handleGalleryFiles = async (files: FileList | File[]) => {
     setGalleryError('')
     setGalleryMessage('')
     const selectedFiles = Array.from(files)
-    if (selectedFiles.length === 0) return
+    if (selectedFiles.length === 0) {
+      setGalleryMessage('Nenhum arquivo selecionado.')
+      return
+    }
 
     const availableSlots = 30 - form.images.length
     if (availableSlots <= 0) {
@@ -176,14 +200,25 @@ function PrizeForm({
       return
     }
 
-    const imageFiles = selectedFiles.filter((file) => file.type.startsWith('image/')).slice(0, availableSlots)
+    const validImageFiles = selectedFiles.filter((file) => file.type.startsWith('image/'))
+    const imageFiles = validImageFiles.slice(0, availableSlots)
     if (imageFiles.length === 0) {
       setGalleryError('Selecione apenas arquivos de imagem.')
       return
     }
-    if (selectedFiles.length > availableSlots) {
-      setGalleryMessage(`Apenas ${availableSlots} imagem(ns) serao adicionadas para respeitar o limite de 30.`)
-    }
+
+    const ignoredFiles = selectedFiles.length - validImageFiles.length
+    const limitMessage =
+      selectedFiles.length > availableSlots
+        ? `Apenas ${availableSlots} imagem(ns) serao adicionadas para respeitar o limite de 30.`
+        : ''
+    const ignoredMessage = ignoredFiles > 0 ? `${ignoredFiles} arquivo(s) sem formato de imagem foram ignorados.` : ''
+
+    setGalleryMessage(
+      [limitMessage, ignoredMessage, `Preparando upload de ${imageFiles.length} imagem(ns)...`]
+        .filter(Boolean)
+        .join(' '),
+    )
 
     setGalleryUploading(true)
     try {
@@ -212,9 +247,9 @@ function PrizeForm({
       console.log('[Gallery] all done, images in form:', form.images.length + uploadedUrls.length)
       setGalleryMessage(`${uploadedUrls.length} imagem(ns) adicionada(s) com sucesso. Clique em Salvar Prêmio para gravar.`)
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Erro desconhecido ao enviar galeria'
+      const msg = e instanceof Error ? e.message : 'Erro desconhecido ao enviar galeria.'
       console.error('[Gallery] FATAL ERROR:', e)
-      setGalleryError(`Erro: ${msg}`)
+      setGalleryError(msg)
     } finally {
       setGalleryUploading(false)
     }
@@ -402,6 +437,15 @@ function PrizeForm({
           Galeria de Imagens <span className="font-normal text-gray-400">(ate 30 imagens)</span>
         </label>
         <div
+          role="button"
+          tabIndex={galleryUploading || form.images.length >= 30 ? -1 : 0}
+          onClick={openGalleryPicker}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              openGalleryPicker()
+            }
+          }}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
             e.preventDefault()
@@ -418,7 +462,10 @@ function PrizeForm({
           <span className="text-xs text-gray-400 mt-1">WebP automatico, 1200px, ate {30 - form.images.length} restantes</span>
           <button
             type="button"
-            onClick={() => galleryInputRef.current?.click()}
+            onClick={(e) => {
+              e.stopPropagation()
+              openGalleryPicker()
+            }}
             disabled={galleryUploading || form.images.length >= 30}
             className="mt-3 px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 disabled:opacity-50 text-indigo-700 text-xs font-semibold rounded-lg transition"
           >
@@ -434,7 +481,13 @@ function PrizeForm({
             onChange={(e) => {
               const files = e.target.files
               e.target.value = ''
-              if (files) void handleGalleryFiles(files)
+              if (!files || files.length === 0) {
+                setGalleryMessage('Nenhum arquivo selecionado.')
+                return
+              }
+              setGalleryError('')
+              setGalleryMessage(`Preparando upload de ${files.length} imagem(ns)...`)
+              void handleGalleryFiles(files)
             }}
             className="hidden"
           />
