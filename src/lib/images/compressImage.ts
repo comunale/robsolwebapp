@@ -28,15 +28,13 @@ const loadImage = async (file: File): Promise<HTMLImageElement> => {
 
   try {
     const image = new Image()
-    image.decoding = 'async'
     image.src = objectUrl
-
-    await new Promise<void>((resolve, reject) => {
-      image.onload = () => resolve()
-      image.onerror = () => reject(new Error('Nao foi possivel carregar a imagem para compressao.'))
-    })
-
+    // image.decode() waits for both load AND full pixel decode before resolving,
+    // so canvas.drawImage never receives an undecoded (blank) image.
+    await image.decode()
     return image
+  } catch {
+    throw new Error('Nao foi possivel carregar a imagem para compressao.')
   } finally {
     URL.revokeObjectURL(objectUrl)
   }

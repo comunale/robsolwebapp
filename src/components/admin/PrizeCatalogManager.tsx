@@ -125,6 +125,7 @@ function PrizeForm({
   const [galleryUploading, setGalleryUploading] = useState(false)
   const [galleryMessage, setGalleryMessage] = useState('')
   const [galleryError, setGalleryError] = useState('')
+  const [formError, setFormError] = useState('')
   const [pendingGalleryUploads, setPendingGalleryUploads] = useState<string[]>([])
   const galleryInputRef = useRef<HTMLInputElement>(null)
 
@@ -230,6 +231,7 @@ function PrizeForm({
 
   const handleSave = async () => {
     if (!form.title) return
+    setFormError('')
     setUploading(true)
     try {
       let imageUrl = form.image_url
@@ -245,7 +247,7 @@ function PrizeForm({
       await onSave({ ...form, image_url: imageUrl, image_horizontal: imageHorizUrl })
       setPendingGalleryUploads([])
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Erro ao enviar imagem')
+      setFormError(e instanceof Error ? e.message : 'Erro ao salvar prêmio')
     } finally {
       setUploading(false)
     }
@@ -420,10 +422,20 @@ function PrizeForm({
           />
         </div>
         {galleryMessage && (
-          <p className="text-xs text-indigo-600 mt-2">{galleryMessage}</p>
+          <div className="flex items-start gap-2 mt-2 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-lg">
+            <svg className="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-sm text-indigo-700">{galleryMessage}</p>
+          </div>
         )}
         {galleryError && (
-          <p className="text-xs text-red-600 mt-2">{galleryError}</p>
+          <div className="flex items-start gap-2 mt-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+            <svg className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-sm text-red-700">{galleryError}</p>
+          </div>
         )}
         {form.images.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 mt-3">
@@ -476,6 +488,14 @@ function PrizeForm({
         />
         <label htmlFor="is_active" className="text-sm text-gray-700">Prêmio ativo (visível na loja)</label>
       </div>
+      {formError && (
+        <div className="flex items-start gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+          <svg className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-sm text-red-700">{formError}</p>
+        </div>
+      )}
       <div className="flex gap-2 pt-1">
         <button
           onClick={() => void handleSave()}
@@ -552,6 +572,7 @@ export default function PrizeCatalogManager() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          campaign_id: form.campaign_id || null,
           points_cost: form.points_cost !== '' ? Number(form.points_cost) : null,
         }),
       })
@@ -562,8 +583,6 @@ export default function PrizeCatalogManager() {
       await fetchPrizes()
       setShowForm(false)
       setEditingPrize(null)
-    } catch (e) {
-      alert(e instanceof Error ? e.message : 'Erro')
     } finally {
       setSaving(false)
     }
