@@ -26,37 +26,40 @@ export function useAuth() {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
 
-      // Callback fired — timeout is no longer needed.
+      // Callback fired — safety timeout no longer needed.
       clearTimeout(timeout)
 
       const currentUser = session?.user ?? null
       setUser(currentUser)
 
-      if (currentUser) {
-        // Only fetch profile if user changed (not on token refresh)
-        if (profileIdRef.current !== currentUser.id) {
-          profileIdRef.current = currentUser.id
-          try {
-            const { data, error } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', currentUser.id)
-              .single()
-
-            if (!mounted) return
-            if (error) throw error
-            setProfile(data)
-          } catch (error) {
-            console.error('Error fetching profile:', error)
-            if (mounted) setProfile(null)
-          }
-        }
-      } else {
+      if (!currentUser) {
         profileIdRef.current = null
         setProfile(null)
       }
 
+      // Unblock the spinner as soon as we know auth state.
+      // AdminGuard will keep showing the spinner while profile is still null
+      // (see the `user && !profile` check there), so there's no blank flash.
       if (mounted) setLoading(false)
+
+      // Profile fetch is async and independent — it doesn't delay auth resolution.
+      if (currentUser && profileIdRef.current !== currentUser.id) {
+        profileIdRef.current = currentUser.id
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', currentUser.id)
+            .single()
+
+          if (!mounted) return
+          if (error) throw error
+          setProfile(data)
+        } catch (error) {
+          console.error('Error fetching profile:', error)
+          if (mounted) setProfile(null)
+        }
+      }
     })
 
     return () => {

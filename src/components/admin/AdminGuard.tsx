@@ -32,7 +32,9 @@ export function useAdmin(): AdminContextValue {
 export default function AdminGuard({ children }: { children: React.ReactNode }) {
   const { user, profile, loading, signOut } = useAuth()
 
-  if (loading) return <LoadingSpinner />
+  // Show spinner while auth is initialising OR while the profile is still
+  // being fetched (user is set but profile hasn't arrived yet).
+  if (loading || (!!user && !profile)) return <LoadingSpinner />
   if (!user || !profile || profile.role !== 'admin') return null
 
   return (
