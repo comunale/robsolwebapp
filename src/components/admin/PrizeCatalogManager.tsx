@@ -189,16 +189,32 @@ function PrizeForm({
     try {
       const uploadedUrls: string[] = []
       for (const [index, file] of imageFiles.entries()) {
-        setGalleryMessage(`Comprimindo e enviando ${index + 1}/${imageFiles.length}: ${file.name}`)
-        const compressed = await compressImageForUpload(file)
-        const url = await uploadPrizeGalleryImage(compressed, uploadId)
+        setGalleryMessage(`Enviando ${index + 1} de ${imageFiles.length}: ${file.name}`)
+        console.log(`[Gallery] file ${index + 1}/${imageFiles.length}:`, file.name, file.size + 'B', file.type)
+
+        let fileToUpload: File
+        try {
+          fileToUpload = await compressImageForUpload(file)
+          console.log('[Gallery] compression OK →', fileToUpload.size + 'B')
+        } catch (compressErr) {
+          console.warn('[Gallery] compression FAILED, uploading original:', compressErr)
+          setGalleryMessage(`Compressão falhou para ${file.name} — enviando original...`)
+          fileToUpload = file
+        }
+
+        console.log('[Gallery] calling uploadPrizeGalleryImage, uploadId:', uploadId)
+        const url = await uploadPrizeGalleryImage(fileToUpload, uploadId)
+        console.log('[Gallery] upload OK:', url)
         uploadedUrls.push(url)
       }
       setForm((p) => ({ ...p, images: [...p.images, ...uploadedUrls].slice(0, 30) }))
       setPendingGalleryUploads((p) => [...p, ...uploadedUrls])
-      setGalleryMessage(`${uploadedUrls.length} imagem(ns) adicionada(s). Clique em Salvar Premio para gravar no banco.`)
+      console.log('[Gallery] all done, images in form:', form.images.length + uploadedUrls.length)
+      setGalleryMessage(`${uploadedUrls.length} imagem(ns) adicionada(s) com sucesso. Clique em Salvar Prêmio para gravar.`)
     } catch (e) {
-      setGalleryError(e instanceof Error ? e.message : 'Erro ao enviar galeria')
+      const msg = e instanceof Error ? e.message : 'Erro desconhecido ao enviar galeria'
+      console.error('[Gallery] FATAL ERROR:', e)
+      setGalleryError(`Erro: ${msg}`)
     } finally {
       setGalleryUploading(false)
     }
@@ -244,7 +260,9 @@ function PrizeForm({
         const compressedImageHoriz = await compressImageForUpload(imageHorizFile)
         imageHorizUrl = await uploadPrizeImageHorizontal(compressedImageHoriz, uploadId)
       }
-      await onSave({ ...form, image_url: imageUrl, image_horizontal: imageHorizUrl })
+      const payload = { ...form, image_url: imageUrl, image_horizontal: imageHorizUrl }
+      console.log('[PrizeForm] saving payload:', { title: payload.title, images: payload.images, campaign_id: payload.campaign_id || null })
+      await onSave(payload)
       setPendingGalleryUploads([])
     } catch (e) {
       setFormError(e instanceof Error ? e.message : 'Erro ao salvar prêmio')

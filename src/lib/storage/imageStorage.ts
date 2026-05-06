@@ -159,11 +159,16 @@ export const uploadPrizeImage = async (file: File, prizeImageId: string): Promis
   const supabase = createClient()
   const fileExt = file.name.split('.').pop()
   const filePath = `prizes/${prizeImageId}/square.${fileExt}`
+  console.log('[uploadPrizeImage] uploading to:', filePath, file.size + 'B')
   const { error } = await supabase.storage
     .from('prize-images')
     .upload(filePath, file, { cacheControl: '3600', upsert: true })
-  if (error) throw error
+  if (error) {
+    console.error('[uploadPrizeImage] ERROR:', error.message, error)
+    throw error
+  }
   const { data: { publicUrl } } = supabase.storage.from('prize-images').getPublicUrl(filePath)
+  console.log('[uploadPrizeImage] OK:', publicUrl)
   return publicUrl
 }
 
@@ -171,23 +176,52 @@ export const uploadPrizeImageHorizontal = async (file: File, prizeImageId: strin
   const supabase = createClient()
   const fileExt = file.name.split('.').pop()
   const filePath = `prizes/${prizeImageId}/horizontal.${fileExt}`
+  console.log('[uploadPrizeImageHorizontal] uploading to:', filePath, file.size + 'B')
   const { error } = await supabase.storage
     .from('prize-images')
     .upload(filePath, file, { cacheControl: '3600', upsert: true })
-  if (error) throw error
+  if (error) {
+    console.error('[uploadPrizeImageHorizontal] ERROR:', error.message, error)
+    throw error
+  }
   const { data: { publicUrl } } = supabase.storage.from('prize-images').getPublicUrl(filePath)
+  console.log('[uploadPrizeImageHorizontal] OK:', publicUrl)
   return publicUrl
 }
 
 export const uploadPrizeGalleryImage = async (file: File, prizeImageId: string): Promise<string> => {
   const supabase = createClient()
+
+  // Auth check — the prize-images INSERT policy requires the authenticated role.
+  const { data: { session } } = await supabase.auth.getSession()
+  console.log(
+    '[uploadPrizeGalleryImage] auth session:',
+    session ? `✓ user=${session.user.email}` : '✗ NO SESSION — upload will be rejected with 403!',
+  )
+
   const fileExt = file.name.split('.').pop() || 'webp'
   const filePath = `prizes/${prizeImageId}/gallery/${crypto.randomUUID()}.${fileExt}`
+  console.log('[uploadPrizeGalleryImage] uploading to:', filePath, file.size + 'B', file.type)
+
   const { error } = await supabase.storage
     .from('prize-images')
     .upload(filePath, file, { cacheControl: '3600', upsert: false })
-  if (error) throw error
+
+  if (error) {
+    // Log the full error object so we can see statusCode, message, etc.
+    console.error('[uploadPrizeGalleryImage] SUPABASE ERROR:', {
+      message: error.message,
+      name: error.name,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      statusCode: (error as any).statusCode,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      cause: (error as any).cause,
+    })
+    throw error
+  }
+
   const { data: { publicUrl } } = supabase.storage.from('prize-images').getPublicUrl(filePath)
+  console.log('[uploadPrizeGalleryImage] OK:', publicUrl)
   return publicUrl
 }
 
