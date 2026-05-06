@@ -261,6 +261,7 @@ export default function DrawManager() {
   const publicWinners = winners.filter((n) => n.is_public)
   const pendingWinnerNotifications = winners.filter((n) => !n.winner_notified_at)
   const currentCampaign = campaigns.find((campaign) => campaign.id === selectedCampaign)
+  const isRaffle = currentCampaign?.type === 'raffle_only'
 
   if (loading) return <LoadingSpinner />
 
@@ -284,16 +285,34 @@ export default function DrawManager() {
       <div className="p-6 space-y-6">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">Selecionar Campanha</label>
-          <select
-            value={selectedCampaign}
-            onChange={(e) => setSelectedCampaign(e.target.value)}
-            className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white"
-          >
-            <option value="">Escolha uma campanha...</option>
-            {campaigns.map((campaign) => (
-              <option key={campaign.id} value={campaign.id}>{campaign.title}</option>
-            ))}
-          </select>
+          <div className="flex items-center gap-3 flex-wrap">
+            <select
+              value={selectedCampaign}
+              onChange={(e) => setSelectedCampaign(e.target.value)}
+              className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white"
+            >
+              <option value="">Escolha uma campanha...</option>
+              {campaigns.map((campaign) => (
+                <option key={campaign.id} value={campaign.id}>
+                  {campaign.title}{campaign.type === 'raffle_only' ? ' 🎲' : ' ⭐'}
+                </option>
+              ))}
+            </select>
+            {selectedCampaign && (
+              <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                isRaffle
+                  ? 'bg-purple-100 text-purple-700'
+                  : 'bg-indigo-100 text-indigo-700'
+              }`}>
+                {isRaffle ? '🎲 Sorteio Puro' : '⭐ Campanha de Pontos'}
+              </span>
+            )}
+          </div>
+          {isRaffle && (
+            <p className="text-xs text-purple-600 mt-2">
+              Os números da sorte são gerados automaticamente quando participantes clicam em &ldquo;Participar&rdquo;. Nenhuma sincronização manual é necessária.
+            </p>
+          )}
         </div>
 
         {selectedCampaign && (
@@ -328,14 +347,16 @@ export default function DrawManager() {
                     className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
                   />
                 </div>
-                <button
-                  onClick={syncLuckyNumbers}
-                  disabled={syncing}
-                  title="Gera números para cupons aprovados que ainda não têm número da sorte"
-                  className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition text-sm"
-                >
-                  {syncing ? 'Sincronizando...' : 'Sincronizar Números'}
-                </button>
+                {!isRaffle && (
+                  <button
+                    onClick={syncLuckyNumbers}
+                    disabled={syncing}
+                    title="Gera números da sorte para os cupons aprovados que ainda não possuem número"
+                    className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition text-sm"
+                  >
+                    {syncing ? 'Sincronizando...' : 'Sincronizar Números'}
+                  </button>
+                )}
                 <button
                   onClick={executeDraw}
                   disabled={drawing || eligibleNumbers === 0}
@@ -410,7 +431,11 @@ export default function DrawManager() {
                 )}
               </div>
               {luckyNumbers.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">Nenhum número da sorte gerado para esta campanha.</p>
+                <p className="text-gray-500 text-center py-8">
+                  {isRaffle
+                    ? 'Nenhum participante inscrito ainda. Os números da sorte são criados automaticamente quando os usuários clicam em "Participar" na campanha.'
+                    : 'Nenhum número da sorte gerado. Use "Sincronizar Números" para gerar a partir dos cupons aprovados.'}
+                </p>
               ) : (
                 <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
                   {luckyNumbers.map((number) => (

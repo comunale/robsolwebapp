@@ -15,10 +15,19 @@ export function useAuth() {
   useEffect(() => {
     let mounted = true
 
+    // Safety net: if onAuthStateChange never fires (e.g. slow network on hard
+    // refresh), force-clear the spinner so the page doesn't hang forever.
+    const timeout = setTimeout(() => {
+      if (mounted) setLoading(false)
+    }, 5000)
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
+
+      // Callback fired — timeout is no longer needed.
+      clearTimeout(timeout)
 
       const currentUser = session?.user ?? null
       setUser(currentUser)
@@ -52,6 +61,7 @@ export function useAuth() {
 
     return () => {
       mounted = false
+      clearTimeout(timeout)
       subscription.unsubscribe()
     }
   }, [supabase])

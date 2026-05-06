@@ -39,6 +39,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'campaign_id e obrigatorio' }, { status: 400 })
     }
 
+    // ── 0. Check campaign type — raffle_only campaigns don't use coupon sync ──
+    const { data: campaign } = await supabase
+      .from('campaigns')
+      .select('type')
+      .eq('id', campaign_id)
+      .single()
+
+    if (campaign?.type === 'raffle_only') {
+      return NextResponse.json({
+        message: 'Campanha do tipo sorteio puro — os números da sorte são gerados automaticamente quando os participantes se inscrevem. Sincronização de cupons não é necessária.',
+        created: 0,
+        type: 'raffle_only',
+      })
+    }
+
     // ── 1. Count approved coupons per user for this campaign ──────────────
     const { data: approvedCoupons, error: couponsErr } = await supabase
       .from('coupons')
