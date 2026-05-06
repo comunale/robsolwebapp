@@ -96,17 +96,28 @@ function PrizeCard({
   onImageClick: (src: string) => void
 }) {
   const mainImage = prize.image_horizontal ?? prize.image_url
-  const galleryImages = prize.images?.filter(Boolean) ?? []
+  const displayImages = useMemo(
+    () => [mainImage, ...(prize.images?.filter(Boolean) ?? [])].filter(Boolean) as string[],
+    [mainImage, prize.images],
+  )
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const currentImage = selectedImage && displayImages.includes(selectedImage) ? selectedImage : displayImages[0] ?? null
   const canAfford = spendablePoints >= (prize.points_cost ?? 0)
   const needed = (prize.points_cost ?? 0) - spendablePoints
 
   return (
     <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${!isRaffle && isSelected ? 'border-green-400 ring-2 ring-green-300' : 'border-gray-200'}`}>
       {/* Main image */}
-      {mainImage ? (
-        <button type="button" className="w-full" onClick={() => onImageClick(mainImage)}>
+      {currentImage ? (
+        <button type="button" className="relative w-full group" onClick={() => onImageClick(currentImage)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={mainImage} alt={prize.title} loading="lazy" className="w-full h-48 object-cover" />
+          <img src={currentImage} alt={prize.title} loading="lazy" className="w-full h-48 object-cover" />
+          <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-full bg-black/65 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm">
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m1.1-5.15a6.25 6.25 0 11-12.5 0 6.25 6.25 0 0112.5 0zM10.5 8v5m-2.5-2.5h5" />
+            </svg>
+            Toque na imagem para ampliar
+          </span>
         </button>
       ) : (
         <div className="w-full h-48 bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
@@ -115,14 +126,19 @@ function PrizeCard({
       )}
 
       {/* Gallery thumbnails */}
-      {galleryImages.length > 0 && (
+      {displayImages.length > 1 && (
         <div className="flex gap-1.5 p-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          {galleryImages.map((src, i) => (
+          {displayImages.map((src, i) => (
             <button
               key={i}
               type="button"
-              onClick={() => onImageClick(src)}
-              className="flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border border-gray-200 hover:ring-2 hover:ring-indigo-400 transition"
+              onClick={() => setSelectedImage(src)}
+              aria-label={`Ver imagem ${i + 1} de ${prize.title}`}
+              className={`flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border transition ${
+                currentImage === src
+                  ? 'border-indigo-500 ring-2 ring-indigo-400'
+                  : 'border-gray-200 hover:ring-2 hover:ring-indigo-300'
+              }`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={src} alt="" loading="lazy" className="w-full h-full object-cover" />
@@ -311,6 +327,27 @@ export default function CampaignDetailsPage() {
   const isRaffle = campaign.type === 'raffle_only'
   const isExpired = new Date(campaign.end_date) < new Date()
   const canJoin = campaign.is_active && !isExpired && !participating
+  const campaignDescription =
+    campaign.description?.trim() ||
+    'Confira os detalhes da campanha, acompanhe os premios disponiveis e veja como participar.'
+  const campaignEndDate = new Date(campaign.end_date).toLocaleDateString('pt-BR')
+  const howItWorksSteps = isRaffle
+    ? [
+        participating && luckyNumber != null
+          ? `Seu numero da sorte #${luckyNumber} foi gerado. Aguarde o sorteio no dia ${campaignEndDate}.`
+          : 'Toque em Participar do Sorteio para gerar seu numero da sorte.',
+        'Confira os premios desta campanha abaixo.',
+        'O resultado sera divulgado conforme as regras da campanha.',
+      ]
+    : [
+        participating
+          ? 'Envie seus cupons pelo painel para acumular pontos nesta campanha.'
+          : 'Toque em Quero Participar para entrar na campanha.',
+        campaign.settings?.points_per_coupon != null
+          ? `Cada cupom aprovado vale ${campaign.settings.points_per_coupon} ponto(s).`
+          : 'Cada cupom aprovado soma pontos para resgate.',
+        'Use seus pontos disponiveis para escolher um premio da campanha.',
+      ]
 
   const selectedPrizeIds = new Set((prizesData?.pendingSelections ?? []).map((s) => s.prize_id))
   const hasPendingSelection = (prizesData?.pendingSelections ?? []).length > 0
@@ -385,9 +422,11 @@ export default function CampaignDetailsPage() {
             <p className="text-sm text-gray-500">
               {new Date(campaign.start_date).toLocaleDateString('pt-BR')}
               {' — '}
-              {new Date(campaign.end_date).toLocaleDateString('pt-BR')}
+              {campaignEndDate}
               {isExpired && <span className="ml-2 text-red-500">(Expirada)</span>}
             </p>
+
+            <p className="mt-3 text-sm text-gray-700 leading-relaxed">{campaignDescription}</p>
           </div>
 
           {/* Incentive stats */}
@@ -423,7 +462,21 @@ export default function CampaignDetailsPage() {
             </div>
           )}
 
-          {/* ── Prizes Section — directly below lucky number ────────────────── */}
+          {/* How it works */}
+          <div className="bg-white border border-gray-200 rounded-xl p-4">
+            <h2 className="text-sm font-semibold text-gray-800 mb-3">Como funciona</h2>
+            <ol className="space-y-2">
+              {howItWorksSteps.map((step, i) => (
+                <li key={i} className="flex gap-3 text-sm text-gray-600 leading-relaxed">
+                  <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[11px] font-bold text-indigo-700">
+                    {i + 1}
+                  </span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+
           {prizesData && prizesData.prizes.length > 0 && (
             <div className="pt-1">
               <div className="flex items-center justify-between mb-3">
@@ -474,14 +527,6 @@ export default function CampaignDetailsPage() {
                   />
                 ))}
               </div>
-            </div>
-          )}
-
-          {/* Description */}
-          {campaign.description && (
-            <div>
-              <h2 className="text-sm font-semibold text-gray-700 mb-2">Como funciona</h2>
-              <p className="text-sm text-gray-600 leading-relaxed">{campaign.description}</p>
             </div>
           )}
 
