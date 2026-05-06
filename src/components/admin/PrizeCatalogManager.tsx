@@ -232,9 +232,8 @@ function PrizeForm({
           fileToUpload = await compressImageForUpload(file)
           console.log('[Gallery] compression OK →', fileToUpload.size + 'B')
         } catch (compressErr) {
-          console.warn('[Gallery] compression FAILED, uploading original:', compressErr)
-          setGalleryMessage(`Compressão falhou para ${file.name} — enviando original...`)
-          fileToUpload = file
+          console.warn('[Gallery] compression FAILED:', compressErr)
+          throw new Error(`Nao foi possivel comprimir ${file.name} para WebP. Tente outra imagem.`)
         }
 
         console.log('[Gallery] calling uploadPrizeGalleryImage, uploadId:', uploadId)
@@ -479,9 +478,9 @@ function PrizeForm({
             multiple
             disabled={galleryUploading || form.images.length >= 30}
             onChange={(e) => {
-              const files = e.target.files
+              const files = Array.from(e.target.files ?? [])
               e.target.value = ''
-              if (!files || files.length === 0) {
+              if (files.length === 0) {
                 setGalleryMessage('Nenhum arquivo selecionado.')
                 return
               }

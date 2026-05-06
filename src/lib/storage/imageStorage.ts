@@ -2,6 +2,21 @@ import { createClient } from '@/lib/supabase/client'
 
 const BUCKET_NAME = 'incentive-campaigns'
 
+const getSafeStorageBaseName = (fileName: string) => {
+  const baseName = fileName.replace(/\.[^/.]+$/, '')
+  const safeName = baseName
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 70)
+
+  return safeName || 'imagem'
+}
+
+const getShortStorageSuffix = () => crypto.randomUUID().replace(/-/g, '').slice(0, 8)
+
 /**
  * Uploads a campaign banner image to Supabase Storage
  * @param file - The image file to upload
@@ -199,8 +214,12 @@ export const uploadPrizeGalleryImage = async (file: File, prizeImageId: string):
     session ? `✓ user=${session.user.email}` : '✗ NO SESSION — upload will be rejected with 403!',
   )
 
-  const fileExt = file.name.split('.').pop() || 'webp'
-  const filePath = `prizes/${prizeImageId}/gallery/${crypto.randomUUID()}.${fileExt}`
+  if (file.type !== 'image/webp') {
+    throw new Error('A imagem da galeria precisa ser convertida para WebP antes do upload.')
+  }
+
+  const safeBaseName = getSafeStorageBaseName(file.name)
+  const filePath = `prizes/${prizeImageId}/gallery/${safeBaseName}-${getShortStorageSuffix()}.webp`
   console.log('[uploadPrizeGalleryImage] uploading to:', filePath, file.size + 'B', file.type)
 
   const { error } = await supabase.storage
