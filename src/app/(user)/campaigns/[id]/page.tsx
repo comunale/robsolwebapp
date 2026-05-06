@@ -213,6 +213,10 @@ export default function CampaignDetailsPage() {
   const [participating, setParticipating] = useState(false)
   const [joinedAt, setJoinedAt] = useState<string | null>(null)
   const [luckyNumber, setLuckyNumber] = useState<number | null>(null)
+  const [luckyNumberId, setLuckyNumberId] = useState<string | null>(null)
+  const [isWinner, setIsWinner] = useState(false)
+  const [winnerPrizeId, setWinnerPrizeId] = useState<string | null>(null)
+  const [selectingPrize, setSelectingPrize] = useState(false)
   const [loading, setLoading] = useState(true)
   const [joining, setJoining] = useState(false)
   const [joinError, setJoinError] = useState('')
@@ -244,7 +248,7 @@ export default function CampaignDetailsPage() {
           .maybeSingle(),
         supabase
           .from('lucky_numbers')
-          .select('number')
+          .select('id, number, is_winner, selected_prize_id')
           .eq('user_id', user.id)
           .eq('campaign_id', id)
           .maybeSingle(),
@@ -262,7 +266,12 @@ export default function CampaignDetailsPage() {
         setParticipating(true)
         setJoinedAt(participationRes.data.joined_at)
       }
-      if (luckyRes.data) setLuckyNumber(luckyRes.data.number)
+      if (luckyRes.data) {
+        setLuckyNumber(luckyRes.data.number)
+        setLuckyNumberId(luckyRes.data.id)
+        setIsWinner(luckyRes.data.is_winner ?? false)
+        setWinnerPrizeId(luckyRes.data.selected_prize_id ?? null)
+      }
       setLoading(false)
     }
 
@@ -287,6 +296,7 @@ export default function CampaignDetailsPage() {
         if (!res.ok) throw new Error(data.error)
         setParticipating(true)
         setLuckyNumber(data.lucky_number?.number ?? null)
+        setLuckyNumberId(data.lucky_number?.id ?? null)
         await fetchPrizes()
       } else {
         const res = await fetch(`/api/campaigns/${campaign.id}/participate`, { method: 'POST' })
@@ -321,12 +331,33 @@ export default function CampaignDetailsPage() {
     }
   }
 
+  const handleSelectWinnerPrize = async (prizeId: string) => {
+    if (!luckyNumberId) return
+    setSelectingPrize(true)
+    try {
+      const res = await fetch('/api/lucky-numbers/select-prize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lucky_number_id: luckyNumberId, prize_id: prizeId }),
+      })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error ?? 'Erro')
+      setWinnerPrizeId(prizeId)
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Erro ao selecionar prêmio')
+    } finally {
+      setSelectingPrize(false)
+    }
+  }
+
   if (authLoading || loading) return <LoadingSpinner />
   if (!user || !campaign) return null
 
   const isRaffle = campaign.type === 'raffle_only'
   const isExpired = new Date(campaign.end_date) < new Date()
-  const canJoin = campaign.is_active && !isExpired && !participating
+  const hasJoinedRaffle = isRaffle && luckyNumber != null
+  const isClosed = campaign.status === 'closed'
+  const canJoin = campaign.is_active && !isExpired && !participating && !hasJoinedRaffle && !isClosed
   const campaignDescription =
     campaign.description?.trim() ||
     'Confira os detalhes da campanha, acompanhe os premios disponiveis e veja como participar.'
@@ -411,9 +442,14 @@ export default function CampaignDetailsPage() {
                     Participando
                   </span>
                 )}
-                {!campaign.is_active && (
+                {(!campaign.is_active || isClosed) && (
                   <span className="flex-shrink-0 inline-flex items-center bg-gray-100 text-gray-500 text-xs font-medium px-3 py-1 rounded-full">
                     Encerrada
+                  </span>
+                )}
+                {isRaffle && hasJoinedRaffle && !isClosed && (
+                  <span className="flex-shrink-0 inline-flex items-center gap-1 bg-amber-100 text-amber-700 text-xs font-semibold px-3 py-1 rounded-full">
+                    🎲 Participando
                   </span>
                 )}
               </div>
@@ -452,13 +488,77 @@ export default function CampaignDetailsPage() {
           )}
 
           {/* Raffle lucky number */}
-          {isRaffle && participating && luckyNumber != null && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between">
+          {isRaffle && luckyNumber != null && (
+            <div className={`border rounded-xl p-4 flex items-center justify-between ${isWinner ? 'bg-green-50 border-green-300' : 'bg-amber-50 border-amber-200'}`}>
               <div>
-                <p className="text-xs font-bold text-amber-600 uppercase tracking-widest mb-0.5">Seu número da sorte</p>
-                <p className="text-3xl font-black text-amber-700">#{luckyNumber}</p>
+                <p className={`text-xs font-bold uppercase tracking-widest mb-0.5 ${isWinner ? 'text-green-700' : 'text-amber-600'}`}>
+                  {isWinner ? 'Número da sorte — GANHADOR!' : 'Seu número da sorte'}
+                </p>
+                <p className={`text-3xl font-black ${isWinner ? 'text-green-800' : 'text-amber-700'}`}>#{luckyNumber}</p>
               </div>
-              <span className="text-5xl">🎲</span>
+              <span className="text-5xl">{isWinner ? '🏆' : '🎲'}</span>
+            </div>
+          )}
+
+          {/* Winner: prize selection */}
+          {isRaffle && isWinner && (
+            <div className="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-400 rounded-xl p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-3xl">🏆</span>
+                <div>
+                  <p className="font-bold text-amber-900 text-base">Parabéns, você foi sorteado!</p>
+                  <p className="text-sm text-amber-700">
+                    {winnerPrizeId ? 'Seu prêmio foi escolhido com sucesso.' : 'Escolha seu prêmio abaixo:'}
+                  </p>
+                </div>
+              </div>
+
+              {winnerPrizeId ? (
+                <div className="flex items-center gap-2 bg-green-100 border border-green-300 rounded-xl px-4 py-3">
+                  <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                  <p className="text-sm font-semibold text-green-800">
+                    {prizesData?.prizes.find((p) => p.id === winnerPrizeId)?.title ?? 'Prêmio selecionado'}
+                  </p>
+                </div>
+              ) : prizesData && prizesData.prizes.length > 0 ? (
+                <div className="space-y-2">
+                  {prizesData.prizes.map((prize) => {
+                    const img = prize.image_horizontal ?? prize.image_url
+                    return (
+                      <button
+                        key={prize.id}
+                        onClick={() => void handleSelectWinnerPrize(prize.id)}
+                        disabled={selectingPrize}
+                        className="w-full text-left flex items-center gap-3 bg-white border border-amber-300 hover:border-amber-500 hover:shadow-sm rounded-xl p-3 transition disabled:opacity-50"
+                      >
+                        {img ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={img} alt="" loading="lazy" className="w-16 h-16 object-cover rounded-lg flex-shrink-0" />
+                        ) : (
+                          <div className="w-16 h-16 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <span className="text-2xl">🎁</span>
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-semibold text-gray-900 text-sm">{prize.title}</p>
+                          {prize.description && (
+                            <p className="text-xs text-gray-500 line-clamp-2 mt-0.5">{prize.description}</p>
+                          )}
+                        </div>
+                        <svg className="w-5 h-5 text-amber-400 flex-shrink-0 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-amber-700 bg-white border border-amber-200 rounded-lg px-4 py-3">
+                  Entre em contato com a equipe para escolher seu prêmio.
+                </p>
+              )}
             </div>
           )}
 
@@ -568,6 +668,23 @@ export default function CampaignDetailsPage() {
                 ? '🎲 Participar do Sorteio'
                 : 'Quero Participar'}
             </button>
+          )}
+
+          {/* Raffle: already participating (locked) */}
+          {isRaffle && hasJoinedRaffle && !isClosed && !isWinner && (
+            <div className="w-full flex items-center justify-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 font-semibold py-4 rounded-xl text-base">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Aguardando Sorteio
+            </div>
+          )}
+
+          {/* Closed campaign notice */}
+          {isClosed && (
+            <div className="w-full flex items-center justify-center gap-2 bg-gray-100 border border-gray-200 text-gray-500 font-semibold py-4 rounded-xl text-base">
+              Campanha encerrada
+            </div>
           )}
 
           {/* Incentive: already participating — scan CTA */}

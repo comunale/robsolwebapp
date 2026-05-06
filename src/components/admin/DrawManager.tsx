@@ -150,8 +150,7 @@ export default function DrawManager() {
       const { data } = await supabase
         .from('campaigns')
         .select('*')
-        .eq('is_active', true)
-        .order('title')
+        .order('created_at', { ascending: false })
       if (data) setCampaigns(data as Campaign[])
     } catch (err) {
       console.error(err)
@@ -299,18 +298,25 @@ export default function DrawManager() {
               <option value="">Escolha uma campanha...</option>
               {campaigns.map((campaign) => (
                 <option key={campaign.id} value={campaign.id}>
-                  {campaign.title}{campaign.type === 'raffle_only' ? ' 🎲' : ' ⭐'}
+                  {campaign.title}{campaign.type === 'raffle_only' ? ' 🎲' : ' ⭐'}{campaign.status === 'closed' ? ' [Encerrada]' : ''}
                 </option>
               ))}
             </select>
             {selectedCampaign && (
-              <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                isRaffle
-                  ? 'bg-purple-100 text-purple-700'
-                  : 'bg-indigo-100 text-indigo-700'
-              }`}>
-                {isRaffle ? '🎲 Sorteio Puro' : '⭐ Campanha de Pontos'}
-              </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                  isRaffle
+                    ? 'bg-purple-100 text-purple-700'
+                    : 'bg-indigo-100 text-indigo-700'
+                }`}>
+                  {isRaffle ? '🎲 Sorteio Puro' : '⭐ Campanha de Pontos'}
+                </span>
+                {currentCampaign?.status === 'closed' && (
+                  <span className="text-xs font-semibold px-3 py-1 rounded-full bg-gray-200 text-gray-600">
+                    Encerrada
+                  </span>
+                )}
+              </div>
             )}
           </div>
           {isRaffle && (

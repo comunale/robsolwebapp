@@ -30,6 +30,7 @@ export default function CampanhasPage() {
           .from('campaigns')
           .select('*')
           .eq('is_active', true)
+          .neq('status', 'closed')
           .gte('end_date', new Date().toISOString())
           .order('created_at', { ascending: false }),
         supabase.from('campaign_participants').select('campaign_id').eq('user_id', user.id),

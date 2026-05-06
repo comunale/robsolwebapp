@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import CabecalhoUsuario from '@/components/user/CabecalhoUsuario'
 import BarraNavegacao from '@/components/user/BarraNavegacao'
 
 interface PublishedWinnerRow {
@@ -84,6 +85,7 @@ export default async function SorteiosPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24 md:pb-0">
+      <CabecalhoUsuario />
       <main className="p-4 md:p-8">
         <div className="max-w-5xl mx-auto">
           <div

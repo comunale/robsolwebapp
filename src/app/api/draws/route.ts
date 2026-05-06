@@ -76,6 +76,12 @@ export async function POST(request: Request) {
 
       if (error) throw error
 
+      // Close the campaign so no new participants can join
+      await supabase
+        .from('campaigns')
+        .update({ status: 'closed' })
+        .eq('id', campaign_id)
+
       return NextResponse.json({
         message: `${data?.length ?? 0} ganhador(es) publicado(s)`,
         count: data?.length ?? 0,
@@ -142,7 +148,6 @@ export async function POST(request: Request) {
         .from('profiles')
         .select('id, email')
         .eq('role', 'user')
-        .eq('status', 'active')
 
       if (usersError) throw usersError
 
@@ -152,6 +157,7 @@ export async function POST(request: Request) {
       const bodyText = 'Sorteio realizado! Confira se você não foi um dos ganhadores.'
 
       if (activeUsers.length > 0) {
+        // Batch insert notifications (ignore individual failures)
         const { error: insertError } = await supabase.from('notifications').insert(
           activeUsers.map((user) => ({
             user_id: user.id,
@@ -166,9 +172,15 @@ export async function POST(request: Request) {
         if (insertError) throw insertError
       }
 
+      let emailsSent = 0
       for (const user of activeUsers) {
         if (user.email) {
-          await emailProvider.send(user.email, template.subject, template.html)
+          try {
+            await emailProvider.send(user.email, template.subject, template.html)
+            emailsSent++
+          } catch (emailErr) {
+            console.error(`[notify_base] email failed for ${user.email}:`, emailErr)
+          }
         }
       }
 
@@ -178,7 +190,7 @@ export async function POST(request: Request) {
         .eq('id', campaign_id)
 
       return NextResponse.json({
-        message: `${activeUsers.length} usuário(s) ativo(s) notificado(s)`,
+        message: `${activeUsers.length} usuário(s) notificado(s) (${emailsSent} e-mails enviados)`,
         count: activeUsers.length,
       })
     }

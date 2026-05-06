@@ -15,6 +15,7 @@ export interface Campaign {
   keywords: string[]
   settings: CampaignSettings | null
   draw_base_notified_at: string | null
+  status: 'active' | 'closed'
   created_at: string
   updated_at: string
 }
