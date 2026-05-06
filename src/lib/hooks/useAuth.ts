@@ -9,6 +9,7 @@ export function useAuth() {
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [profileLoading, setProfileLoading] = useState(false)
   const supabase = useMemo(() => createClient(), [])
   const profileIdRef = useRef<string | null>(null)
 
@@ -45,6 +46,7 @@ export function useAuth() {
       // Profile fetch is async and independent — it doesn't delay auth resolution.
       if (currentUser && profileIdRef.current !== currentUser.id) {
         profileIdRef.current = currentUser.id
+        if (mounted) setProfileLoading(true)
         try {
           const { data, error } = await supabase
             .from('profiles')
@@ -58,6 +60,8 @@ export function useAuth() {
         } catch (error) {
           console.error('Error fetching profile:', error)
           if (mounted) setProfile(null)
+        } finally {
+          if (mounted) setProfileLoading(false)
         }
       }
     })
@@ -116,6 +120,7 @@ export function useAuth() {
     user,
     profile,
     loading,
+    profileLoading,
     signIn,
     signUp,
     signOut,

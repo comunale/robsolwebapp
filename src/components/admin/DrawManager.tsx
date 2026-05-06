@@ -107,7 +107,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
 type LuckyNumberWithProfile = LuckyNumber & {
   full_name?: string
   whatsapp?: string
-  cpf?: string
+  cpf?: string | null
   store_name?: string
 }
 
@@ -164,14 +164,19 @@ export default function DrawManager() {
     if (!selectedCampaign) return
 
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('lucky_numbers')
         .select('*, profiles(full_name, whatsapp, cpf, stores(name))')
         .eq('campaign_id', selectedCampaign)
         .order('number')
 
+      if (error) {
+        console.error('[DrawManager] fetchLuckyNumbers error:', error)
+        return
+      }
+
       if (data) {
-        setLuckyNumbers(data.map((n: LuckyNumber & { profiles?: { full_name: string; whatsapp?: string; cpf?: string; stores?: { name: string } | null } | null }) => ({
+        setLuckyNumbers(data.map((n: LuckyNumber & { profiles?: { full_name: string; whatsapp?: string; cpf?: string | null; stores?: { name: string } | null } | null }) => ({
           ...n,
           full_name: n.profiles?.full_name,
           whatsapp: n.profiles?.whatsapp,
@@ -470,6 +475,9 @@ export default function DrawManager() {
                         <div>
                           <span className="text-sm font-medium text-gray-900">{winner.full_name || 'Desconhecido'}</span>
                           <p className="text-xs text-gray-500">{winner.store_name || 'Loja não informada'}</p>
+                          {winner.cpf && (
+                            <p className="text-xs text-gray-400 font-mono">CPF: {winner.cpf}</p>
+                          )}
                         </div>
                       </div>
                       <div className="text-right">
