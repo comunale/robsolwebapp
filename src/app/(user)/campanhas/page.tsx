@@ -175,7 +175,7 @@ export default function CampanhasPage() {
                           fill
                           sizes="(max-width:768px) 100vw, 50vw"
                           loading="lazy"
-                          className="object-cover md:hidden"
+                          className="object-contain md:hidden"
                         />
                       )}
                       {campaign.banner_url && (
@@ -185,7 +185,7 @@ export default function CampanhasPage() {
                           fill
                           sizes="(max-width:768px) 100vw, 50vw"
                           loading="lazy"
-                          className={`object-cover ${campaign.banner_url_mobile ? 'hidden md:block' : ''}`}
+                          className={`object-contain ${campaign.banner_url_mobile ? 'hidden md:block' : ''}`}
                         />
                       )}
                     </div>

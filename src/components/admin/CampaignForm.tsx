@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
 import { uploadCampaignBanner, uploadCampaignBannerMobile } from '@/lib/storage/imageStorage'
 import { compressImageForUpload } from '@/lib/images/compressImage'
 import AdminHeader from './AdminHeader'
@@ -49,6 +51,27 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
   const [drawType, setDrawType] = useState<'manual' | 'random'>('random')
   const [goals, setGoals] = useState<GoalConfig[]>([])
 
+  // Rich-text editor — stores HTML in `description`
+  const pendingEditorContent = useRef<string | null>(null)
+  const editor = useEditor({
+    extensions: [StarterKit],
+    content: '',
+    onUpdate: ({ editor }) => setDescription(editor.getHTML()),
+    editorProps: {
+      attributes: {
+        class: 'min-h-[140px] px-4 py-3 focus:outline-none text-sm text-gray-800 leading-relaxed [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:ml-5 [&_ol]:mb-2 [&_li]:mb-0.5 [&_strong]:font-semibold [&_em]:italic [&_h2]:font-bold [&_h2]:text-base [&_h2]:mb-1 [&_h3]:font-semibold [&_h3]:mb-1',
+      },
+    },
+  })
+
+  // Sync editor when content is loaded from DB in edit mode
+  useEffect(() => {
+    if (editor && pendingEditorContent.current !== null) {
+      editor.commands.setContent(pendingEditorContent.current)
+      pendingEditorContent.current = null
+    }
+  }, [editor])
+
   // Fetch prizes list (for multi-select)
   useEffect(() => {
     const fetchPrizes = async () => {
@@ -73,6 +96,7 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
         const c = data.campaign
         setTitle(c.title || '')
         setDescription(c.description || '')
+        pendingEditorContent.current = c.description || ''
         setStartDate(c.start_date ? c.start_date.split('T')[0] : '')
         setEndDate(c.end_date ? c.end_date.split('T')[0] : '')
         setIsActive(c.is_active ?? true)
@@ -296,19 +320,59 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
               />
             </div>
 
-            {/* Description */}
+            {/* Description — Rich Text Editor */}
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                Descricao
-              </label>
-              <textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
-                placeholder="Descreva a campanha e seus objetivos..."
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-2">Descricao</label>
+
+              {/* Toolbar */}
+              <div className="flex flex-wrap items-center gap-1 px-2 py-1.5 border border-gray-300 border-b-0 rounded-t-lg bg-gray-50">
+                {[
+                  { label: 'B', title: 'Negrito', action: () => editor?.chain().focus().toggleBold().run(), active: editor?.isActive('bold') },
+                  { label: 'I', title: 'Itálico', action: () => editor?.chain().focus().toggleItalic().run(), active: editor?.isActive('italic') },
+                ].map(({ label, title, action, active }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    title={title}
+                    onMouseDown={(e) => { e.preventDefault(); action() }}
+                    className={`w-7 h-7 rounded text-sm font-bold transition ${active ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-200'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+                <div className="w-px h-5 bg-gray-300 mx-0.5" />
+                <button
+                  type="button"
+                  title="Lista com marcadores"
+                  onMouseDown={(e) => { e.preventDefault(); editor?.chain().focus().toggleBulletList().run() }}
+                  className={`w-7 h-7 rounded text-xs transition flex items-center justify-center ${editor?.isActive('bulletList') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-200'}`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    <circle cx="2" cy="6" r="1" fill="currentColor" />
+                    <circle cx="2" cy="10" r="1" fill="currentColor" />
+                    <circle cx="2" cy="14" r="1" fill="currentColor" />
+                    <circle cx="2" cy="18" r="1" fill="currentColor" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  title="Lista numerada"
+                  onMouseDown={(e) => { e.preventDefault(); editor?.chain().focus().toggleOrderedList().run() }}
+                  className={`w-7 h-7 rounded text-xs transition flex items-center justify-center ${editor?.isActive('orderedList') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-200'}`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Editor area */}
+              <div className="border border-gray-300 rounded-b-lg focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent overflow-hidden bg-white cursor-text"
+                onClick={() => editor?.commands.focus()}>
+                <EditorContent editor={editor} />
+              </div>
+              <p className="text-xs text-gray-400 mt-1">Suporta negrito, itálico e listas. O que você formatar aqui aparece igualmente para o usuário.</p>
             </div>
 
             {/* Dates */}

@@ -396,27 +396,6 @@ export default function CampaignDetailsPage() {
   const hasJoinedRaffle = isRaffle && luckyNumber != null
   const isClosed = campaign.status === 'closed'
   const canJoin = campaign.is_active && !isExpired && !participating && !hasJoinedRaffle && !isClosed
-  const campaignDescription =
-    campaign.description?.trim() ||
-    'Confira os detalhes da campanha, acompanhe os premios disponiveis e veja como participar.'
-  const campaignEndDate = new Date(campaign.end_date).toLocaleDateString('pt-BR')
-  const howItWorksSteps = isRaffle
-    ? [
-        participating && luckyNumber != null
-          ? `Seu numero da sorte #${luckyNumber} foi gerado. Aguarde o sorteio no dia ${campaignEndDate}.`
-          : 'Toque em Participar do Sorteio para gerar seu numero da sorte.',
-        'Confira os premios desta campanha abaixo.',
-        'O resultado sera divulgado conforme as regras da campanha.',
-      ]
-    : [
-        participating
-          ? 'Envie seus cupons pelo painel para acumular pontos nesta campanha.'
-          : 'Toque em Quero Participar para entrar na campanha.',
-        campaign.settings?.points_per_coupon != null
-          ? `Cada cupom aprovado vale ${campaign.settings.points_per_coupon} ponto(s).`
-          : 'Cada cupom aprovado soma pontos para resgate.',
-        'Use seus pontos disponiveis para escolher um premio da campanha.',
-      ]
 
   const selectedPrizeIds = new Set((prizesData?.pendingSelections ?? []).map((s) => s.prize_id))
   const hasPendingSelection = (prizesData?.pendingSelections ?? []).length > 0
@@ -437,7 +416,7 @@ export default function CampaignDetailsPage() {
                 fill
                 sizes="100vw"
                 loading="lazy"
-                className="object-cover md:hidden"
+                className="object-contain md:hidden"
               />
             )}
             {campaign.banner_url && (
@@ -447,7 +426,7 @@ export default function CampaignDetailsPage() {
                 fill
                 sizes="100vw"
                 loading="lazy"
-                className={`object-cover ${campaign.banner_url_mobile ? 'hidden md:block' : ''}`}
+                className={`object-contain ${campaign.banner_url_mobile ? 'hidden md:block' : ''}`}
               />
             )}
           </div>
@@ -496,11 +475,20 @@ export default function CampaignDetailsPage() {
             <p className="text-sm text-gray-500">
               {new Date(campaign.start_date).toLocaleDateString('pt-BR')}
               {' — '}
-              {campaignEndDate}
+              {new Date(campaign.end_date).toLocaleDateString('pt-BR')}
               {isExpired && <span className="ml-2 text-red-500">(Expirada)</span>}
             </p>
 
-            <p className="mt-3 text-sm text-gray-700 leading-relaxed">{campaignDescription}</p>
+            {campaign.description && (
+              /<[^>]+>/.test(campaign.description) ? (
+                <div
+                  className="mt-3 text-sm text-gray-700 leading-relaxed [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ml-4 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:ml-4 [&_ol]:mb-2 [&_li]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_h2]:font-bold [&_h2]:text-base [&_h2]:mb-1 [&_h3]:font-semibold [&_h3]:text-sm [&_h3]:mb-1"
+                  dangerouslySetInnerHTML={{ __html: campaign.description }}
+                />
+              ) : (
+                <p className="mt-3 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{campaign.description}</p>
+              )
+            )}
           </div>
 
           {/* Incentive stats */}
@@ -636,21 +624,6 @@ export default function CampaignDetailsPage() {
               </div>
             </div>
           )}
-
-          {/* How it works */}
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <h2 className="text-sm font-semibold text-gray-800 mb-3">Como funciona</h2>
-            <ol className="space-y-2">
-              {howItWorksSteps.map((step, i) => (
-                <li key={i} className="flex gap-3 text-sm text-gray-600 leading-relaxed">
-                  <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[11px] font-bold text-indigo-700">
-                    {i + 1}
-                  </span>
-                  <span>{step}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
 
           {prizesData && prizesData.prizes.length > 0 && (
             <div className="pt-1">

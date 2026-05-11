@@ -97,7 +97,7 @@ export default function DestaquesCampanhas({
                       fill
                       sizes="256px"
                       loading="lazy"
-                      className="object-cover md:hidden"
+                      className="object-contain md:hidden"
                     />
                   )}
                   {campaign.banner_url && (
@@ -107,7 +107,7 @@ export default function DestaquesCampanhas({
                       fill
                       sizes="320px"
                       loading="lazy"
-                      className={`object-cover ${campaign.banner_url_mobile ? 'hidden md:block' : ''}`}
+                      className={`object-contain ${campaign.banner_url_mobile ? 'hidden md:block' : ''}`}
                     />
                   )}
                 </div>
@@ -115,7 +115,9 @@ export default function DestaquesCampanhas({
 
               <h3 className="font-bold text-sm mb-1 truncate">{campaign.title}</h3>
               {campaign.description && (
-                <p className="text-white/80 text-xs mb-2 line-clamp-2">{campaign.description}</p>
+                <p className="text-white/80 text-xs mb-2 line-clamp-2">
+                  {campaign.description.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()}
+                </p>
               )}
 
               <div className="flex items-center justify-between text-xs mb-3">
