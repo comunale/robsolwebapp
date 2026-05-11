@@ -217,6 +217,10 @@ export default function CampaignDetailsPage() {
   const [isWinner, setIsWinner] = useState(false)
   const [winnerPrizeId, setWinnerPrizeId] = useState<string | null>(null)
   const [selectingPrize, setSelectingPrize] = useState(false)
+  const [publishedDraws, setPublishedDraws] = useState<{
+    id: string; round_number: number; published_at: string | null; winner_count: number
+    winners: { number: number; full_name: string }[]
+  }[]>([])
   const [loading, setLoading] = useState(true)
   const [joining, setJoining] = useState(false)
   const [joinError, setJoinError] = useState('')
@@ -272,6 +276,40 @@ export default function CampaignDetailsPage() {
         setIsWinner(luckyRes.data.is_winner ?? false)
         setWinnerPrizeId(luckyRes.data.selected_prize_id ?? null)
       }
+
+      // Fetch published draw results for this campaign
+      const { data: drawsData } = await supabase
+        .from('draws')
+        .select('id, round_number, published_at, winner_count')
+        .eq('campaign_id', id)
+        .eq('status', 'published')
+        .order('round_number')
+
+      if (drawsData?.length) {
+        const drawIds = drawsData.map((d: { id: string }) => d.id)
+        const { data: winnersRaw } = await supabase
+          .from('lucky_numbers')
+          .select('draw_id, number, profiles!lucky_numbers_user_id_fkey(full_name)')
+          .in('draw_id', drawIds)
+          .eq('is_winner', true)
+          .eq('is_public', true)
+
+        type WRow = { draw_id: string; number: number; profiles: { full_name: string | null } | null }
+        const winnersData = (winnersRaw ?? []) as unknown as WRow[]
+
+        if (active) {
+          setPublishedDraws(drawsData.map((d: { id: string; round_number: number; published_at: string | null; winner_count: number }) => ({
+            ...d,
+            winners: winnersData
+              .filter((w) => w.draw_id === d.id)
+              .map((w) => ({
+                number: w.number,
+                full_name: w.profiles?.full_name ?? 'Ganhador',
+              })),
+          })))
+        }
+      }
+
       setLoading(false)
     }
 
@@ -559,6 +597,43 @@ export default function CampaignDetailsPage() {
                   Entre em contato com a equipe para escolher seu prêmio.
                 </p>
               )}
+            </div>
+          )}
+
+          {/* Published draw results */}
+          {isRaffle && publishedDraws.length > 0 && (
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-bold text-gray-900">Resultados das Rodadas</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {publishedDraws.length} de {campaign.max_draw_rounds ?? 1} rodada{(campaign.max_draw_rounds ?? 1) !== 1 ? 's' : ''} concluída{publishedDraws.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+                {isClosed && (
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-gray-200 text-gray-600">Encerrada</span>
+                )}
+              </div>
+              <div className="divide-y divide-gray-100">
+                {publishedDraws.map((draw) => (
+                  <div key={draw.id} className="px-4 py-3">
+                    <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-1.5">
+                      Rodada {draw.round_number}
+                      {draw.published_at && (
+                        <span className="ml-2 font-normal text-gray-400 normal-case tracking-normal">
+                          — {new Date(draw.published_at).toLocaleDateString('pt-BR')}
+                        </span>
+                      )}
+                    </p>
+                    {draw.winners.map((w, i) => (
+                      <div key={i} className="flex items-center gap-2 mt-1">
+                        <span className="text-xs font-black text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">#{w.number}</span>
+                        <span className="text-sm font-medium text-gray-900">{w.full_name}</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

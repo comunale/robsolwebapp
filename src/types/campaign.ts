@@ -16,6 +16,7 @@ export interface Campaign {
   settings: CampaignSettings | null
   draw_base_notified_at: string | null
   status: 'active' | 'closed'
+  max_draw_rounds: number
   created_at: string
   updated_at: string
 }

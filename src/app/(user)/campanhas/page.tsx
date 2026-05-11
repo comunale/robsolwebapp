@@ -17,6 +17,8 @@ export default function CampanhasPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set())
   const [luckyNumbersByCampaign, setLuckyNumbersByCampaign] = useState<Record<string, number>>({})
+  const [latestWinnerByCampaign, setLatestWinnerByCampaign] = useState<Record<string, string>>({})
+  const [publishedRoundsByCampaign, setPublishedRoundsByCampaign] = useState<Record<string, number>>({})
   const [joining, setJoining] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
 
@@ -30,7 +32,6 @@ export default function CampanhasPage() {
           .from('campaigns')
           .select('*')
           .eq('is_active', true)
-          .neq('status', 'closed')
           .gte('end_date', new Date().toISOString())
           .order('created_at', { ascending: false }),
         supabase.from('campaign_participants').select('campaign_id').eq('user_id', user.id),
@@ -38,7 +39,9 @@ export default function CampanhasPage() {
       ])
 
       if (!active) return
-      if (campaignsRes.data) setCampaigns(campaignsRes.data as Campaign[])
+      const fetchedCampaigns = (campaignsRes.data ?? []) as Campaign[]
+      setCampaigns(fetchedCampaigns)
+
       if (participantsRes.data) {
         setJoinedIds(new Set(participantsRes.data.map((p: { campaign_id: string }) => p.campaign_id)))
       }
@@ -49,6 +52,41 @@ export default function CampanhasPage() {
         }
         setLuckyNumbersByCampaign(map)
       }
+
+      // Fetch draw data for all campaigns in parallel
+      if (fetchedCampaigns.length > 0) {
+        const campaignIds = fetchedCampaigns.map((c) => c.id)
+        const [drawsRes, winnersRes] = await Promise.all([
+          supabase.from('draws').select('campaign_id, round_number').in('campaign_id', campaignIds).eq('status', 'published'),
+          supabase.from('lucky_numbers')
+            .select('campaign_id, number, published_at, profiles!lucky_numbers_user_id_fkey(full_name)')
+            .in('campaign_id', campaignIds)
+            .eq('is_winner', true)
+            .eq('is_public', true)
+            .order('published_at', { ascending: false }),
+        ])
+        if (!active) return
+
+        if (drawsRes.data) {
+          const rounds: Record<string, number> = {}
+          for (const d of drawsRes.data as { campaign_id: string; round_number: number }[]) {
+            rounds[d.campaign_id] = (rounds[d.campaign_id] ?? 0) + 1
+          }
+          setPublishedRoundsByCampaign(rounds)
+        }
+
+        if (winnersRes.data) {
+          type WRow = { campaign_id: string; profiles: { full_name: string | null } | null }
+          const latest: Record<string, string> = {}
+          for (const w of (winnersRes.data as unknown as WRow[])) {
+            if (!latest[w.campaign_id]) {
+              latest[w.campaign_id] = w.profiles?.full_name ?? 'Ganhador'
+            }
+          }
+          setLatestWinnerByCampaign(latest)
+        }
+      }
+
       setLoading(false)
     }
 
@@ -117,12 +155,15 @@ export default function CampanhasPage() {
               const isJoined = joinedIds.has(campaign.id)
               const isJoining = joining.has(campaign.id)
               const luckyNumber = luckyNumbersByCampaign[campaign.id]
+              const isClosed = campaign.status === 'closed'
+              const publishedRounds = publishedRoundsByCampaign[campaign.id] ?? 0
+              const latestWinner = latestWinnerByCampaign[campaign.id]
 
               return (
                 <Link
                   key={campaign.id}
                   href={`/campaigns/${campaign.id}`}
-                  className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col"
+                  className={`rounded-xl border shadow-sm hover:shadow-md transition overflow-hidden flex flex-col ${isClosed ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-100'}`}
                 >
                   {/* Banner */}
                   {(campaign.banner_url || campaign.banner_url_mobile) ? (
@@ -160,13 +201,17 @@ export default function CampanhasPage() {
                   <div className="p-4 flex-1 flex flex-col">
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <h2 className="font-semibold text-gray-900 text-sm leading-snug">{campaign.title}</h2>
-                      <div className="flex-shrink-0 flex items-center gap-1.5">
-                        {isRaffle ? (
+                      <div className="flex-shrink-0 flex items-center gap-1.5 flex-wrap justify-end">
+                        {isClosed ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-200 text-gray-600">
+                            🔒 Encerrada
+                          </span>
+                        ) : isRaffle ? (
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
                             🎲 Sorteio
                           </span>
                         ) : null}
-                        {isJoined && !isRaffle && (
+                        {isJoined && !isRaffle && !isClosed && (
                           <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
                             Participando
                           </span>
@@ -194,8 +239,26 @@ export default function CampanhasPage() {
                         </span>
                       </div>
 
+                      {/* Last winner tag (active campaign with published draws) */}
+                      {isRaffle && !isClosed && publishedRounds > 0 && latestWinner && (
+                        <div className="flex items-center gap-1.5 bg-green-50 border border-green-200 rounded-lg px-2.5 py-1.5">
+                          <span className="text-green-600 text-xs">🏆</span>
+                          <span className="text-xs text-green-800 font-medium truncate">
+                            Rodada {publishedRounds}: {latestWinner}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Closed: final winner summary */}
+                      {isClosed && latestWinner && (
+                        <div className="flex items-center gap-1.5 bg-gray-100 border border-gray-200 rounded-lg px-2.5 py-1.5">
+                          <span className="text-gray-500 text-xs">🏆</span>
+                          <span className="text-xs text-gray-600 font-medium truncate">Ganhador: {latestWinner}</span>
+                        </div>
+                      )}
+
                       {/* Lucky number badge OR join button */}
-                      {isRaffle && (
+                      {isRaffle && !isClosed && (
                         luckyNumber != null ? (
                           <span className="inline-flex items-center gap-1 bg-amber-400 text-amber-900 text-xs font-black px-2.5 py-1 rounded-full">
                             🎲 Número #{luckyNumber}
@@ -210,7 +273,7 @@ export default function CampanhasPage() {
                           </button>
                         )
                       )}
-                      {!isRaffle && !isJoined && (
+                      {!isRaffle && !isJoined && !isClosed && (
                         <button
                           onClick={(e) => void handleJoinIncentive(e, campaign.id)}
                           disabled={isJoining}
