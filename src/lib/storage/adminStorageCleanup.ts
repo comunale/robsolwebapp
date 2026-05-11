@@ -107,6 +107,36 @@ export const removeCampaignStorageAssets = async (
   return removed
 }
 
+/**
+ * Full campaign storage cleanup: banner URLs + all files in the campaign's
+ * folder paths (coupons uploaded by users, etc.).
+ * Call this when permanently deleting a campaign.
+ */
+export const removeCampaignAllStorageAssets = async (
+  admin: SupabaseClient,
+  campaignId: string,
+  campaign: CampaignImageRecord,
+) => {
+  let removed = 0
+
+  // Banner URLs (may live outside the folder path if manually set)
+  removed += await removeStoragePaths(
+    admin,
+    CAMPAIGN_IMAGES_BUCKET,
+    getCampaignImagePaths(campaign, CAMPAIGN_IMAGES_BUCKET),
+  )
+
+  // Folder-level cleanup: campaigns/{id}/* and coupons/{id}/*
+  for (const folder of [`campaigns/${campaignId}`, `coupons/${campaignId}`]) {
+    const files = await listStorageFiles(admin, CAMPAIGN_IMAGES_BUCKET, folder)
+    if (files.length > 0) {
+      removed += await removeStoragePaths(admin, CAMPAIGN_IMAGES_BUCKET, files)
+    }
+  }
+
+  return removed
+}
+
 export const listStorageFiles = async (
   admin: SupabaseClient,
   bucket: string,

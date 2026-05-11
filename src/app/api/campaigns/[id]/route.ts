@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { removeCampaignStorageAssets } from '@/lib/storage/adminStorageCleanup'
+import { removeCampaignAllStorageAssets } from '@/lib/storage/adminStorageCleanup'
 import { NextResponse } from 'next/server'
 import type { UpdateCampaignInput } from '@/types/campaign'
 
@@ -136,6 +136,8 @@ export async function DELETE(
     }
 
     const admin = createAdminClient()
+
+    // Fetch banner URLs before deletion (needed for storage cleanup)
     const { data: campaign, error: fetchError } = await admin
       .from('campaigns')
       .select('banner_url, banner_url_mobile')
@@ -144,11 +146,12 @@ export async function DELETE(
 
     if (fetchError) throw fetchError
 
+    // Delete DB record — cascades to campaign_prizes, draws, lucky_numbers, etc.
     const { error } = await supabase.from('campaigns').delete().eq('id', id)
-
     if (error) throw error
 
-    const deletedFiles = await removeCampaignStorageAssets(admin, campaign)
+    // Clean up storage: banners + all user coupon images
+    const deletedFiles = await removeCampaignAllStorageAssets(admin, id, campaign)
 
     return NextResponse.json({ message: 'Campanha excluida com sucesso', deletedFiles })
   } catch (error: unknown) {
