@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server"
 import { buildCssVarsString, BRAND_DEFAULTS, type BrandSettings } from "@/lib/brand-config"
 import { BrandProvider } from "@/components/shared/BrandProvider"
 import PwaInstallPrompt from "@/components/shared/PwaInstallPrompt"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -92,6 +93,7 @@ export default async function RootLayout({
         <BrandProvider settings={brand}>
           {children}
           <PwaInstallPrompt />
+          <SpeedInsights />
         </BrandProvider>
       </body>
     </html>
