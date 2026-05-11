@@ -165,32 +165,36 @@ export default function CampanhasPage() {
                   href={`/campaigns/${campaign.id}`}
                   className={`rounded-xl border shadow-sm hover:shadow-md transition overflow-hidden flex flex-col ${isClosed ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-100'}`}
                 >
-                  {/* Banner */}
+                  {/* Banner — square on mobile, 2:1 on desktop */}
                   {(campaign.banner_url || campaign.banner_url_mobile) ? (
-                    <div className="relative w-full aspect-video bg-gray-100">
+                    <>
                       {campaign.banner_url_mobile && (
-                        <Image
-                          src={campaign.banner_url_mobile}
-                          alt={campaign.title}
-                          fill
-                          sizes="(max-width:768px) 100vw, 50vw"
-                          loading="lazy"
-                          className="object-contain md:hidden"
-                        />
+                        <div className={`relative w-full aspect-square bg-gray-100 overflow-hidden ${campaign.banner_url ? 'md:hidden' : ''}`}>
+                          <Image
+                            src={campaign.banner_url_mobile}
+                            alt={campaign.title}
+                            fill
+                            sizes="(max-width:768px) 100vw, 50vw"
+                            loading="lazy"
+                            className="object-contain"
+                          />
+                        </div>
                       )}
                       {campaign.banner_url && (
-                        <Image
-                          src={campaign.banner_url}
-                          alt={campaign.title}
-                          fill
-                          sizes="(max-width:768px) 100vw, 50vw"
-                          loading="lazy"
-                          className={`object-contain ${campaign.banner_url_mobile ? 'hidden md:block' : ''}`}
-                        />
+                        <div className={`relative w-full aspect-[2/1] bg-gray-100 overflow-hidden ${campaign.banner_url_mobile ? 'hidden md:block' : ''}`}>
+                          <Image
+                            src={campaign.banner_url}
+                            alt={campaign.title}
+                            fill
+                            sizes="(max-width:768px) 100vw, 50vw"
+                            loading="lazy"
+                            className="object-contain"
+                          />
+                        </div>
                       )}
-                    </div>
+                    </>
                   ) : (
-                    <div className={`w-full aspect-video flex items-center justify-center ${isRaffle ? 'bg-gradient-to-br from-amber-400 to-orange-500' : 'bg-gradient-to-br from-indigo-500 to-purple-600'}`}>
+                    <div className={`w-full aspect-square md:aspect-[2/1] flex items-center justify-center ${isRaffle ? 'bg-gradient-to-br from-amber-400 to-orange-500' : 'bg-gradient-to-br from-indigo-500 to-purple-600'}`}>
                       <svg className="w-10 h-10 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                           d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2" />

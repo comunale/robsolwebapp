@@ -406,30 +406,34 @@ export default function CampaignDetailsPage() {
 
       <CabecalhoUsuario />
       <main className="max-w-lg mx-auto pb-24">
-        {/* Banner */}
+        {/* Banner — square on mobile, 2:1 on desktop */}
         {(campaign.banner_url || campaign.banner_url_mobile) && (
-          <div className="relative w-full aspect-video overflow-hidden bg-gray-100">
+          <>
             {campaign.banner_url_mobile && (
-              <Image
-                src={campaign.banner_url_mobile}
-                alt={campaign.title}
-                fill
-                sizes="100vw"
-                loading="lazy"
-                className="object-contain md:hidden"
-              />
+              <div className={`relative w-full aspect-square overflow-hidden bg-gray-100 ${campaign.banner_url ? 'md:hidden' : ''}`}>
+                <Image
+                  src={campaign.banner_url_mobile}
+                  alt={campaign.title}
+                  fill
+                  sizes="100vw"
+                  priority
+                  className="object-contain"
+                />
+              </div>
             )}
             {campaign.banner_url && (
-              <Image
-                src={campaign.banner_url}
-                alt={campaign.title}
-                fill
-                sizes="100vw"
-                loading="lazy"
-                className={`object-contain ${campaign.banner_url_mobile ? 'hidden md:block' : ''}`}
-              />
+              <div className={`relative w-full aspect-[2/1] overflow-hidden bg-gray-100 ${campaign.banner_url_mobile ? 'hidden md:block' : ''}`}>
+                <Image
+                  src={campaign.banner_url}
+                  alt={campaign.title}
+                  fill
+                  sizes="100vw"
+                  priority
+                  className="object-contain"
+                />
+              </div>
             )}
-          </div>
+          </>
         )}
 
         <div className="px-4 py-5 space-y-5">

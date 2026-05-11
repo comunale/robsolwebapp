@@ -310,8 +310,8 @@ export default function PainelUsuario() {
         {/* ── Goal progress — only for joined campaigns ────────────────────── */}
         {joinedCampaigns.length > 0 && <ProgressoMetas campaigns={joinedCampaigns} />}
 
-        {/* ── Coupon Stats ─────────────────────────────────────────────────── */}
-        <section className="mb-6">
+        {/* ── Coupon Stats — hidden when all campaigns are raffle-only ─────── */}
+        {hasIncentiveCampaigns && <section className="mb-6">
           <h2 className="text-sm font-semibold text-gray-700 mb-3 px-1">Meus Cupons</h2>
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
@@ -336,7 +336,7 @@ export default function PainelUsuario() {
               <p className="text-xs text-gray-500 mt-0.5">Recusados</p>
             </div>
           </div>
-        </section>
+        </section>}
 
         {/* ── Quick Actions ─────────────────────────────────────────────────── */}
         <section>
