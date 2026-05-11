@@ -617,6 +617,24 @@ export default function SiteSettings() {
               No título do hero, use <code className="font-mono text-xs bg-gray-100 px-1 rounded">[gold]palavra[/gold]</code> para destacar em dourado.
             </p>
 
+            {/* ── Section: Home Video ── */}
+            <ContentSection title="Vídeo de Apresentação" icon="▶️">
+              <p className="text-xs text-gray-500">
+                Cole um link do YouTube (youtube.com/watch?v=... ou youtu.be/...). O player aparece na Home dos usuários logo abaixo do banner. Se vazio, a seção fica oculta.
+              </p>
+              <CmsField
+                dbKey="home_video_url"
+                label="URL do Vídeo (YouTube)"
+                placeholder="https://www.youtube.com/watch?v=..."
+                value={settings.home_video_url ?? ''}
+                onChange={(v) => setValue('home_video_url', v)}
+                saving={!!saving.home_video_url}
+                saved={!!saved.home_video_url}
+                onSave={() => handleSave('home_video_url')}
+                multiline={false}
+              />
+            </ContentSection>
+
             {/* ── Section: Hero ── */}
             <ContentSection title="Hero — Banner Principal" icon="🚀">
               {[

@@ -21,6 +21,7 @@ export const viewport: Viewport = {
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await getBrandSettings()
+  const faviconUrl = brand.logo_favicon_url || '/favicon.png'
   const pwaIconUrl = brand.pwa_icon_url || '/logo.png'
 
   return {
@@ -31,8 +32,9 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL('https://appbeneficios.robsol.com.br'),
     icons: {
       icon: [
-        { url: '/favicon.ico', sizes: 'any' },
+        { url: faviconUrl, sizes: '32x32', type: 'image/png' },
         { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+        { url: '/favicon.ico', sizes: 'any' },
       ],
       apple: [
         { url: pwaIconUrl, sizes: '512x512', type: 'image/png' },

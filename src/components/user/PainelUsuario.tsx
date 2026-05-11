@@ -10,6 +10,7 @@ import BarraNavegacao from './BarraNavegacao'
 import DestaquesCampanhas from './DestaquesCampanhas'
 import CarrosselBanners from './CarrosselBanners'
 import ProgressoMetas from './ProgressoMetas'
+import HomeVideoPlayer from './HomeVideoPlayer'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import type { Campaign } from '@/types/campaign'
 
@@ -249,6 +250,9 @@ export default function PainelUsuario() {
 
         {/* Banner Carousel */}
         <CarrosselBanners />
+
+        {/* Home video — hidden when URL not set in admin */}
+        <HomeVideoPlayer url={brand.home_video_url} />
 
         {/* Urgency countdown — visible only when campaign_end_date is set */}
         <UrgenciaBanner endDate={brand.campaign_end_date} />
