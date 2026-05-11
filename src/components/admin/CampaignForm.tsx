@@ -52,7 +52,7 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
   const [goals, setGoals] = useState<GoalConfig[]>([])
 
   // Rich-text editor — stores HTML in `description`
-  const pendingEditorContent = useRef<string | null>(null)
+  const editorSynced = useRef(false)
   const editor = useEditor({
     extensions: [StarterKit],
     content: '',
@@ -64,13 +64,15 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
     },
   })
 
-  // Sync editor when content is loaded from DB in edit mode
+  // Populate editor with fetched content once both editor and data are ready.
+  // Depends on `fetching` (flips false after DB load) and `editor` (async init).
+  // `editorSynced` prevents re-applying after the user starts editing.
   useEffect(() => {
-    if (editor && pendingEditorContent.current !== null) {
-      editor.commands.setContent(pendingEditorContent.current)
-      pendingEditorContent.current = null
-    }
-  }, [editor])
+    if (!editor || fetching || editorSynced.current) return
+    editor.commands.setContent(description || '')
+    editorSynced.current = true
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor, fetching])
 
   // Fetch prizes list (for multi-select)
   useEffect(() => {
@@ -96,7 +98,6 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
         const c = data.campaign
         setTitle(c.title || '')
         setDescription(c.description || '')
-        pendingEditorContent.current = c.description || ''
         setStartDate(c.start_date ? c.start_date.split('T')[0] : '')
         setEndDate(c.end_date ? c.end_date.split('T')[0] : '')
         setIsActive(c.is_active ?? true)
