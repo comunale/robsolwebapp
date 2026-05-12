@@ -82,6 +82,8 @@ export const BRAND_DEFAULTS = {
   home_video_url: '',
   // ── Campaign settings ───────────────────────────────────────────────────────
   campaign_end_date:  '',
+  // ── Support contact ─────────────────────────────────────────────────────────
+  support_whatsapp: '',
   // ── Social media links (footer) ─────────────────────────────────────────────
   social_instagram: '',
   social_facebook:  '',

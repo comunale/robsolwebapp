@@ -33,6 +33,7 @@ export interface CreateCampaignInput {
   keywords?: string[]
   settings?: CampaignSettings | null
   draw_base_notified_at?: string | null
+  max_draw_rounds?: number
 }
 
 export interface UpdateCampaignInput {
@@ -47,4 +48,5 @@ export interface UpdateCampaignInput {
   keywords?: string[]
   settings?: CampaignSettings | null
   draw_base_notified_at?: string | null
+  max_draw_rounds?: number
 }

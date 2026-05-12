@@ -50,6 +50,7 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
   const [hasDraws, setHasDraws] = useState(false)
   const [drawType, setDrawType] = useState<'manual' | 'random'>('random')
   const [goals, setGoals] = useState<GoalConfig[]>([])
+  const [maxDrawRounds, setMaxDrawRounds] = useState(1)
 
   // Rich-text editor — stores HTML in `description`
   const editorSynced = useRef(false)
@@ -111,6 +112,7 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
           setExistingMobileBannerUrl(c.banner_url_mobile)
           setMobileBannerPreview(c.banner_url_mobile)
         }
+        setMaxDrawRounds(c.max_draw_rounds ?? 1)
         const settings = c.settings as CampaignSettings | null
         if (settings) {
           setPointsPerCoupon(settings.points_per_coupon ?? 10)
@@ -250,6 +252,7 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
         banner_url: bannerUrl,
         banner_url_mobile: mobileBannerUrl,
         keywords,
+        max_draw_rounds: campaignType === 'raffle_only' ? maxDrawRounds : 1,
         settings: campaignType === 'raffle_only'
           ? { points_per_coupon: 0, has_draws: false, draw_type: null, goals: [] }
           : {
@@ -452,6 +455,30 @@ export default function CampaignForm({ campaignId }: CampaignFormProps) {
                 ))}
               </div>
             </div>
+
+            {/* Raffle-only settings */}
+            {campaignType === 'raffle_only' && (
+              <div className="border border-amber-200 bg-amber-50 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-amber-800 mb-3">Configurações do Sorteio</h3>
+                <div>
+                  <label htmlFor="maxDrawRounds" className="block text-sm font-medium text-gray-700 mb-1">
+                    Quantidade de Sorteios
+                  </label>
+                  <input
+                    id="maxDrawRounds"
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={maxDrawRounds}
+                    onChange={(e) => setMaxDrawRounds(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Quantos sorteios serão realizados nesta campanha. A campanha se encerra automaticamente após o último sorteio ser publicado.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Prize Multi-select */}
             <div>

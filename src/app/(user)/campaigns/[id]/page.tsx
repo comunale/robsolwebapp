@@ -436,6 +436,19 @@ export default function CampaignDetailsPage() {
           </>
         )}
 
+        {/* Closed campaign engagement banner */}
+        {isClosed && (
+          <div className="bg-gray-900 px-4 py-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+              <span className="text-xl">🔒</span>
+            </div>
+            <div>
+              <p className="text-sm font-black text-white uppercase tracking-wider">Campanha Encerrada</p>
+              <p className="text-xs text-gray-400 mt-0.5">Esta campanha não aceita mais participações.</p>
+            </div>
+          </div>
+        )}
+
         <div className="px-4 py-5 space-y-5">
           {/* Back link */}
           <Link href="/campanhas" className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800">
@@ -494,6 +507,21 @@ export default function CampaignDetailsPage() {
               )
             )}
           </div>
+
+          {/* Multi-draw engagement badge */}
+          {isRaffle && !isClosed && publishedDraws.length > 0 && publishedDraws.length < (campaign.max_draw_rounds ?? 1) && (
+            <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+              <span className="text-2xl flex-shrink-0">🎲</span>
+              <div>
+                <p className="text-sm font-bold text-amber-800">
+                  Sorteio {publishedDraws.length} realizado!
+                </p>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  Próximo sorteio em breve. Você ainda pode participar!
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Incentive stats */}
           {!isRaffle && campaign.settings?.points_per_coupon != null && (
