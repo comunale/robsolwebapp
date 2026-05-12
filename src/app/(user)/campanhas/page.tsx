@@ -224,7 +224,9 @@ export default function CampanhasPage() {
                     </div>
 
                     {campaign.description && (
-                      <p className="text-xs text-gray-500 line-clamp-2 mb-3">{campaign.description}</p>
+                      <p className="text-xs text-gray-500 line-clamp-2 mb-3">
+                        {campaign.description.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()}
+                      </p>
                     )}
 
                     <div className="mt-auto space-y-2">

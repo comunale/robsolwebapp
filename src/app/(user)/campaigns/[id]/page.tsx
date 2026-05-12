@@ -107,11 +107,13 @@ function PrizeCard({
 
   return (
     <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${!isRaffle && isSelected ? 'border-green-400 ring-2 ring-green-300' : 'border-gray-200'}`}>
-      {/* Main image */}
+      {/* Main image — aspect-[4/3] container with object-contain preserves full product */}
       {currentImage ? (
         <button type="button" className="relative w-full group" onClick={() => onImageClick(currentImage)}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={currentImage} alt={prize.title} loading="lazy" className="w-full h-48 object-cover" />
+          <div className="relative w-full aspect-[4/3] bg-gray-50 overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={currentImage} alt={prize.title} loading="lazy" className="absolute inset-0 w-full h-full object-contain" />
+          </div>
           <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-full bg-black/65 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm">
             <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m1.1-5.15a6.25 6.25 0 11-12.5 0 6.25 6.25 0 0112.5 0zM10.5 8v5m-2.5-2.5h5" />
@@ -141,7 +143,7 @@ function PrizeCard({
               }`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" loading="lazy" className="w-full h-full object-cover" />
+              <img src={src} alt="" loading="lazy" className="w-full h-full object-contain bg-gray-50" />
             </button>
           ))}
         </div>
