@@ -43,48 +43,72 @@ function isValidCpf(value: string): boolean {
 }
 
 interface StoreComboboxProps {
-  stores: Store[]
+  supabase: ReturnType<typeof createClient>
   value: string
-  onChange: (value: string) => void
+  selectedStore: Store | null
+  onChange: (storeId: string, store: Store | null) => void
 }
 
-function StoreCombobox({ stores, value, onChange }: StoreComboboxProps) {
+function StoreCombobox({ supabase, value, selectedStore, onChange }: StoreComboboxProps) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
+  const [results, setResults] = useState<Store[]>([])
+  const [searching, setSearching] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const selectedStore = stores.find((store) => store.id === value)
   const selectedLabel = value === OTHER_STORE_VALUE
     ? 'Minha loja não está na lista'
     : selectedStore?.name ?? ''
 
-  const filteredStores = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase()
-    if (!normalizedQuery) return stores
+  useEffect(() => {
+    if (!open) return
 
-    return stores.filter((store) => {
-      const name = store.name.toLowerCase()
-      const location = store.location?.toLowerCase() ?? ''
-      return name.includes(normalizedQuery) || location.includes(normalizedQuery)
-    })
-  }, [query, stores])
+    if (timerRef.current) clearTimeout(timerRef.current)
+
+    const trimmed = query.trim()
+    if (trimmed.length < 2) {
+      setResults([])
+      setSearching(false)
+      return
+    }
+
+    setSearching(true)
+    timerRef.current = setTimeout(async () => {
+      const { data } = await supabase
+        .from('stores')
+        .select('id, name, location')
+        .eq('is_active', true)
+        .or(`name.ilike.%${trimmed}%,location.ilike.%${trimmed}%`)
+        .order('name')
+        .limit(25)
+
+      setResults((data as Store[]) ?? [])
+      setSearching(false)
+    }, 300)
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [query, open, supabase])
 
   useEffect(() => {
     function handleOutsideClick(event: MouseEvent) {
       if (!containerRef.current?.contains(event.target as Node)) {
         setOpen(false)
         setQuery('')
+        setResults([])
       }
     }
-
     document.addEventListener('mousedown', handleOutsideClick)
     return () => document.removeEventListener('mousedown', handleOutsideClick)
   }, [])
 
-  function selectStore(nextValue: string) {
-    onChange(nextValue)
+  function handleSelect(storeId: string, store: Store | null) {
+    onChange(storeId, store)
     setOpen(false)
     setQuery('')
+    setResults([])
   }
 
   return (
@@ -112,18 +136,38 @@ function StoreCombobox({ stores, value, onChange }: StoreComboboxProps) {
               type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Buscar loja..."
+              placeholder="Digite o nome da loja..."
               className="w-full px-3 py-2 text-base border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--brand-primary)] focus:border-transparent outline-none"
             />
           </div>
 
           <ul className="max-h-56 overflow-y-auto py-1" role="listbox">
-            {filteredStores.map((store) => (
+            {searching && (
+              <li className="px-4 py-3 text-sm text-gray-500 text-center flex items-center justify-center gap-2">
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.37 0 0 5.37 0 12h4z" />
+                </svg>
+                Buscando...
+              </li>
+            )}
+
+            {!searching && query.trim().length < 2 && (
+              <li className="px-4 py-3 text-sm text-gray-400 text-center">
+                Digite ao menos 2 letras para buscar
+              </li>
+            )}
+
+            {!searching && query.trim().length >= 2 && results.length === 0 && (
+              <li className="px-4 py-3 text-sm text-gray-500 text-center">Nenhuma loja encontrada</li>
+            )}
+
+            {!searching && results.map((store) => (
               <li
                 key={store.id}
                 role="option"
                 aria-selected={value === store.id}
-                onClick={() => selectStore(store.id)}
+                onClick={() => handleSelect(store.id, store)}
                 className="px-4 py-2.5 text-sm cursor-pointer hover:bg-gray-50 transition"
               >
                 <span className="block font-semibold text-gray-900">{store.name}</span>
@@ -131,15 +175,11 @@ function StoreCombobox({ stores, value, onChange }: StoreComboboxProps) {
               </li>
             ))}
 
-            {filteredStores.length === 0 && (
-              <li className="px-4 py-3 text-sm text-gray-500 text-center">Nenhuma loja encontrada</li>
-            )}
-
             <li className="border-t border-gray-100 my-1" aria-hidden="true" />
             <li
               role="option"
               aria-selected={value === OTHER_STORE_VALUE}
-              onClick={() => selectStore(OTHER_STORE_VALUE)}
+              onClick={() => handleSelect(OTHER_STORE_VALUE, null)}
               className="px-4 py-2.5 text-sm cursor-pointer hover:bg-gray-50 transition"
             >
               <span className="block font-semibold" style={{ color: 'var(--brand-primary)' }}>
@@ -166,34 +206,12 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [storeId, setStoreId] = useState('')
+  const [selectedStore, setSelectedStore] = useState<Store | null>(null)
   const [requestedStoreName, setRequestedStoreName] = useState('')
-  const [stores, setStores] = useState<Store[]>([])
   const [showPass, setShowPass] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    let mounted = true
-
-    supabase
-      .from('stores')
-      .select('*')
-      .eq('is_active', true)
-      .order('name', { ascending: true })
-      .then(({ data, error: storesError }) => {
-        if (!mounted) return
-        if (storesError) {
-          console.error('Error loading stores:', storesError)
-          return
-        }
-        setStores(data ?? [])
-      })
-
-    return () => {
-      mounted = false
-    }
-  }, [supabase])
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -374,7 +392,12 @@ export default function RegisterPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Sua loja <span className="text-red-500">*</span>
             </label>
-            <StoreCombobox stores={stores} value={storeId} onChange={setStoreId} />
+            <StoreCombobox
+              supabase={supabase}
+              value={storeId}
+              selectedStore={selectedStore}
+              onChange={(id, store) => { setStoreId(id); setSelectedStore(store) }}
+            />
             <p className="text-xs text-gray-500 mt-1">Selecione a loja onde você trabalha</p>
           </div>
 
