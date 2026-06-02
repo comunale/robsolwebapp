@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import AdminHeader from './AdminHeader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import type { Store } from '@/types/store'
+
+const PAGE_SIZE = 50
 
 interface ImportResult {
   imported: number
@@ -15,17 +17,18 @@ export default function StoreManagement() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingStore, setEditingStore] = useState<Store | null>(null)
-  const [formData, setFormData] = useState({ name: '', cnpj: '', location: '' })
+  const [formData, setFormData] = useState({ name: '', cnpj: '', location: '', razao_social: '' })
   const [saving, setSaving] = useState(false)
 
-  // Import state
+  const [searchQuery, setSearchQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
+  const [currentPage, setCurrentPage] = useState(1)
+
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState<ImportResult | null>(null)
 
-  useEffect(() => {
-    fetchStores()
-  }, [])
+  useEffect(() => { fetchStores() }, [])
 
   const fetchStores = async () => {
     try {
@@ -38,6 +41,28 @@ export default function StoreManagement() {
       setLoading(false)
     }
   }
+
+  const filteredStores = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    return stores.filter((store) => {
+      if (statusFilter === 'active' && !store.is_active) return false
+      if (statusFilter === 'inactive' && store.is_active) return false
+      if (!q) return true
+      const cnpjClean = store.cnpj.replace(/\D/g, '')
+      return (
+        store.name.toLowerCase().includes(q) ||
+        (store.razao_social?.toLowerCase().includes(q) ?? false) ||
+        cnpjClean.includes(q.replace(/\D/g, '')) ||
+        (store.location?.toLowerCase().includes(q) ?? false)
+      )
+    })
+  }, [stores, searchQuery, statusFilter])
+
+  const totalPages = Math.max(1, Math.ceil(filteredStores.length / PAGE_SIZE))
+  const safePage = Math.min(currentPage, totalPages)
+  const pagedStores = filteredStores.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+
+  useEffect(() => { setCurrentPage(1) }, [searchQuery, statusFilter])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -62,8 +87,14 @@ export default function StoreManagement() {
 
   const handleEdit = (store: Store) => {
     setEditingStore(store)
-    setFormData({ name: store.name, cnpj: store.cnpj, location: store.location || '' })
+    setFormData({
+      name: store.name,
+      cnpj: store.cnpj,
+      location: store.location || '',
+      razao_social: store.razao_social || '',
+    })
     setShowForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleToggleActive = async (store: Store) => {
@@ -75,7 +106,7 @@ export default function StoreManagement() {
       })
       await fetchStores()
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Falha ao atualizar status da loja')
+      alert(err instanceof Error ? err.message : 'Falha ao atualizar status')
     }
   }
 
@@ -92,12 +123,11 @@ export default function StoreManagement() {
   const resetForm = () => {
     setShowForm(false)
     setEditingStore(null)
-    setFormData({ name: '', cnpj: '', location: '' })
+    setFormData({ name: '', cnpj: '', location: '', razao_social: '' })
   }
 
-  // ── Template download ──────────────────────────────────────────────────────
   const handleDownloadTemplate = () => {
-    const csv = 'nome,cnpj,localizacao\nLoja Exemplo,00.000.000/0001-00,Sao Paulo SP\n'
+    const csv = 'nome,cnpj,localizacao\nLoja Exemplo,00.000.000/0001-00,SP\n'
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -107,36 +137,26 @@ export default function StoreManagement() {
     URL.revokeObjectURL(url)
   }
 
-  // ── File import handler ───────────────────────────────────────────────────
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     e.target.value = ''
-
     setImporting(true)
     setImportResult(null)
-
     try {
       const ext = file.name.split('.').pop()?.toLowerCase()
       const rows: { name: string; cnpj: string; location?: string }[] = []
       const errors: string[] = []
-
       if (ext === 'csv') {
         const text = await file.text()
         const Papa = (await import('papaparse')).default
-        const parsed = Papa.parse<Record<string, string>>(text, {
-          header: true,
-          skipEmptyLines: true,
-        })
+        const parsed = Papa.parse<Record<string, string>>(text, { header: true, skipEmptyLines: true })
         parsed.data.forEach((row, i) => {
           const name = (row['nome'] ?? row['name'] ?? '').trim()
           const cnpj = (row['cnpj'] ?? '').trim()
           const location = (row['localizacao'] ?? row['location'] ?? '').trim()
-          if (!name || !cnpj) {
-            errors.push(`Linha ${i + 2}: nome ou CNPJ ausente`)
-          } else {
-            rows.push({ name, cnpj, location: location || undefined })
-          }
+          if (!name || !cnpj) errors.push(`Linha ${i + 2}: nome ou CNPJ ausente`)
+          else rows.push({ name, cnpj, location: location || undefined })
         })
       } else if (ext === 'xlsx' || ext === 'xls') {
         const XLSX = await import('xlsx')
@@ -148,16 +168,12 @@ export default function StoreManagement() {
           const name = String(row['nome'] ?? row['name'] ?? '').trim()
           const cnpj = String(row['cnpj'] ?? '').trim()
           const location = String(row['localizacao'] ?? row['location'] ?? '').trim()
-          if (!name || !cnpj) {
-            errors.push(`Linha ${i + 2}: nome ou CNPJ ausente`)
-          } else {
-            rows.push({ name, cnpj, location: location || undefined })
-          }
+          if (!name || !cnpj) errors.push(`Linha ${i + 2}: nome ou CNPJ ausente`)
+          else rows.push({ name, cnpj, location: location || undefined })
         })
       } else {
         errors.push('Formato nao suportado. Use CSV ou XLSX.')
       }
-
       if (rows.length > 0) {
         const res = await fetch('/api/stores/import', {
           method: 'POST',
@@ -176,10 +192,7 @@ export default function StoreManagement() {
         setImportResult({ imported: 0, errors })
       }
     } catch (err: unknown) {
-      setImportResult({
-        imported: 0,
-        errors: [err instanceof Error ? err.message : 'Falha ao processar arquivo'],
-      })
+      setImportResult({ imported: 0, errors: [err instanceof Error ? err.message : 'Falha ao processar arquivo'] })
     } finally {
       setImporting(false)
     }
@@ -187,11 +200,16 @@ export default function StoreManagement() {
 
   if (loading) return <LoadingSpinner />
 
+  const statusCounts = {
+    all: stores.length,
+    active: stores.filter(s => s.is_active).length,
+    inactive: stores.filter(s => !s.is_active).length,
+  }
+
   return (
     <>
       <AdminHeader title="Gestao de Lojas" subtitle={`${stores.length} loja(s) cadastrada(s)`}>
         <div className="flex items-center gap-2">
-          {/* Download template */}
           <button
             onClick={handleDownloadTemplate}
             className="flex items-center gap-1.5 border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition"
@@ -202,8 +220,6 @@ export default function StoreManagement() {
             </svg>
             Modelo CSV
           </button>
-
-          {/* Import button */}
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={importing}
@@ -226,14 +242,7 @@ export default function StoreManagement() {
               </>
             )}
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv,.xlsx,.xls"
-            className="hidden"
-            onChange={handleFileChange}
-          />
-
+          <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={handleFileChange} />
           <button
             onClick={() => { resetForm(); setShowForm(true) }}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
@@ -243,10 +252,10 @@ export default function StoreManagement() {
         </div>
       </AdminHeader>
 
-      <div className="p-6">
+      <div className="p-6 space-y-4">
         {/* Import result banner */}
         {importResult && (
-          <div className={`mb-4 p-4 rounded-lg border text-sm ${
+          <div className={`p-4 rounded-lg border text-sm ${
             importResult.errors.length === 0
               ? 'bg-green-50 border-green-200 text-green-800'
               : importResult.imported > 0
@@ -255,12 +264,10 @@ export default function StoreManagement() {
           }`}>
             <div className="flex items-start justify-between gap-3">
               <div>
-                {importResult.imported > 0 && (
-                  <p className="font-medium">{importResult.imported} loja(s) importada(s) com sucesso.</p>
-                )}
+                {importResult.imported > 0 && <p className="font-medium">{importResult.imported} loja(s) importada(s) com sucesso.</p>}
                 {importResult.errors.length > 0 && (
                   <ul className="mt-1 list-disc list-inside space-y-0.5">
-                    {importResult.errors.map((e, i) => <li key={i}>{e}</li>)}
+                    {importResult.errors.map((err, i) => <li key={i}>{err}</li>)}
                   </ul>
                 )}
               </div>
@@ -273,56 +280,60 @@ export default function StoreManagement() {
           </div>
         )}
 
-        {/* Modal do formulario */}
+        {/* Form */}
         {showForm && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <h3 className="text-lg font-semibold mb-4">
-              {editingStore ? 'Editar Loja' : 'Nova Loja'}
-            </h3>
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold mb-4">{editingStore ? 'Editar Loja' : 'Nova Loja'}</h3>
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nome Fantasia <span className="text-red-500">*</span>
+                </label>
                 <input
-                  type="text"
-                  required
-                  value={formData.name}
+                  type="text" required value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm"
                   placeholder="Nome da loja"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">CNPJ</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Razão Social</label>
                 <input
-                  type="text"
-                  required
-                  value={formData.cnpj}
-                  onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                  placeholder="00.000.000/0000-00"
+                  type="text" value={formData.razao_social}
+                  onChange={(e) => setFormData({ ...formData, razao_social: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm"
+                  placeholder="Razão social da empresa"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Localizacao</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  CNPJ <span className="text-red-500">*</span>
+                </label>
                 <input
-                  type="text"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                  placeholder="Cidade, Estado"
+                  type="text" required value={formData.cnpj}
+                  onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm font-mono"
+                  placeholder="00000000000000"
                 />
               </div>
-              <div className="md:col-span-3 flex gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">UF</label>
+                <input
+                  type="text" value={formData.location} maxLength={2}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value.toUpperCase() })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm"
+                  placeholder="SP"
+                />
+              </div>
+              <div className="md:col-span-2 flex gap-3 pt-1">
                 <button
-                  type="submit"
-                  disabled={saving}
+                  type="submit" disabled={saving}
                   className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white px-6 py-2 rounded-lg text-sm font-medium transition"
                 >
                   {saving ? 'Salvando...' : editingStore ? 'Atualizar' : 'Criar'}
                 </button>
                 <button
-                  type="button"
-                  onClick={resetForm}
+                  type="button" onClick={resetForm}
                   className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2 rounded-lg text-sm font-medium transition"
                 >
                   Cancelar
@@ -332,49 +343,133 @@ export default function StoreManagement() {
           </div>
         )}
 
-        {/* Lista de lojas */}
+        {/* Search + status filters */}
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+          <div className="relative w-full sm:max-w-sm">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+            <input
+              type="text" value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar nome, razão social, CNPJ ou UF..."
+              className="w-full pl-9 pr-8 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                aria-label="Limpar busca"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg text-sm flex-shrink-0">
+            {(['all', 'active', 'inactive'] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setStatusFilter(f)}
+                className={`px-3 py-1.5 rounded-md font-medium transition whitespace-nowrap ${
+                  statusFilter === f ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {f === 'all'
+                  ? `Todas (${statusCounts.all})`
+                  : f === 'active'
+                    ? `Ativas (${statusCounts.active})`
+                    : `Inativas (${statusCounts.inactive})`}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nome</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CNPJ</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Localizacao</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acoes</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {stores.map((store) => (
-                <tr key={store.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{store.name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{store.cnpj}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{store.location || '-'}</td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      store.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {store.is_active ? 'Ativa' : 'Inativa'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right space-x-2">
-                    <button onClick={() => handleEdit(store)} className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Editar</button>
-                    <button onClick={() => handleToggleActive(store)} className="text-yellow-600 hover:text-yellow-800 text-sm font-medium">
-                      {store.is_active ? 'Desativar' : 'Ativar'}
-                    </button>
-                    <button onClick={() => handleDelete(store.id)} className="text-red-600 hover:text-red-800 text-sm font-medium">Excluir</button>
-                  </td>
-                </tr>
-              ))}
-              {stores.length === 0 && (
+          <div className="px-4 py-2.5 border-b border-gray-100 text-xs text-gray-400">
+            {filteredStores.length === stores.length
+              ? `${stores.length} lojas`
+              : `${filteredStores.length} de ${stores.length} lojas`}
+            {totalPages > 1 && ` · página ${safePage} de ${totalPages}`}
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                    Nenhuma loja cadastrada. Clique em &quot;+ Adicionar Loja&quot; para comecar.
-                  </td>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Nome Fantasia</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Razão Social</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">CNPJ</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">UF</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wide">Ações</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {pagedStores.map((store) => (
+                  <tr key={store.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{store.name}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 max-w-[200px]">
+                      <span className="block truncate" title={store.razao_social ?? undefined}>
+                        {store.razao_social || <span className="text-gray-300">—</span>}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-500 font-mono">{store.cnpj}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{store.location || <span className="text-gray-300">—</span>}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                        store.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        {store.is_active ? 'Ativa' : 'Inativa'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-3">
+                        <button onClick={() => handleEdit(store)} className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleToggleActive(store)}
+                          className={`text-sm font-medium ${store.is_active ? 'text-yellow-600 hover:text-yellow-800' : 'text-green-600 hover:text-green-800'}`}
+                        >
+                          {store.is_active ? 'Desativar' : 'Ativar'}
+                        </button>
+                        <button onClick={() => handleDelete(store.id)} className="text-red-500 hover:text-red-700 text-sm font-medium">
+                          Excluir
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {pagedStores.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-12 text-center text-gray-400 text-sm">
+                      {searchQuery || statusFilter !== 'all'
+                        ? 'Nenhuma loja encontrada para este filtro.'
+                        : 'Nenhuma loja cadastrada. Clique em "+ Adicionar Loja" para começar.'}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
+              <span className="text-xs text-gray-400">
+                {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filteredStores.length)} de {filteredStores.length}
+              </span>
+              <div className="flex items-center gap-1">
+                <button onClick={() => setCurrentPage(1)} disabled={safePage === 1} className="w-7 h-7 flex items-center justify-center rounded text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-sm">«</button>
+                <button onClick={() => setCurrentPage(p => p - 1)} disabled={safePage === 1} className="w-7 h-7 flex items-center justify-center rounded text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-sm">‹</button>
+                <span className="px-3 text-xs text-gray-600 font-medium">{safePage} / {totalPages}</span>
+                <button onClick={() => setCurrentPage(p => p + 1)} disabled={safePage === totalPages} className="w-7 h-7 flex items-center justify-center rounded text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-sm">›</button>
+                <button onClick={() => setCurrentPage(totalPages)} disabled={safePage === totalPages} className="w-7 h-7 flex items-center justify-center rounded text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-sm">»</button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>

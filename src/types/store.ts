@@ -3,6 +3,7 @@ export interface Store {
   name: string
   cnpj: string
   location: string | null
+  razao_social: string | null
   logo_url: string | null
   is_active: boolean
   created_at: string
@@ -13,6 +14,7 @@ export interface CreateStoreInput {
   name: string
   cnpj: string
   location?: string | null
+  razao_social?: string | null
   logo_url?: string | null
 }
 
@@ -20,6 +22,7 @@ export interface UpdateStoreInput {
   name?: string
   cnpj?: string
   location?: string | null
+  razao_social?: string | null
   logo_url?: string | null
   is_active?: boolean
 }
